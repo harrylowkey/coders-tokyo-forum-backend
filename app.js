@@ -4,11 +4,14 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
 const apiRoutes = require('./src/api/routes/index');
-const mongoose = require('./src/config/mongoose');
+const mongooseDb = require('./src/config/mongoose');
+const redisDb = require('./src/config/redis');
 const { port } = require('./src/config/vars');
 
 const app = express();
-mongoose.connect();
+// connect to database
+mongooseDb.connect();
+redisDb.connect();
 
 // setup middlewares
 app.use(cors());
