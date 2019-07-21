@@ -25,7 +25,6 @@ exports.login = async (req, res) => {
   user.__v = undefined
   res.cookie('access_token', token, {
     httpOnly: true,
-    //secure: true;
   });
 
   return res.status(httpStatus.OK).json({ status: httpStatus.OK, user, access_token: token});
