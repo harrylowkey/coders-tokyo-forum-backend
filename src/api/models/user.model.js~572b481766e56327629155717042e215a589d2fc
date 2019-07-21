@@ -2,9 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const brcrypt = require('bcrypt');
-const jwt = require('jwt-simple');
 const httpStatus = require('http-status');
-const { jwt_secret } = require('../../config/vars');
+
 
 const userSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
@@ -101,13 +100,6 @@ userSchema.methods({
 });
 
 userSchema.statics = {
-  generateToken(user) {
-    const token = await jwt.encode({
-      sub: user.id,
-    }, jwt_secret)
-    return token;
-  },
-
   async findAndGenerateToken({ username, password }) {
     const user = await this.findOne({ username: username });
     if (!user) {
