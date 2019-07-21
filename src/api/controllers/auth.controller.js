@@ -4,7 +4,7 @@ const Utils = require('../../utils');
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email: email});
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(httpStatus.NOT_FOUND).json({
       status: httpStatus.NOT_FOUND,
