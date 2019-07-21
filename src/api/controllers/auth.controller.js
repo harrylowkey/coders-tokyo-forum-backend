@@ -4,7 +4,7 @@ const Utils = require('../../utils');
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email }).lean();
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(httpStatus.NOT_FOUND).json({
       status: httpStatus.NOT_FOUND,
@@ -12,7 +12,7 @@ exports.login = async (req, res) => {
     })
   }
 
-  const isMatchedPassword = Utils.bcrypt.comparePassword(user._id, password);
+  const isMatchedPassword = Utils.bcrypt.comparePassword(password, user.password);
   if (!isMatchedPassword) {
     return res.status(httpStatus.BAD_REQUEST).json({
       status: httpStatus.BAD_REQUEST,
@@ -31,9 +31,10 @@ exports.login = async (req, res) => {
      status: httpStatus.OK,
      message: 'Login successfully',
      data: {
-      ...user, 
+      user, 
       access_token: token
      }
+    
     });
 };
 
