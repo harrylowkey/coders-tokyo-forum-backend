@@ -15,10 +15,17 @@
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+<<<<<<< HEAD
     "mongoose": "^5.6.3"
   },
   "devDependencies": {
     "bcrypt": "^3.0.6",
+=======
+    "ioredis": "^4.11.2",
+    "mongoose": "^5.6.3"
+  },
+  "devDependencies": {
+>>>>>>> 28cb12465e578414a776fddfd029f13448173646
     "dotenv": "^8.0.0",
     "dotenv-safe": "^6.1.0",
     "express-validator": "^6.1.1",
