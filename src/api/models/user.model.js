@@ -6,16 +6,17 @@ const httpStatus = require('http-status');
 
 
 const userSchema = new Schema({
-  _id: mongoose.Schema.Types.ObjectId,
   username: {
     type: String,
     trim: true,
     maxlength: 20,
+    required: true
   },
   password: {
     type: String,
     minlength: 6,
     maxlength: 128,
+    required: true,
   },
   email: {
     type: String,
@@ -23,6 +24,7 @@ const userSchema = new Schema({
     trim: true,
     lowercase: true,
     unique: true,
+    required: true,
   },
   avatar: {
     type: String,
@@ -80,12 +82,12 @@ const userSchema = new Schema({
   },
 }, { timestamps: true });
 
-userschema.index({ username: 1 }, { email: 1 }, { job: 1 });
+userSchema.index({ username: 1 }, { email: 1 }, { job: 1 });
 
-userschema.pre('save', async function save(next) {
+userSchema.pre('save', async function save(next) {
   try {
     if (!this.isModified('password')) return next();
-    const hash = brcrypt.hash(this.password, 10);
+    const hash = brcrypt.hashSync(this.password, 10);
     this.password = hash;
     return next();
   } catch (error) {
@@ -93,27 +95,10 @@ userschema.pre('save', async function save(next) {
   }
 });
 
-userSchema.methods({
-  passwordMatches(password) {
-    return brcrypt.compare(password, this.password);
-  },
+userSchema.method({
 });
 
 userSchema.statics = {
-  async findAndGenerateToken({ username, password }) {
-    const user = await this.findOne({ username: username });
-    if (!user) {
-      return res.status(httpStatus.NOT_FOUND).json({status: httpStatus.NOT_FOUND, message: 'User not found'});
-    }
-    const isMatchedPassword = await user.passwordMatches(password);
-    if (!isMatchedPassword) {
-      return res.status(httpStatus.UNAUTHORIZED).json({ status: httpStatus.UNAUTHORIZED, message: 'Wrong password'});
-    }
-    const token = user.generateToken(user);
-    user.__v = undefined;
-    user.password = undefined;
-    return { user, token };
-  }
 }
 
 const userModel =  mongoose.model('User', userSchema);
