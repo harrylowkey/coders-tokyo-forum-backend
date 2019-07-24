@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const brcrypt = require('bcrypt');
-const httpStatus = require('http-status');
-
 
 const userSchema = new Schema({
   username: {
@@ -76,7 +74,11 @@ const userSchema = new Schema({
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Post'
     }
-  ]
+  ],
+  verifyCode: {
+    code: Number,
+    expiresIn: Number
+  }
 }, { timestamps: true });
 
 userSchema.index({ username: 1 }, { email: 1 }, { job: 1 });

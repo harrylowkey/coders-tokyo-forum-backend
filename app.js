@@ -7,7 +7,7 @@ const apiRoutes = require('./src/api/routes/index');
 const mongooseDb = require('./src/config/mongoose');
 const redisDb = require('./src/config/redis');
 const { port } = require('./src/config/vars');
-const error = require('./src/middlewares/error-handler')
+const error = require('./src/middlewares/error-handler');
 const app = express();
 
 // connect to database

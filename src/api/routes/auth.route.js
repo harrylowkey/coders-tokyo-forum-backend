@@ -7,6 +7,8 @@ const { login, register } = require('../validations/auth.validation');
 const router = express.Router();
 
 router.route('/register').post(validate(register), authController.register);
-router.route('/login').post(validate(login), authController.login)
+router.route('/login').post(validate(login), authController.login);
+router.route('/forgot-password').put(authController.forgotPassword);
+router.route('/send-verify-code').post(authController.sendEmailVerifyCode);
 
 module.exports = router;
