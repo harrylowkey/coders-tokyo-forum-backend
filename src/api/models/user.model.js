@@ -60,26 +60,23 @@ const userSchema = new Schema({
   },
   hobbies: [
     {
-      hobbie: {
-        type: String,
-        trim: true,
-        lowercase: true,
-        sparse: true,
-        maxlength: 30,
-      },
+      type: String,
+      trim: true,
+      lowercase: true,
+      sparse: true,
+      maxlength: 30,
     },
   ],
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  blogs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }],
-  books: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
-  videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }],
-  songs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Song' }],
-  posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
-  rankId: {
-    type: Number,
-    maxlength: 3,
-    sparse: true,
+  rankId:{
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'Rank'
   },
+  lovedPosts: [
+    {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'Post'
+    }
+  ]
 }, { timestamps: true });
 
 userSchema.index({ username: 1 }, { email: 1 }, { job: 1 });
