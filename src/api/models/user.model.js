@@ -3,83 +3,92 @@ const Schema = mongoose.Schema;
 
 const brcrypt = require('bcrypt');
 
-const userSchema = new Schema({
-  username: {
-    type: String,
-    trim: true,
-    maxlength: 20,
-    required: true
-  },
-  password: {
-    type: String,
-    minlength: 6,
-    maxlength: 128,
-    required: true,
-  },
-  email: {
-    type: String,
-    match: /^\S+@\S+\.\S+$/,
-    trim: true,
-    lowercase: true,
-    unique: true,
-    required: true,
-  },
-  avatar: {
-    type: String,
-    trim: true,
-    lowercase: true,
-  },
-  links: [
-    {
-      link: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
+const userSchema = new Schema(
+  {
+    username: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      required: true,
     },
-  ],
-  sex: {
-    type: String,
-    minlength: 4,
-    maxlength: 6,
-    lowercase: true,
-    trim: true,
-    sparse: true,
-  },
-  age: {
-    type: Number,
-    sparse: true,
-  },
-  job: {
-    type: String,
-    maxlength: 30,
-    trim: true,
-    sparse: true,
-  },
-  hobbies: [
-    {
+    password: {
+      type: String,
+      minlength: 6,
+      maxlength: 128,
+      required: true,
+    },
+    email: {
+      type: String,
+      match: /^\S+@\S+\.\S+$/,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      required: true,
+    },
+    avatar: {
       type: String,
       trim: true,
       lowercase: true,
-      sparse: true,
-      maxlength: 30,
     },
-  ],
-  rankId:{
-    type: mongoose.SchemaTypes.ObjectId,
-    ref: 'Rank'
-  },
-  lovedPosts: [
-    {
+    links: [
+      {
+        link: {
+          type: String,
+          trim: true,
+          lowercase: true,
+        },
+      },
+    ],
+    sex: {
+      type: String,
+      minlength: 4,
+      maxlength: 6,
+      lowercase: true,
+      trim: true,
+      sparse: true,
+    },
+    age: {
+      type: Number,
+      sparse: true,
+    },
+    job: {
+      type: String,
+      maxlength: 30,
+      trim: true,
+      sparse: true,
+    },
+    hobbies: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+        sparse: true,
+        maxlength: 30,
+      },
+    ],
+    rankId: {
       type: mongoose.SchemaTypes.ObjectId,
-      ref: 'Post'
-    }
-  ],
-  verifyCode: {
-    code: Number,
-    expiresIn: Number
-  }
-}, { timestamps: true });
+      ref: 'Rank',
+    },
+    posts: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Post',
+      },
+    ],
+    lovedPosts: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Post',
+      },
+    ],
+    verifyCode: {
+      code: Number,
+      expiresIn: Number,
+    },
+  },
+  { timestamps: true },
+);
 
 userSchema.index({ username: 1 }, { email: 1 }, { job: 1 });
 
@@ -94,15 +103,13 @@ userSchema.pre('save', async function save(next) {
   }
 });
 
-userSchema.method({
-});
+userSchema.method({});
 
-userSchema.statics = {
-}
+userSchema.statics = {};
 
-const userModel =  mongoose.model('User', userSchema);
+const userModel = mongoose.model('User', userSchema);
 
 module.exports = {
   schema: userSchema,
   model: userModel,
-}
+};
