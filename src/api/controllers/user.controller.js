@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const Utils = require('../../utils');
 const User = require('../models/user.model').model;
 const Promise = require('bluebird');
+const cloudinary = require('cloudinary').v2;
 
 exports.getOneUser = async (req, res) => {
   const user = await User.findById(req.params.userId)
@@ -37,7 +38,9 @@ exports.updateProfile = async (req, res, next) => {
     req.params.userId,
     { $set: query },
     { new: true },
-  ).lean().select('-__v -password -verifyCode');
+  )
+    .lean()
+    .select('-__v -password -verifyCode');
 
   if (!result) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -51,4 +54,41 @@ exports.updateProfile = async (req, res, next) => {
     message: 'Update profile successfully',
     data: result,
   });
+};
+
+exports.updateAvatar = async (req, res, next) => {
+  try {
+    const path = req.file.path;
+    const uploadedImage = await cloudinary.uploader.upload(path, {
+      folder: 'Coders-Tokyo-Forum',
+      transformation: [
+        {
+          width: 400,
+          height: 400,
+          gravity: 'face',
+          radius: 'max',
+          crop: 'crop',
+        },
+        { width: 200, crop: 'scale' },
+      ],
+    });
+    const uploadedAvatar = await User.findByIdAndUpdate(
+      req.params.userId,
+      {
+        $set: { avatar: uploadedImage.url },
+      },
+      { new: true },
+    )
+      .lean()
+      .select('-_id avatar');
+    return res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      message: 'success',
+      data: {
+        url: uploadedAvatar.avatar,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
 };

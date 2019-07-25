@@ -5,14 +5,16 @@ const cookieParser = require('cookie-parser');
 
 const apiRoutes = require('./src/api/routes/index');
 const mongooseDb = require('./src/config/mongoose');
-const redisDb = require('./src/config/redis');
 const { port } = require('./src/config/vars');
 const error = require('./src/middlewares/error-handler');
+const cloudinary = require('./src/config/cloudinary');
 const app = express();
 
 // connect to database
 mongooseDb.connect();
-redisDb.connect();
+
+// config cloudinary
+cloudinary.config();
 
 // setup middlewares
 app.use(cors());
