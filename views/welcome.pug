@@ -1,0 +1,54 @@
+doctype html
+html
+  head
+    style
+      include ./styles/welcome-email.css
+
+  .container
+    .illustration
+      a(href='https://coders.tokyo')
+        img(src='https://i.ibb.co/mcGMLyd/undraw-super-thank-you-obwk.png', alt='super-thank-you', border='0')
+    .hgroup
+      span.name Hello, #{name}
+      h1 Welcome to Coders.Tokyo forum
+      p
+        | Welcome #{name} to join with us.
+        | We hope you will have many joys when we are here.
+        | Have an AWESOME day!
+    .hgroup
+      h2 What you can do
+    .items
+      .item
+        .icon
+          img(src='https://cdn.pixabay.com/photo/2017/03/25/03/59/blogger-2172746_960_720.png', alt='')
+        .title Blog
+        .subtitle
+          | Write our blog about anything you want, your exprerience, your passination, ...
+      .item
+        .icon
+          img(src='https://image.shutterstock.com/z/stock-vector--flat-icon-of-book-review-concept-1062838130.jpg', alt='')
+        .title Review
+        .subtitle
+          | Write your book, food, movie review about that you like and want to share with others
+      .item
+        .icon
+          img(src='https://cdn3.iconfinder.com/data/icons/audio-visual-acquicons/512/Eighth-Note-Double.png', alt='')
+        .title Video, Song
+        .subtitle
+          | Upload and embed any video or song you like and share your own feeling about them
+      .item
+        .icon
+          img(src='https://image.flaticon.com/sprites/new_packs/340322-rank-badge.png', alt='')
+        .title Ranking
+        .subtitle
+          | Find out where you are in this playground, your rank with other blogger 
+    a(href='https://mcashpay.com/')
+      .button-wrap
+        button.explore
+          | Explore
+    footer
+      | Coders.Tokyo forum
+      br
+      | Together coding the future
+      br
+      | Tel: +84 335 608980

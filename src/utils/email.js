@@ -46,6 +46,16 @@ let sendEmailVerifyCode = async (email, codeVerify) => {
   return false;
 };
 
+let sendEmailWelcome = async (email, name) => {
+  const subject = "Coders.Tokyo forum Welcome";
+  const template = pug.renderFile(
+    path.join(__dirname, "../../views/welcome.pug"),
+    { name }
+  );
+  return await emailConfig(subject, template, email);
+};
+
 module.exports = {
-  sendEmailVerifyCode: sendEmailVerifyCode,
+  sendEmailVerifyCode,
+  sendEmailWelcome
 };
