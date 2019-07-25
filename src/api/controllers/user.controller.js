@@ -72,6 +72,10 @@ exports.updateAvatar = async (req, res, next) => {
         { width: 200, crop: 'scale' },
       ],
     });
+
+    if (!uploadedImage) {
+      throw Boom.badRequest('Upload avatar failed');
+    }
     const uploadedAvatar = await User.findByIdAndUpdate(
       req.params.userId,
       {
