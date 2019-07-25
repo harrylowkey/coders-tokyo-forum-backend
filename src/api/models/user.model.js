@@ -32,11 +32,9 @@ const userSchema = new Schema(
     },
     links: [
       {
-        link: {
-          type: String,
-          trim: true,
-          lowercase: true,
-        },
+        type: Object,
+        trim: true,
+        lowercase: true,
       },
     ],
     sex: {
