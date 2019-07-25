@@ -1,26 +1,22 @@
 const jwt = require('jsonwebtoken');
 const { jwt_secret, expired_time_token } = require('../config/vars');
 
-
 const generateToken = (user, option) => {
   option = option || {};
   let salt = option.salt || '';
-  let ttl = option.ttl || (expired_time_token || 3600000); // 1h as default
+  let ttl = option.ttl || 3600; // 1hour default
   let claims = {
-    id: user.id,
+    id: user._id,
     email: user.email,
   };
-
-  return jwt.sign(
-    claims, 
-    jwt_secret + salt, {
+  return jwt.sign(claims, jwt_secret + salt, {
     expiresIn: ttl,
   });
-}
+};
 
 const verifyToken = (token, salt = '') => {
   try {
-    return jwt.verify(token, secretKey + salt);
+    return jwt.verify(token, jwt_secret + salt);
   } catch (e) {
     return null;
   }

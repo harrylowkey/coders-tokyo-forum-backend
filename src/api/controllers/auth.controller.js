@@ -8,7 +8,9 @@ const Promise = require('bluebird');
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email })
+      .lean()
+      .select('-__v -verifyCode');
     if (!user) throw Boom.notFound('User not found');
 
     const isMatchedPassword = Utils.bcrypt.comparePassword(
@@ -17,13 +19,12 @@ exports.login = async (req, res, next) => {
     );
     if (!isMatchedPassword) throw Boom.badRequest('Wrong password');
 
-    const token = Utils.jwt.generateToken(user, 360000); // 1 hour
-    user.password = undefined;
-    user.__v = undefined;
+    const token = Utils.jwt.generateToken(user);
     res.cookie('access_token', token, {
       httpOnly: true,
     });
 
+    user.password = undefined;
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'Login successfully',
@@ -43,9 +44,12 @@ exports.register = async (req, res, next) => {
     if (isExistingEmail) throw Boom.badRequest('Email already existed');
 
     const result = await Promise.props({
-      sentEmail: Utils.email.sendEmailWelcome(req.body.email, req.body.username),
-      newUser: User.create(req.body)
-    })
+      sentEmail: Utils.email.sendEmailWelcome(
+        req.body.email,
+        req.body.username,
+      ),
+      newUser: User.create(req.body),
+    });
     result.newUser.password = undefined;
     result.newUser.__v = undefined;
     return res.status(httpStatus.OK).json({
@@ -97,10 +101,6 @@ exports.forgotPassword = async (req, res, next) => {
     if (!user) throw Boom.notFound('Wrong code or code expired time');
 
     if (user.verifyCode.code != code) throw Boom.badRequest('Wrong code');
-    if (new Date().getTime() > user.verifyCode.expiresIn + 25200000 + 120000) {
-      throw Boom.badRequest(' Code expired time');
-    } // 25200000 = 7hours G+7_VN && 120000=2minues
-
     const hashPassword = bcrypt.hashSync(newPassword, 10);
     await User.findOneAndUpdate(
       { 'verifyCode.code': code },
@@ -119,6 +119,36 @@ exports.forgotPassword = async (req, res, next) => {
     return res
       .status(200)
       .json({ status: 200, message: 'Update password successfully' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const user = req.user;
+    const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
+    if (!isMatchedOldPass) {
+      throw Boom.badRequest('Wrong old password, change password failed');
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw Boom.badRequest('Confirm password wrong');
+    }
+    const hashPassword = bcrypt.hashSync(newPassword, 10);
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          password: hashPassword,
+        },
+      },
+      { new: true },
+    );
+    return res
+      .status(200)
+      .json({ status: 200, message: 'Change password successfully' });
   } catch (error) {
     return next(error);
   }

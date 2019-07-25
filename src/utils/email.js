@@ -40,7 +40,6 @@ let sendEmailVerifyCode = async (email, codeVerify) => {
     path.join(__dirname, '../../views/verifyCode.pug'),
     { code: codeVerify.code },
   );
-  console.log(template)
   const result = await emailConfig(subject, template, email);
   if (result) return codeVerify.code;
   return false;
