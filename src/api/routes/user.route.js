@@ -16,8 +16,9 @@ var storage = multer.diskStorage(
 
 const upload = multer({ storage: storage });
 
-router.route('/:userId').get(authorization.checkAccessToken ,userController.getOneUser);
+router.route('/:userId').get(authorization.checkAccessToken, userController.getOneUser);
 router.route('/:userId').put(authorization.checkAccessToken, userController.updateProfile);
-router.route('/:userId/update-avatar').put(authorization.checkAccessToken, upload.single('path'), userController.updateAvatar);
+router.route('/:userId/avatars').post(authorization.checkAccessToken, upload.single('path'), userController.uploadAvatar);
+router.route('/:userId/avatars/:avatarId').delete(authorization.checkAccessToken, userController.deleteAvatar);
 
 module.exports = router;

@@ -26,9 +26,17 @@ const userSchema = new Schema(
       required: true,
     },
     avatar: {
-      type: String,
-      trim: true,
-      lowercase: true,
+      type: Object,
+      pubic_id: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+      url: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
     },
     links: [
       {
