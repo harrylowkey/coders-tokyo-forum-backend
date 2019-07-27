@@ -59,7 +59,8 @@ exports.updateProfile = async (req, res, next) => {
 exports.uploadAvatar = async (req, res, next) => {
   try {
     const path = req.file.path;
-    const avatarId = req.user.avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    const avatar = req.user.avatar || {};
+    const avatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
     const isOk = await Promise.props({
       deletedOldAvatarOnCloud: cloudinary.uploader.destroy(avatarId),
@@ -96,7 +97,9 @@ exports.uploadAvatar = async (req, res, next) => {
     )
       .lean()
       .select('-_id avatar');
-
+    if (!uploadedAvatar) {
+      throw Boom.badRequest('Upload avatar failed');
+    }
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'success',
