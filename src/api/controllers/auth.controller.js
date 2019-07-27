@@ -153,3 +153,10 @@ exports.changePassword = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.logout = async (req, res) => {
+  res.clearCookie('access_token');  
+  return res
+    .status(httpStatus.OK)
+    .json({ status: httpStatus.OK, message: 'Logout successfully' });
+};
