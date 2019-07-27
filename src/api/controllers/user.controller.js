@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
 const Utils = require('../../utils');
-const User = require('../models/user.model').model;
+const User = require('../models/').User;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 

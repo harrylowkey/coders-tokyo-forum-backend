@@ -23,7 +23,7 @@ const authorSchema = new Schema({
   ],
 });
 
-authorScheme.index({ name: 1 });
+authorSchema.index({ name: 1 });
 
 const authorModel = mongoose.model('Author', authorSchema);
 

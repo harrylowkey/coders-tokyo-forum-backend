@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
 const Utils = require('../../utils');
-const User = require('../models/user.model').model;
+const User = require('../models/').User;
 const Promise = require('bluebird');
 
 exports.login = async (req, res, next) => {
@@ -155,7 +155,7 @@ exports.changePassword = async (req, res, next) => {
 };
 
 exports.logout = async (req, res) => {
-  res.clearCookie('access_token');  
+  res.clearCookie('access_token');
   return res
     .status(httpStatus.OK)
     .json({ status: httpStatus.OK, message: 'Logout successfully' });

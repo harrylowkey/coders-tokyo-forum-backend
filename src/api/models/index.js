@@ -4,4 +4,5 @@ module.exports = {
   Media: require('./media.model').model,
   Food: require('./food.model').model,
   Author: require('./author.model').model,
+  Tag: require('./tag.model').model,
 };

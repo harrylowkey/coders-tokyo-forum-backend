@@ -38,7 +38,7 @@ const foodSchema = new Schema({
   ],
 });
 
-const foodModel = mongoose.model('Media', foodSchema);
+const foodModel = mongoose.model('Food', foodSchema);
 
 module.exports = {
   schema: foodSchema,
