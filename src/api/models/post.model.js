@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-types = ['status, blog, book, food, movie, video, song'];
+types = ['Status, Blog, Book, Food, Movie, Video, Song'];
 
 const postSchema = new Schema(
   {

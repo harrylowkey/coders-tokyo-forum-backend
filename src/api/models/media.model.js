@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const types = [video, song, movie];
+const types = ['Video', 'Song', 'Movie'];
 
 const mediaSchema = new Schema({
   _id: Schema.Types.ObjectId,
