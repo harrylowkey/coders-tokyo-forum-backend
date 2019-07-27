@@ -25,6 +25,8 @@ const mediaSchema = new Schema({
   ],
 });
 
+mediaSchema.index({ authors: 1 });
+
 const mediaModel = mongoose.model('Media', mediaSchema);
 
 module.exports = {

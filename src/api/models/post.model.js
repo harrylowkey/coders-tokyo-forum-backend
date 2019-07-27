@@ -32,10 +32,7 @@ const postSchema = new Schema(
       {
         value: {
           type: Schema.Types.ObjectId,
-          refPath: 'relatedContent.type'
-            .split('')[0]
-            .toLocaleUpperCase()
-            .join(''),
+          refPath: 'relatedContent.type',
         },
         type: { type: String },
       },
@@ -53,6 +50,13 @@ const postSchema = new Schema(
       type: String,
       required: true,
     },
+    authors: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Author',
+        default: null,
+      },
+    ],
     cover: {
       type: Object,
       pubic_id: {
@@ -70,7 +74,7 @@ const postSchema = new Schema(
   { timestamps: true },
 );
 
-postSchema.index({ tags: 1 }, { type: 1 }, { topic: 1 });
+postSchema.index({ tags: 1 }, { type: 1 }, { topic: 1 }, { authors: 1 });
 
 const postModel = mongoose.model('Post', postSchema);
 
