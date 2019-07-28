@@ -58,54 +58,54 @@ exports.updateProfile = async (req, res, next) => {
 
 exports.uploadAvatar = async (req, res, next) => {
   try {
-    const path = req.file.path;
+    const newAvatar = req.file.path;
     const avatar = req.user.avatar || {};
-    const avatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
-    const isOk = await Promise.props({
-      deletedOldAvatarOnCloud: cloudinary.uploader.destroy(avatarId),
-      uploadedAvatar: cloudinary.uploader.upload(path, {
-        transformation: [
-          {
-            width: 400,
-            height: 400,
-            gravity: 'face',
-            radius: 'max',
-            crop: 'crop',
-          },
-          { width: 200, crop: 'scale' },
-        ],
-      }),
-    });
-
-    if (
-      isOk.deletedOldAvatarOnCloud.result !==
-        (avatarId == 'null' ? 'not found' : 'ok') ||
-      !isOk.uploadedAvatar
-    ) {
+    const data = { oldImageId: oldAvatarId, newImage: newAvatar };
+    const option = {
+      transformation: [
+        {
+          width: 400,
+          height: 400,
+          gravity: 'face',
+          radius: 'max',
+          crop: 'crop',
+        },
+        { width: 200, crop: 'scale' },
+      ],
+    };
+    const uploadedImage = await Utils.cloudinary.deleteAndUploadImage(
+      data,
+      option,
+    );
+    console.log(uploadedImage)
+    if (!uploadedImage) {
       throw Boom.badRequest('Upload avatar failed');
     }
-    const uploadedAvatar = await User.findByIdAndUpdate(
+
+    const updatedAvatar = await User.findByIdAndUpdate(
       req.params.userId,
       {
         $set: {
-          'avatar.public_id': isOk.uploadedAvatar.public_id,
-          'avatar.url': isOk.uploadedAvatar.url,
+          'avatar.public_id': uploadedImage.public_id,
+          'avatar.url': uploadedImage.url,
         },
       },
       { new: true },
     )
       .lean()
       .select('-_id avatar');
-    if (!uploadedAvatar) {
+    if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'success',
-      data: uploadedAvatar.avatar,
+      data: updatedAvatar.avatar,
     });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
