@@ -5,13 +5,15 @@ const tagSchema = new Schema({
   _id: Schema.Types.ObjectId,
   tagName: {
     type: String,
-    maxlength: 10,
+    maxlength: 30,
     required: true,
   },
-  postId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Post',
-  },
+  posts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Post',
+    },
+  ],
 });
 
 const tagModel = mongoose.model('Tag', tagSchema);

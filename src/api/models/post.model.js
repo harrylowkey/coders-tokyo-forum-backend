@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-types = ['Status, Blog, Book, Food, Movie, Video, Song'];
+types = ['Status', 'Blog', 'Book', 'Food', 'Movie', 'Video', 'Song'];
 
 const postSchema = new Schema(
   {
@@ -16,7 +16,7 @@ const postSchema = new Schema(
         ref: 'Tag',
       },
     ],
-    comment: [
+    comments: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Comment',
@@ -25,18 +25,13 @@ const postSchema = new Schema(
     type: {
       type: String,
       enum: types,
-      default: 'status',
+      default: 'Status',
       required: true,
     },
-    relatedContent: [
-      {
-        value: {
-          type: Schema.Types.ObjectId,
-          refPath: 'relatedContent.type',
-        },
-        type: { type: String },
-      },
-    ],
+    relatedContent: {
+      type: Schema.Types.ObjectId,
+      ref: 'Post', //default
+    },
     topic: {
       type: String,
       maxlength: 200,
@@ -70,6 +65,12 @@ const postSchema = new Schema(
         lowercase: true,
       },
     },
+    flowers: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true },
 );
