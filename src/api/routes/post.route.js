@@ -21,4 +21,12 @@ router
     postController.createPost,
   );
 
+router
+  .route('/:postId')
+  .put(
+    authorization.checkAccessToken,
+    upload.single('coverImage'),
+    postController.editPost,
+  );
+
 module.exports = router;

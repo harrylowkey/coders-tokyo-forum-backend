@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 exports.deleteAndUploadImage = async (data, option = {}) => {
   try {
     const { oldImageId, newImage } = data;
-    console.log(oldImageId);
+    
     const isOk = await Promise.props({
       deletedOldImagerOnCloud: cloudinary.uploader.destroy(oldImageId),
       uploadedImage: cloudinary.uploader.upload(newImage, option),

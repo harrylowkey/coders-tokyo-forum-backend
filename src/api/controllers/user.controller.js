@@ -79,7 +79,7 @@ exports.uploadAvatar = async (req, res, next) => {
       data,
       option,
     );
-    console.log(uploadedImage)
+    
     if (!uploadedImage) {
       throw Boom.badRequest('Upload avatar failed');
     }
@@ -105,7 +105,6 @@ exports.uploadAvatar = async (req, res, next) => {
       data: updatedAvatar.avatar,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
