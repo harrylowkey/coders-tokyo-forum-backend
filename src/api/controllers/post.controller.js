@@ -53,6 +53,22 @@ exports.editPost = (req, res, next) => {
   }
 };
 
+exports.deletePost = (req, res, next) => {
+  try {
+    const type = req.query.type;
+    if (!type) {
+      throw Boom.badRequest('Type is required');
+    }
+    switch (type) {
+      case 'blog':
+        BlogController.deleteBlog(req, res, next);
+        break;
+    }
+  } catch (error) {
+    return next();
+  }
+};
+
 const createStatus = async (req, res, next) => {
   return res.status(200).json('create status');
 };

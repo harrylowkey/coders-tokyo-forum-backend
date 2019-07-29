@@ -213,3 +213,29 @@ exports.editBlog = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.deleteBlog = async (req, res, next) => {
+  try {
+    const result = await Promise.props({
+      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+      isDetetedInOwner: User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: { posts: req.params.postId },
+        },
+        { new: true },
+      ),
+    });
+
+    if (!result.isDeletedPost || !result.isDetetedInOwner) {
+      throw Boom.badRequest('Delete blog failed');
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Delete blog successfully',
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

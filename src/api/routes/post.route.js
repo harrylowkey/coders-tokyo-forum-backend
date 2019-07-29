@@ -29,4 +29,8 @@ router
     postController.editPost,
   );
 
+router
+  .route('/:postId')
+  .delete(authorization.checkAccessToken, postController.deletePost);
+
 module.exports = router;
