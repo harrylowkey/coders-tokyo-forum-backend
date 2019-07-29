@@ -1,25 +1,39 @@
 const cloudinary = require('cloudinary').v2;
 const Promise = require('bluebird');
 
-exports.deleteAndUploadImage = async (data, transformation = {}) => {
+exports.deleteOldAvaAndUploadNewAva = async data => {
   try {
     const { oldImageId, newImage } = data;
-    
-    const isOk = await Promise.props({
-      deletedOldImagerOnCloud: cloudinary.uploader.destroy(oldImageId),
-      uploadedImage: cloudinary.uploader.upload(newImage, transformation),
+    const config = {
+      folder: 'Coders-Tokyo-Forum/avatars',
+      use_filename: true,
+      unique_filename: true,
+      resource_type: 'image',
+      transformation: [
+        {
+          width: 400,
+          height: 400,
+          gravity: 'face',
+          radius: 'max',
+          crop: 'crop',
+        },
+        { width: 200, crop: 'scale' },
+      ],
+    };
+
+    const result = await Promise.props({
+      idDeleted: cloudinary.uploader.destroy(oldImageId),
+      isUploaded: cloudinary.uploader.upload(newImage, config),
     });
 
     if (
-      isOk.deletedOldImagerOnCloud.result !==
-        (oldImageId == 'null' ? 'not found' : 'ok') ||
-      !isOk.uploadedImage
+      result.idDeleted.result !== (oldImageId == 'null' ? 'not found' : 'ok') ||
+      !result.isUploaded
     ) {
       return false;
     }
 
-    const uploadedImage = isOk.uploadedImage;
-    return uploadedImage;
+    return result.isUploaded;
   } catch (error) {
     throw error;
   }

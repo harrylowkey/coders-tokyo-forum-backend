@@ -62,23 +62,8 @@ exports.uploadAvatar = async (req, res, next) => {
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
     const data = { oldImageId: oldAvatarId, newImage: newAvatar };
-    const transformation = {
-      transformation: [
-        {
-          width: 400,
-          height: 400,
-          gravity: 'face',
-          radius: 'max',
-          crop: 'crop',
-        },
-        { width: 200, crop: 'scale' },
-      ],
-    };
-    const uploadedImage = await Utils.cloudinary.deleteAndUploadImage(
-      data,
-      transformation,
-    );
-    
+    const uploadedImage = await Utils.cloudinary.deleteOldAvaAndUploadNewAva(data);
+
     if (!uploadedImage) {
       throw Boom.badRequest('Upload avatar failed');
     }
@@ -104,7 +89,6 @@ exports.uploadAvatar = async (req, res, next) => {
       data: updatedAvatar.avatar,
     });
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
