@@ -4,19 +4,31 @@ const Post = require('../models/').Post;
 const User = require('../models/').User;
 const Promise = require('bluebird');
 
-exports.getOnePost = (req, res, next) => {
+exports.getOnePost = async (req, res, next) => {
   try {
     const type = req.query.type;
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
-    switch (type) {
-      case 'blog':
-        BlogController.getOneBlog(req, res, next);
-        break;
+    const post = await Post.findById(req.params.postId)
+      .lean()
+      .populate({
+        path: 'tags',
+        select: 'tagName',
+      })
+      .select('-__v');
+
+    if (!post) {
+      throw Boom.badRequest(`Not found ${type}`);
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      data: post,
+    });
   } catch (error) {
-    return next();
+    return next(error);
   }
 };
 
@@ -98,7 +110,6 @@ exports.deletePost = async (req, res, next) => {
       message: `Delete ${type} successfully`,
     });
   } catch (error) {
-    console.log(error);
     return next();
   }
 };
