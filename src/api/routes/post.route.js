@@ -13,6 +13,8 @@ var storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+router.route('/:postId').get(postController.getOnePost);
+
 router
   .route('/')
   .post(

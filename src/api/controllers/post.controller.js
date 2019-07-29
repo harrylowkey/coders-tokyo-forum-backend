@@ -1,6 +1,22 @@
 const Boom = require('@hapi/boom');
 const BlogController = require('./blog.controller');
 
+exports.getOnePost = (req, res, next) => {
+  try {
+    const type = req.query.type;
+    if (!type) {
+      throw Boom.badRequest('Type is required');
+    }
+    switch (type) {
+      case 'blog':
+        BlogController.getOneBlog(req, res, next);
+        break;
+    }
+  } catch (error) {
+    return next();
+  }
+};
+
 exports.createPost = (req, res, next) => {
   try {
     const type = req.query.type;

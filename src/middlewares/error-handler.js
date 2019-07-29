@@ -20,6 +20,16 @@ exports.handler = (err, req, res, next) => {
     return res.end();
   }
 
+  if (err.name == 'CastError') {
+    response.status = 500;
+    response.message = err.message
+    response.name = err.name;
+    response.kind = err.kind;
+    response.location = err.path;
+
+    res.status(500).json(response);
+    return res.end();
+  }
   if ((err.message = 'validation error')) {
     response.status = err.status;
     response.message = err.message;
