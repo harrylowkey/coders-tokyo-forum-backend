@@ -61,10 +61,12 @@ exports.uploadAvatar = async (req, res, next) => {
     const avatar = req.user.avatar || {};
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
-    const data = { oldImageId: oldAvatarId, newImage: newAvatar };
-    const uploadedImage = await Utils.cloudinary.deleteOldAvaAndUploadNewAva(data);
+    const data = { oldAvatarId, newAvatar };
+    const uploadedAvatar = await Utils.cloudinary.deleteOldAvaAndUploadNewAva(
+      data,
+    );
 
-    if (!uploadedImage) {
+    if (!uploadedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }
 
@@ -72,8 +74,8 @@ exports.uploadAvatar = async (req, res, next) => {
       req.params.userId,
       {
         $set: {
-          'avatar.public_id': uploadedImage.public_id,
-          'avatar.url': uploadedImage.url,
+          'avatar.public_id': uploadedAvatar.public_id,
+          'avatar.url': uploadedAvatar.url,
         },
       },
       { new: true },
@@ -83,6 +85,7 @@ exports.uploadAvatar = async (req, res, next) => {
     if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }
+    
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'success',

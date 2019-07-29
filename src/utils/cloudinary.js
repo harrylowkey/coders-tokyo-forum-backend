@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 
 exports.deleteOldAvaAndUploadNewAva = async data => {
   try {
-    const { oldImageId, newImage } = data;
+    const { oldAvatarId, newAvatar } = data;
     const config = {
       folder: 'Coders-Tokyo-Forum/avatars',
       use_filename: true,
@@ -22,12 +22,13 @@ exports.deleteOldAvaAndUploadNewAva = async data => {
     };
 
     const result = await Promise.props({
-      idDeleted: cloudinary.uploader.destroy(oldImageId),
-      isUploaded: cloudinary.uploader.upload(newImage, config),
+      idDeleted: cloudinary.uploader.destroy(oldAvatarId),
+      isUploaded: cloudinary.uploader.upload(newAvatar, config),
     });
 
     if (
-      result.idDeleted.result !== (oldImageId == 'null' ? 'not found' : 'ok') ||
+      result.idDeleted.result !==
+        (oldAvatarId == 'null' ? 'not found' : 'ok') ||
       !result.isUploaded
     ) {
       return false;
