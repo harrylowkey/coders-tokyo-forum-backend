@@ -33,47 +33,28 @@ exports.getOneBlog = async (req, res, next) => {
 };
 
 exports.createBlog = async (req, res, next) => {
+  const _id = mongoose.Types.ObjectId(); // blogId
   const tags = req.body.tags;
-  const _id = mongoose.Types.ObjectId();
+  const coverImage = {
+    path: req.file.path,
+    transformation: [
+      {
+        width: 730,
+        height: 480,
+      },
+    ],
+  };
   try {
-    const getTagPromise = (tagName, postId) => {
-      return new Promise(async (resolve, reject) => {
-        const isExistedTag = await Tag.findOne({ tagName }).lean();
-        try {
-          if (isExistedTag) {
-            const updatedTag = Tag.findOneAndUpdate(
-              { tagName },
-              {
-                $push: { posts: postId },
-              },
-              { new: true },
-            );
-            return resolve(updatedTag);
-          }
+    // create Tag and upload cover image to cloudinary
+    const result = await Utils.post.createTagsAndUploadCoverImage(
+      _id,
+      tags,
+      coverImage,
+    );
 
-          const newTag = Tag.create({
-            _id: mongoose.Types.ObjectId(),
-            tagName,
-            posts: [postId],
-          });
-          return resolve(newTag);
-        } catch (error) {
-          return reject(error);
-        }
-      });
-    };
-    const newTagsArrPromise = tags.map(tag => getTagPromise(tag, _id));
-    const result = await Promise.props({
-      newTags: Promise.all(newTagsArrPromise),
-      uploadedCoverImage: cloudinary.uploader.upload(req.file.path, {
-        transformation: [
-          {
-            width: 730,
-            height: 480,
-          },
-        ],
-      }),
-    });
+    if (!result) {
+      throw Boom.serverUnavailable('Create tag and upload cover image false');
+    }
 
     const tagsId = result.newTags.map(newTag => ({
       _id: newTag.id,
@@ -82,7 +63,7 @@ exports.createBlog = async (req, res, next) => {
       public_id: result.uploadedCoverImage.public_id,
       url: result.uploadedCoverImage.url,
     };
-    
+
     const isOk = await Promise.props({
       pushBlogIdToOwner: User.findByIdAndUpdate(
         req.user._id,
@@ -101,12 +82,11 @@ exports.createBlog = async (req, res, next) => {
       }),
     });
 
-    const newBlog = isOk.createNewBlog;
-    if (!newBlog || !isOk.pushBlogIdToOwner) {
+    if (!isOk.createNewBlog || !isOk.pushBlogIdToOwner) {
       throw Boom.badRequest('Create new blog failed');
     }
 
-    const blog = await Post.findById(newBlog._id)
+    const blog = await Post.findById(isOk.createNewBlog._id)
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
       .select('-__v');

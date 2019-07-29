@@ -3,4 +3,5 @@ module.exports = {
   bcrypt: require('./bcrypt'),
   email: require('./email'),
   cloudinary: require('./cloudinary'),
+  post: require('./post'),
 };

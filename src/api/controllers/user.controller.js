@@ -62,7 +62,7 @@ exports.uploadAvatar = async (req, res, next) => {
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
     const data = { oldImageId: oldAvatarId, newImage: newAvatar };
-    const option = {
+    const transformation = {
       transformation: [
         {
           width: 400,
@@ -76,7 +76,7 @@ exports.uploadAvatar = async (req, res, next) => {
     };
     const uploadedImage = await Utils.cloudinary.deleteAndUploadImage(
       data,
-      option,
+      transformation,
     );
     
     if (!uploadedImage) {
