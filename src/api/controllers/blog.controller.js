@@ -4,8 +4,6 @@ const httpStatus = require('http-status');
 const Utils = require('../../utils');
 const User = require('../models').User;
 const Post = require('../models').Post;
-const Author = require('../models').Author;
-const Food = require('../models').Food;
 const Tag = require('../models').Tag;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
@@ -84,7 +82,7 @@ exports.createBlog = async (req, res, next) => {
       public_id: result.uploadedCoverImage.public_id,
       url: result.uploadedCoverImage.url,
     };
-
+    
     const isOk = await Promise.props({
       pushBlogIdToOwner: User.findByIdAndUpdate(
         req.user._id,

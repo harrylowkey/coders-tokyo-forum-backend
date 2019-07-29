@@ -1,6 +1,5 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
-const bcrypt = require('bcrypt');
 const Utils = require('../../utils');
 const User = require('../models/').User;
 const Promise = require('bluebird');
@@ -105,6 +104,7 @@ exports.uploadAvatar = async (req, res, next) => {
       data: updatedAvatar.avatar,
     });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
