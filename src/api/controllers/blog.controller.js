@@ -35,15 +35,7 @@ exports.getOneBlog = async (req, res, next) => {
 exports.createBlog = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // blogId
   const tags = req.body.tags;
-  const coverImage = {
-    path: req.file.path,
-    transformation: [
-      {
-        width: 730,
-        height: 480,
-      },
-    ],
-  };
+  const coverImage = req.file.path;
   try {
     // create Tag and upload cover image to cloudinary
     const result = await Utils.post.createTagsAndUploadCoverImage(
@@ -56,8 +48,8 @@ exports.createBlog = async (req, res, next) => {
       throw Boom.serverUnavailable('Create tag and upload cover image false');
     }
 
-    const tagsId = result.newTags.map(newTag => ({
-      _id: newTag.id,
+    const tagsId = result.tags.map(tag => ({
+      _id: tag.id,
     }));
     const cover = {
       public_id: result.uploadedCoverImage.public_id,
@@ -167,32 +159,6 @@ exports.editBlog = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    return next(error);
-  }
-};
-
-exports.deleteBlog = async (req, res, next) => {
-  try {
-    const result = await Promise.props({
-      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-      isDetetedInOwner: User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $pull: { posts: req.params.postId },
-        },
-        { new: true },
-      ),
-    });
-
-    if (!result.isDeletedPost || !result.isDetetedInOwner) {
-      throw Boom.badRequest('Delete blog failed');
-    }
-
-    return res.status(200).json({
-      status: 200,
-      message: 'Delete blog successfully',
-    });
-  } catch (error) {
     return next(error);
   }
 };

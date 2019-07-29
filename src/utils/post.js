@@ -2,9 +2,22 @@ const Tag = require('../api/models').Tag;
 const Post = require('../api/models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
+const mongoose = require('mongoose');
 
 exports.createTagsAndUploadCoverImage = async (postId, tags, coverImage) => {
-  const { path, transformation } = coverImage;
+  const config = {
+    folder: 'Coders-Tokyo-Forum/posts',
+    use_filename: true,
+    unique_filename: true,
+    resource_type: 'image',
+    transformation: [
+      {
+        width: 730,
+        height: 480,
+      },
+    ],
+  };
+
   const getTagPromise = (tagName, postId) => {
     return new Promise(async (resolve, reject) => {
       const isExistedTag = await Tag.findOne({ tagName }).lean();
@@ -31,11 +44,11 @@ exports.createTagsAndUploadCoverImage = async (postId, tags, coverImage) => {
       }
     });
   };
-  const newTagsArrPromise = tags.map(tag => getTagPromise(tag, postId));
+  const getTagsPromises = tags.map(tag => getTagPromise(tag, postId));
 
   const result = await Promise.props({
-    newTags: Promise.all(newTagsArrPromise),
-    uploadedCoverImage: cloudinary.uploader.upload(path, transformation),
+    tags: Promise.all(getTagsPromises),
+    uploadedCoverImage: cloudinary.uploader.upload(coverImage, config),
   });
 
   if (!result) {
@@ -49,7 +62,7 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
   const post = await Post.findById(postId)
     .lean()
     .populate({ path: 'tags', select: 'tagName' });
-    
+
   const getTagPromise = (tagName, postId) => {
     return new Promise(async (resolve, reject) => {
       const existedTag = await Tag.findOne({ tagName }).lean();

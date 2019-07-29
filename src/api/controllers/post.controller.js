@@ -1,5 +1,8 @@
 const Boom = require('@hapi/boom');
 const BlogController = require('./blog.controller');
+const Post = require('../models/').Post;
+const User = require('../models/').User;
+const Promise = require('bluebird');
 
 exports.getOnePost = (req, res, next) => {
   try {
@@ -69,18 +72,33 @@ exports.editPost = (req, res, next) => {
   }
 };
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
   try {
     const type = req.query.type;
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
-    switch (type) {
-      case 'blog':
-        BlogController.deleteBlog(req, res, next);
-        break;
+    const result = await Promise.props({
+      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+      isDetetedInOwner: User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: { posts: req.params.postId },
+        },
+        { new: true },
+      ),
+    });
+
+    if (!result.isDeletedPost || !result.isDetetedInOwner) {
+      throw Boom.badRequest(`Delete ${type} failed`);
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete ${type} successfully`,
+    });
   } catch (error) {
+    console.log(error);
     return next();
   }
 };
