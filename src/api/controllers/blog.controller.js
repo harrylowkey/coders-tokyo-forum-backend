@@ -103,13 +103,11 @@ exports.createBlog = async (req, res, next) => {
 
 exports.editBlog = async (req, res, next) => {
   try {
-    const blog = await Post.findById(req.params.postId)
-      .lean()
-      .populate({ path: 'tags', select: 'tagName' })
-      .select('-__v');
+    const blog = await Post.findById(req.params.postId).lean();
     if (!blog) {
       throw Boom.badRequest('Not found blog, edit blog failed');
     }
+
     const { topic, description, content, tags } = req.body;
     const file = req.file || {};
     const coverImage = file.path || null;
@@ -119,60 +117,16 @@ exports.editBlog = async (req, res, next) => {
     if (description) query.description = description;
     if (content) query.content = content;
     if (tags) {
-      const getTagPromise = (tagName, postId) => {
-        return new Promise(async (resolve, reject) => {
-          const existedTag = await Tag.findOne({ tagName }).lean();
-          try {
-            if (existedTag) {
-              return resolve(existedTag);
-            }
-
-            const newTag = Tag.create({
-              _id: mongoose.Types.ObjectId(),
-              tagName,
-              posts: [postId],
-            });
-            return resolve(newTag);
-          } catch (error) {
-            return reject(error);
-          }
-        });
-      };
-
-      const removePostInNotUsedTag = (tagName, postId) => {
-        return new Promise(async (resolve, reject) => {
-          try {
-            const removedPost = Tag.findOneAndUpdate(
-              { tagName },
-              {
-                $pull: { posts: postId },
-              },
-              { new: true },
-            );
-            return resolve(removedPost);
-          } catch (error) {
-            return reject(error);
-          }
-        });
-      };
-
-      const oldTags = blog.tags.map(tag =>
-        !tags.includes(tag.tagName) ? tag.tagName : null,
-      );
-      const removePostInNotUsedTagArrPromise = oldTags.map(oldTag =>
-        removePostInNotUsedTag(oldTag, req.params.postId),
+      const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
+        blog._id,
+        tags,
       );
 
-      const newTagsArrPromise = tags.map(tag =>
-        getTagPromise(tag, req.params.postId),
-      );
+      if (!newTags) {
+        throw Boom.serverUnavailable('Get new tags failed');
+      }
 
-      const result = await Promise.props({
-        remove: Promise.all(removePostInNotUsedTagArrPromise),
-        getNewTags: Promise.all(newTagsArrPromise),
-      });
-
-      const newTagsId = result.getNewTags.map(newTag => newTag._id);
+      const newTagsId = newTags.map(newTag => newTag._id);
       query.tags = newTagsId;
     }
 
@@ -212,6 +166,7 @@ exports.editBlog = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
