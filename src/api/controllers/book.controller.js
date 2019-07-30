@@ -5,6 +5,34 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 
+exports.getOneBookReview = async (req, res, next) => {
+  try {
+    const bookReivew = await Post.findById(req.params.postId)
+      .lean()
+      .populate({
+        path: 'tags',
+        select: 'tagName',
+      })
+      .populate({
+        path: 'authors',
+        select: 'name',
+      })
+      .select('-__v');
+
+    if (!bookReivew) {
+      throw Boom.badRequest(`Not found blog book reivew`);
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      data: bookReivew,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.createBookReview = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // blogId
   const { tags, authors } = req.body;

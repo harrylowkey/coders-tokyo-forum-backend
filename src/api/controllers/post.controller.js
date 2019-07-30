@@ -11,23 +11,14 @@ exports.getOnePost = async (req, res, next) => {
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
-    const post = await Post.findById(req.params.postId)
-      .lean()
-      .populate({
-        path: 'tags',
-        select: 'tagName',
-      })
-      .select('-__v');
-
-    if (!post) {
-      throw Boom.badRequest(`Not found ${type}`);
+    switch (type) {
+      case 'blog':
+        BlogController.getOneBlog(req, res, next);
+        break;
+      case 'book':
+        BookController.getOneBookReview(req, res, next);
+        break;
     }
-
-    return res.status(200).json({
-      status: 200,
-      message: 'success',
-      data: post,
-    });
   } catch (error) {
     return next(error);
   }
