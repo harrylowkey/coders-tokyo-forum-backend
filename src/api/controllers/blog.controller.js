@@ -97,7 +97,7 @@ exports.editBlog = async (req, res, next) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      type: 'Blog',
+      type: 'blog',
     }).lean();
     if (!blog) {
       throw Boom.badRequest('Not found blog, edit blog failed');
@@ -167,7 +167,7 @@ exports.editBlog = async (req, res, next) => {
     )
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
-      .select('-__v');
+      .select('-__v -foodInstance -mediaInstance -authors');
 
     return res.status(200).json({
       status: 200,

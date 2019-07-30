@@ -5,7 +5,6 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 const Food = require('../models').Food;
-const cloudinary = require('cloudinary').v2;
 
 exports.createFoodReview = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // postId
@@ -13,9 +12,8 @@ exports.createFoodReview = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;
   const foodPhotos = req.files['foodPhotos'].map(photo => photo.path);
   try {
-    // create food instance
     const foodPhotosConfig = {
-      folder: 'Coders-Tokyo-Forum/posts',
+      folder: 'Coders-Tokyo-Forum/posts/foodReview',
       use_filename: true,
       unique_filename: true,
       resource_type: 'image',
@@ -42,6 +40,7 @@ exports.createFoodReview = async (req, res, next) => {
       secure_url: photo.secure_url,
     }));
 
+    // create food instance
     const foodInstance = await Food.create({
       _id: foodId,
       postId: _id,
@@ -109,7 +108,6 @@ exports.createFoodReview = async (req, res, next) => {
       data: blog,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
