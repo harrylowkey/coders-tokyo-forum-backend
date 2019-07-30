@@ -60,6 +60,7 @@ const postSchema = new Schema(
     ],
     cover: {
       type: Object,
+      required: true,
       pubic_id: {
         type: String,
         trim: true,

@@ -30,7 +30,10 @@ router
   .route('/:postId')
   .put(
     authorization.checkAccessToken,
-    upload.single('coverImage'),
+    upload.fields([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'foodPhotos', maxCount: 10 },
+    ]),
     postController.editPost,
   );
 

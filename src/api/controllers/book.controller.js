@@ -115,8 +115,6 @@ exports.editBookReview = async (req, res, next) => {
     }
 
     const { topic, description, content, tags, authors } = req.body;
-    const file = req.file || {};
-    const coverImage = file.path || null;
 
     let query = {};
     if (topic) query.topic = topic;
@@ -150,12 +148,14 @@ exports.editBookReview = async (req, res, next) => {
       query.authors = newAuthorsId;
     }
 
-    if (coverImage) {
-      const newCover = req.file.path;
+    const files = req.files || {};
+    const coverImageInput = files['coverImage'] || null;
+    if (coverImageInput) {
+      const coverImage = coverImageInput[0].path;
       const oldCover = book.cover || {};
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
-      const data = { oldImageId: oldCoverId, newImage: newCover };
+      const data = { oldImageId: oldCoverId, newImage: coverImage };
       const coverImageConfig = {
         folder: 'Coders-Tokyo-Forum/posts',
         use_filename: true,
@@ -201,7 +201,7 @@ exports.editBookReview = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error);
+
     return next(error);
   }
 };
@@ -234,7 +234,7 @@ exports.deleteBookReview = async (req, res, next) => {
       isDeletedInAuthors: Utils.post.deletePostInAuthors(book._id, authorsId),
       isDeletedInTags: Utils.post.deletePostInTags(book._id, tagsId),
     });
-    console.log(result.isDeletedCoverImage)
+
     if (
       !result.isDeletedPost ||
       !result.isDetetedInOwner ||

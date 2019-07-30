@@ -60,6 +60,9 @@ exports.editPost = (req, res, next) => {
       case 'book':
         BookController.editBookReview(req, res, next);
         break;
+      case 'food':
+        FoodController.editFoodReview(req, res, next);
+        break;
     }
   } catch (error) {
     return next();

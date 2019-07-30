@@ -89,6 +89,7 @@ exports.createBlog = async (req, res, next) => {
       data: blog,
     });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
@@ -104,15 +105,13 @@ exports.editBlog = async (req, res, next) => {
     }
 
     const { topic, description, content, tags } = req.body;
-    const file = req.file || {};
-    const coverImage = file.path || null;
 
     let query = {};
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
     if (tags) {
-      const newTags = await Utils.blog.removeOldTagsAndCreatNewTags(
+      const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         blog._id,
         tags,
       );
@@ -125,12 +124,14 @@ exports.editBlog = async (req, res, next) => {
       query.tags = newTagsId;
     }
 
-    if (coverImage) {
-      const newCover = req.file.path;
+    const files = req.files || {};
+    const coverImageInput = files['coverImage'] || null;
+    if (coverImageInput) {
+      const coverImage = coverImageInput[0].path;
       const oldCover = blog.cover || {};
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
-      const data = { oldImageId: oldCoverId, newImage: newCover };
+      const data = { oldImageId: oldCoverId, newImage: coverImage };
       const coverImageConfig = {
         folder: 'Coders-Tokyo-Forum/posts',
         use_filename: true,
@@ -175,6 +176,7 @@ exports.editBlog = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };

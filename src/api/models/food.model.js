@@ -32,6 +32,7 @@ const foodSchema = new Schema({
   photos: [
     {
       type: Object,
+      required: true,
       pubic_id: {
         type: String,
         trim: true,
