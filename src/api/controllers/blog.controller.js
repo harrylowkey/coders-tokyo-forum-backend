@@ -70,7 +70,10 @@ exports.createBlog = async (req, res, next) => {
 
 exports.editBlog = async (req, res, next) => {
   try {
-    const blog = await Post.findById(req.params.postId).lean();
+    const blog = await Post.findOne({
+      _id: req.params.postId,
+      type: 'Blog'
+    }).lean();
     if (!blog) {
       throw Boom.badRequest('Not found blog, edit blog failed');
     }
@@ -103,8 +106,21 @@ exports.editBlog = async (req, res, next) => {
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
       const data = { oldImageId: oldCoverId, newImage: newCover };
-      const uploadedCoverImage = await Utils.cloudinary.deleteAndUploadImage(
+      const coverImageConfig = {
+        folder: 'Coders-Tokyo-Forum/posts',
+        use_filename: true,
+        unique_filename: true,
+        resource_type: 'image',
+        transformation: [
+          {
+            width: 730,
+            height: 480,
+          },
+        ],
+      };
+      const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
         data,
+        coverImageConfig,
       );
       if (!uploadedCoverImage) {
         throw Boom.badRequest('Edit cover image failed');
@@ -113,6 +129,7 @@ exports.editBlog = async (req, res, next) => {
       query.cover = {
         public_id: uploadedCoverImage.public_id,
         url: uploadedCoverImage.url,
+        secure_url: uploadedCoverImage.secure_url,
       };
     }
 
@@ -133,7 +150,6 @@ exports.editBlog = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

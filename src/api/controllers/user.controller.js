@@ -61,9 +61,26 @@ exports.uploadAvatar = async (req, res, next) => {
     const avatar = req.user.avatar || {};
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
-    const data = { oldAvatarId, newAvatar };
-    const uploadedAvatar = await Utils.cloudinary.deleteOldAvaAndUploadNewAva(
+    const data = { oldImageId: oldAvatarId, newImage: newAvatar };
+    const avatarConfig = {
+      folder: 'Coders-Tokyo-Forum/avatars',
+      use_filename: true,
+      unique_filename: true,
+      resource_type: 'image',
+      transformation: [
+        {
+          width: 400,
+          height: 400,
+          gravity: 'face',
+          radius: 'max',
+          crop: 'crop',
+        },
+        { width: 200, crop: 'scale' },
+      ],
+    };
+    const uploadedAvatar = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
       data,
+      avatarConfig,
     );
 
     if (!uploadedAvatar) {
@@ -85,7 +102,7 @@ exports.uploadAvatar = async (req, res, next) => {
     if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }
-    
+
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'success',

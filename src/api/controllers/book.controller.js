@@ -74,3 +74,89 @@ exports.createBookReview = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.editBookReview = async (req, res, next) => {
+  try {
+    const book = await Post.findOne({
+      _id: req.params.postId,
+      type: 'Book',
+    }).lean();
+    if (!book) {
+      throw Boom.badRequest('Not found book, edit book failed');
+    }
+
+    const { topic, description, content, tags, authors } = req.body;
+    const file = req.file || {};
+    const coverImage = file.path || null;
+
+    let query = {};
+    if (topic) query.topic = topic;
+    if (description) query.description = description;
+    if (content) query.content = content;
+    if (tags) {
+      const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
+        book._id,
+        tags,
+      );
+
+      if (!newTags) {
+        throw Boom.serverUnavailable('Get new tags failed');
+      }
+
+      const newTagsId = newTags.map(newTag => newTag._id);
+      query.tags = newTagsId;
+    }
+
+    if (coverImage) {
+      const newCover = req.file.path;
+      const oldCover = book.cover || {};
+      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+
+      const data = { oldImageId: oldCoverId, newImage: newCover };
+      const coverImageConfig = {
+        folder: 'Coders-Tokyo-Forum/posts',
+        use_filename: true,
+        unique_filename: true,
+        resource_type: 'image',
+        transformation: [
+          {
+            width: 730,
+            height: 480,
+          },
+        ],
+      };
+      const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+        data,
+        coverImageConfig,
+      );
+      if (!uploadedCoverImage) {
+        throw Boom.badRequest('Edit cover image failed');
+      }
+
+      query.cover = {
+        public_id: uploadedCoverImage.public_id,
+        url: uploadedCoverImage.url,
+        secure_url: uploadedCoverImage.secure_url,
+      };
+    }
+
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .select('-__v');
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Edit book successfully',
+      data: upadatedBlog,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
