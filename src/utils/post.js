@@ -77,15 +77,16 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
       }
     });
   };
+
+  const getNewTagsPromises = newTags.map(tag => getTagPromise(tag, postId));
+
+  // remove posts in not used tags
   const oldTagsNotUsed = post.tags.map(tag =>
     !newTags.includes(tag.tagName) ? tag.tagName : null,
   );
-  // remove posts in not used tags
   const removePostsPromises = oldTagsNotUsed.map(oldTag =>
     removePostsPromise(oldTag, postId),
   );
-
-  const getNewTagsPromises = newTags.map(tag => getTagPromise(tag, postId));
 
   const result = await Promise.props({
     removePosts: Promise.all(removePostsPromises),
@@ -120,7 +121,7 @@ exports.deletePostInTags = async (postId, tagsId) => {
   );
 
   return Promise.all(deletePostPromises);
-}
+};
 
 exports.creatAuthors = async (postId, authors) => {
   const getAuthorPromise = (name, type, postId) => {
@@ -154,6 +155,83 @@ exports.creatAuthors = async (postId, authors) => {
     getAuthorPromise(author.name, author.type, postId),
   );
   return Promise.all(getAuthorsPromises);
+};
+
+exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
+  const post = await Post.findById(postId)
+    .lean()
+    .populate({ path: 'tags', select: 'tagName' })
+    .populate({ path: 'authors', select: 'name type' });
+
+  const getAuthorPromise = (name, type, postId) => {
+    return new Promise(async (resolve, reject) => {
+      const isExistedAuthor = await Author.findOne({ name, type }).lean();
+      try {
+        if (isExistedAuthor) {
+          const updatedAuthor = Author.findOneAndUpdate(
+            { name, type },
+            {
+              $push: { posts: postId },
+            },
+            { new: true },
+          );
+          return resolve(updatedAuthor);
+        }
+
+        const newAuthor = Author.create({
+          _id: mongoose.Types.ObjectId(),
+          name,
+          type,
+          posts: [postId],
+        });
+        return resolve(newAuthor);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+
+  const deletePostPromise = (postId, authorId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const deletedPost = Author.findByIdAndUpdate(
+          authorId,
+          {
+            $pull: { posts: postId },
+          },
+          { new: true },
+        );
+        return resolve(deletedPost);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+
+  const getNewAuthorsPromises = newAuthors.map(author =>
+    getAuthorPromise(author.name, author.type, postId),
+  );
+
+  // remove posts in not used authors
+  const newAuthorsName = newAuthors.map(newAuthor => newAuthor.name);
+
+  const oldAuthorsIdNotUsed = post.authors.map(author =>
+    !newAuthorsName.includes(author.name) ? author._id : null,
+  );
+
+  // get old author not used id
+  const deletePostsPromises = oldAuthorsIdNotUsed.map(oldAuthorId =>
+    deletePostPromise(postId, oldAuthorId),
+  );
+
+  const result = await Promise.props({
+    deletePosts: Promise.all(deletePostsPromises),
+    getNewAuthors: Promise.all(getNewAuthorsPromises),
+  });
+
+  if (!result) return false;
+
+  return result.getNewAuthors;
 };
 
 exports.deletePostInAuthors = async (postId, authorsId) => {

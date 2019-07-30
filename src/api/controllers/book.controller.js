@@ -136,6 +136,20 @@ exports.editBookReview = async (req, res, next) => {
       query.tags = newTagsId;
     }
 
+    if (authors) {
+      const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
+        book._id,
+        authors,
+      );
+
+      if (!authors) {
+        throw Boom.serverUnavailable('Get new authors failed');
+      }
+
+      const newAuthorsId = newAuthors.map(newAuthor => newAuthor._id);
+      query.authors = newAuthorsId;
+    }
+
     if (coverImage) {
       const newCover = req.file.path;
       const oldCover = book.cover || {};
@@ -186,6 +200,7 @@ exports.editBookReview = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
