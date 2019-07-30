@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const types = ['Author', 'Singer', 'Composer', 'Actor', 'Director'];
+const types = ['author', 'singer', 'composer', 'actor', 'director'];
 
 const authorSchema = new Schema({
   _id: Schema.Types.ObjectId,

@@ -69,7 +69,7 @@ exports.createBookReview = async (req, res, next) => {
       ...req.body,
       tags: tagsId,
       authors: authorsId,
-      type: 'Book',
+      type: 'book',
       cover,
     };
 
@@ -92,7 +92,7 @@ exports.createBookReview = async (req, res, next) => {
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
       .populate({ path: 'authors', select: 'name' })
-      .select('-__v');
+      .select('-__v -mediaInstance -foodInstance -mediaInstance');
 
     return res.status(200).json({
       status: 200,

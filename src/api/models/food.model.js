@@ -7,6 +7,11 @@ const foodSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Post',
   },
+  foodName: {
+    type: String,
+    maxlength: 30,
+    required: true,
+  },
   price: {
     type: Number,
     required: true,
@@ -20,6 +25,9 @@ const foodSchema = new Schema({
   },
   star: {
     type: Number,
+    default: 0,
+    max: 5,
+    min: 0,
   },
   photos: [
     {
@@ -30,6 +38,11 @@ const foodSchema = new Schema({
         lowercase: true,
       },
       url: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+      secure_url: {
         type: String,
         trim: true,
         lowercase: true,

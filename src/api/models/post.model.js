@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-types = ['Status', 'Blog', 'Book', 'Food', 'Movie', 'Video', 'Song'];
+types = ['status', 'blog', 'book', 'food', 'movie', 'video', 'song'];
 
 const postSchema = new Schema(
   {
@@ -25,12 +25,18 @@ const postSchema = new Schema(
     type: {
       type: String,
       enum: types,
-      default: 'Status',
+      default: 'status',
       required: true,
     },
-    relatedContent: {
+    foodInstance: {
       type: Schema.Types.ObjectId,
-      ref: 'Post', //default
+      ref: 'Food',
+      default: null,
+    },
+    mediaInstance: {
+      type: Schema.Types.ObjectId,
+      ref: 'Media',
+      default: null,
     },
     topic: {
       type: String,

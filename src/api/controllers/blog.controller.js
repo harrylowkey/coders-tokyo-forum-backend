@@ -59,7 +59,7 @@ exports.createBlog = async (req, res, next) => {
       userId: req.user._id,
       ...req.body,
       tags: tagsId,
-      type: 'Blog',
+      type: 'blog',
       cover,
     };
 
@@ -81,7 +81,7 @@ exports.createBlog = async (req, res, next) => {
     const blog = await Post.findById(isOk.createNewBlog._id)
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
-      .select('-__v');
+      .select('-__v -authors -mediaInstance -foodInstance');
 
     return res.status(200).json({
       status: 200,
