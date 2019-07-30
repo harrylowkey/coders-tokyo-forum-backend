@@ -2,7 +2,6 @@ const cloudinary = require('cloudinary').v2;
 const Promise = require('bluebird');
 
 exports.deleteOldImageAndUploadNewImage = async (data, config = {}) => {
-  try {
     const { oldImageId, newImage } = data;
     const result = await Promise.props({
       idDeleted: cloudinary.uploader.destroy(oldImageId),
@@ -18,9 +17,6 @@ exports.deleteOldImageAndUploadNewImage = async (data, config = {}) => {
     }
 
     return result.isUploaded;
-  } catch (error) {
-    throw error;
-  }
 };
 
 exports.uploadCoverImage = async coverImage => {
