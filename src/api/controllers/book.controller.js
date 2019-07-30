@@ -37,7 +37,7 @@ exports.getOneBookReview = async (req, res, next) => {
 exports.createBookReview = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // blogId
   const { tags, authors } = req.body;
-  const coverImage = req.file.path;
+  const coverImage = req.files['coverImage'][0].path;
   try {
     const result = await Promise.props({
       tags: Utils.post.createTags(_id, tags),
