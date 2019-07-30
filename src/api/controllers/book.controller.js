@@ -192,6 +192,7 @@ exports.editBookReview = async (req, res, next) => {
     )
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
+      .populate({ path: 'authors', select: 'name' })
       .select('-__v');
 
     return res.status(200).json({
