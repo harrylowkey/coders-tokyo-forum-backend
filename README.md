@@ -4,7 +4,8 @@
 
  1. Clone this repo
  2. Contact to me to receive the .env file
- 3. Run command `npm run dev`
+ 3. Checkout `develop branch`
+ 4. Run command `npm run dev`
 
 ## What is the Coders.Tokyo forum?
 - This project is aim to make a playground for every members of Coders.Tokyo. 
