@@ -22,7 +22,7 @@ exports.handler = (err, req, res, next) => {
 
   if (err.name == 'CastError') {
     response.status = 500;
-    response.message = err.message
+    response.message = err.message;
     response.name = err.name;
     response.kind = err.kind;
     response.location = err.path;
@@ -31,6 +31,7 @@ exports.handler = (err, req, res, next) => {
     return res.end();
   }
   if ((err.message = 'validation error')) {
+    console.log(err);
     response.status = err.status;
     response.message = err.message;
     response.data = err.errors;

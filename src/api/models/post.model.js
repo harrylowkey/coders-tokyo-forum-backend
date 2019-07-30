@@ -64,6 +64,11 @@ const postSchema = new Schema(
         trim: true,
         lowercase: true,
       },
+      secure_url: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
     },
     flowers: [
       {

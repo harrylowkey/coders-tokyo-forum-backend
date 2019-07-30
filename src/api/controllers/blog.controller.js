@@ -7,15 +7,13 @@ const Promise = require('bluebird');
 
 exports.createBlog = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // blogId
-  const tags = req.body.tags;
+  const { tags } = req.body;
   const coverImage = req.file.path;
   try {
-    // create Tag and upload cover image to cloudinary
-    const result = await Utils.post.createTagsAndUploadCoverImage(
-      _id,
-      tags,
-      coverImage,
-    );
+    const result = await Promise.props({
+      tags: Utils.post.createTags(_id, tags),
+      coverImage: Utils.cloudinary.uploadCoverImage(coverImage),
+    });
 
     if (!result) {
       throw Boom.serverUnavailable('Create tag and upload cover image false');
@@ -24,9 +22,20 @@ exports.createBlog = async (req, res, next) => {
     const tagsId = result.tags.map(tag => ({
       _id: tag.id,
     }));
+
     const cover = {
-      public_id: result.uploadedCoverImage.public_id,
-      url: result.uploadedCoverImage.url,
+      public_id: result.coverImage.public_id,
+      url: result.coverImage.url,
+      secure_url: result.coverImage.secure_url,
+    };
+
+    const blogData = {
+      _id,
+      userId: req.user._id,
+      ...req.body,
+      tags: tagsId,
+      type: 'Blog',
+      cover,
     };
 
     const isOk = await Promise.props({
@@ -37,14 +46,7 @@ exports.createBlog = async (req, res, next) => {
         },
         { new: true },
       ),
-      createNewBlog: Post.create({
-        _id,
-        userId: req.user._id,
-        ...req.body,
-        tags: tagsId,
-        type: 'Blog',
-        cover,
-      }),
+      createNewBlog: Post.create(blogData),
     });
 
     if (!isOk.createNewBlog || !isOk.pushBlogIdToOwner) {

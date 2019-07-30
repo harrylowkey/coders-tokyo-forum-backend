@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const BlogController = require('./blog.controller');
+const BookController = require('./book.controller');
 const Post = require('../models/').Post;
 const User = require('../models/').User;
 const Promise = require('bluebird');
@@ -43,7 +44,7 @@ exports.createPost = (req, res, next) => {
         BlogController.createBlog(req, res, next);
         break;
       case 'book':
-        createBookReview(req, res, next);
+        BookController.createBookReview(req, res, next);
         break;
       case 'food':
         createFoodReview(req, res, next);

@@ -39,3 +39,20 @@ exports.deleteOldAvaAndUploadNewAva = async data => {
     throw error;
   }
 };
+
+exports.uploadCoverImage = async coverImage => {
+  const config = {
+    folder: 'Coders-Tokyo-Forum/posts',
+    use_filename: true,
+    unique_filename: true,
+    resource_type: 'image',
+    transformation: [
+      {
+        width: 730,
+        height: 480,
+      },
+    ],
+  };
+
+  return cloudinary.uploader.upload(coverImage, config);
+};

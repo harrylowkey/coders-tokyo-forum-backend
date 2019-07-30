@@ -1,22 +1,10 @@
 const Tag = require('../api/models').Tag;
 const Post = require('../api/models').Post;
+const Author = require('../api/models').Author;
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
 
-exports.createTagsAndUploadCoverImage = async (postId, tags, coverImage) => {
-  const config = {
-    folder: 'Coders-Tokyo-Forum/posts',
-    use_filename: true,
-    unique_filename: true,
-    resource_type: 'image',
-    transformation: [
-      {
-        width: 730,
-        height: 480,
-      },
-    ],
-  };
+exports.createTags = async (postId, tags) => {
 
   const getTagPromise = (tagName, postId) => {
     return new Promise(async (resolve, reject) => {
@@ -46,16 +34,7 @@ exports.createTagsAndUploadCoverImage = async (postId, tags, coverImage) => {
   };
   const getTagsPromises = tags.map(tag => getTagPromise(tag, postId));
 
-  const result = await Promise.props({
-    tags: Promise.all(getTagsPromises),
-    uploadedCoverImage: cloudinary.uploader.upload(coverImage, config),
-  });
-
-  if (!result) {
-    return false;
-  }
-
-  return result;
+  return Promise.all(getTagsPromises)
 };
 
 exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
@@ -118,3 +97,35 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
 
   return result.getNewTags;
 };
+
+exports.creatAuthors = async (postId, authors) =>{
+  const getAuthorPromise = (name, type, postId) => {
+    return new Promise(async (resolve, reject) => {
+      const isExistedAuthor = await Author.findOne({ name, type }).lean();
+      try {
+        if (isExistedAuthor) {
+          const updatedAuthor = Author.findOneAndUpdate(
+            { name, type },
+            {
+              $push: { posts: postId },
+            },
+            { new: true },
+          );
+          return resolve(updatedAuthor);
+        }
+
+        const newAuthor = Author.create({
+          _id: mongoose.Types.ObjectId(),
+          name,
+          type,
+          posts: [postId],
+        });
+        return resolve(newAuthor);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+  const getAuthorsPromises = authors.map(author => getAuthorPromise(author.name, author.type, postId));
+  return  Promise.all(getAuthorsPromises);
+}

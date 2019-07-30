@@ -10,7 +10,7 @@ const authorSchema = new Schema({
     required: true,
     maxlength: 20,
   },
-  types: {
+  type: {
     type: String,
     enum: types,
     default: 'author',
