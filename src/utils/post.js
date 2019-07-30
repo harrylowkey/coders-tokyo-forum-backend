@@ -5,7 +5,6 @@ const Promise = require('bluebird');
 const mongoose = require('mongoose');
 
 exports.createTags = async (postId, tags) => {
-
   const getTagPromise = (tagName, postId) => {
     return new Promise(async (resolve, reject) => {
       const isExistedTag = await Tag.findOne({ tagName }).lean();
@@ -34,7 +33,7 @@ exports.createTags = async (postId, tags) => {
   };
   const getTagsPromises = tags.map(tag => getTagPromise(tag, postId));
 
-  return Promise.all(getTagsPromises)
+  return Promise.all(getTagsPromises);
 };
 
 exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
@@ -98,7 +97,32 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
   return result.getNewTags;
 };
 
-exports.creatAuthors = async (postId, authors) =>{
+exports.deletePostInTags = async (postId, tagsId) => {
+  const deletePostPromise = (postId, tagId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const deletedPost = Tag.findByIdAndUpdate(
+          tagId,
+          {
+            $pull: { posts: postId },
+          },
+          { new: true },
+        );
+        return resolve(deletedPost);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+
+  const deletePostPromises = tagsId.map(tagId =>
+    deletePostPromise(postId, tagId),
+  );
+
+  return Promise.all(deletePostPromises);
+}
+
+exports.creatAuthors = async (postId, authors) => {
   const getAuthorPromise = (name, type, postId) => {
     return new Promise(async (resolve, reject) => {
       const isExistedAuthor = await Author.findOne({ name, type }).lean();
@@ -126,6 +150,33 @@ exports.creatAuthors = async (postId, authors) =>{
       }
     });
   };
-  const getAuthorsPromises = authors.map(author => getAuthorPromise(author.name, author.type, postId));
-  return  Promise.all(getAuthorsPromises);
-}
+  const getAuthorsPromises = authors.map(author =>
+    getAuthorPromise(author.name, author.type, postId),
+  );
+  return Promise.all(getAuthorsPromises);
+};
+
+exports.deletePostInAuthors = async (postId, authorsId) => {
+  const deletePostPromise = (postId, authorId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const deletedPost = Author.findByIdAndUpdate(
+          authorId,
+          {
+            $pull: { posts: postId },
+          },
+          { new: true },
+        );
+        return resolve(deletedPost);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+
+  const deletePostPromises = authorsId.map(authorId =>
+    deletePostPromise(postId, authorId),
+  );
+
+  return Promise.all(deletePostPromises);
+};

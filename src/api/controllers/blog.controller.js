@@ -4,6 +4,7 @@ const Utils = require('../../utils');
 const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
+const cloudinary = require('cloudinary').v2;
 
 exports.getOneBlog = async (req, res, next) => {
   try {
@@ -111,7 +112,7 @@ exports.editBlog = async (req, res, next) => {
     if (description) query.description = description;
     if (content) query.content = content;
     if (tags) {
-      const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
+      const newTags = await Utils.blog.removeOldTagsAndCreatNewTags(
         blog._id,
         tags,
       );
@@ -172,6 +173,50 @@ exports.editBlog = async (req, res, next) => {
       status: 200,
       message: 'Edit blog successfully',
       data: upadatedBlog,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteBlog = async (req, res, next) => {
+  try {
+    const blog = await Post.findOne({
+      _id: req.params.postId,
+      type: 'Blog',
+    })
+      .populate({ path: 'tags', select: 'tagName' })
+      .lean();
+    if (!blog) {
+      throw Boom.badRequest('Not found blog');
+    }
+
+    const tagsId = blog.tags.map(tag => tag._id);
+    const result = await Promise.props({
+      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+      isDeletedCoverImage: cloudinary.uploader.destroy(blog.cover.public_id),
+      isDetetedInOwner: User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: { posts: req.params.postId },
+        },
+        { new: true },
+      ),
+      isDeletedInTags: Utils.post.deletePostInTags(blog._id, tagsId),
+    });
+
+    if (
+      !result.isDeletedPost ||
+      !result.isDetetedInOwner ||
+      !result.isDeletedCoverImage ||
+      !result.isDeletedInTags
+    ) {
+      throw Boom.badRequest(`Delete blog failed`);
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete blog successfully`,
     });
   } catch (error) {
     return next(error);

@@ -4,6 +4,7 @@ const BookController = require('./book.controller');
 const Post = require('../models/').Post;
 const User = require('../models/').User;
 const Promise = require('bluebird');
+const cloudinary = require('cloudinary').v2;
 
 exports.getOnePost = async (req, res, next) => {
   try {
@@ -85,27 +86,18 @@ exports.deletePost = async (req, res, next) => {
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
-    const result = await Promise.props({
-      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-      isDetetedInOwner: User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $pull: { posts: req.params.postId },
-        },
-        { new: true },
-      ),
-    });
 
-    if (!result.isDeletedPost || !result.isDetetedInOwner) {
-      throw Boom.badRequest(`Delete ${type} failed`);
+    switch (type) {
+      case 'blog':
+        BlogController.deleteBlog(req, res, next);
+        break;
+      case 'book':
+        BookController.deleteBookReview(req, res, next);
+        break;
     }
-
-    return res.status(200).json({
-      status: 200,
-      message: `Delete ${type} successfully`,
-    });
   } catch (error) {
-    return next();
+    console.log(error);
+    return next(error);
   }
 };
 

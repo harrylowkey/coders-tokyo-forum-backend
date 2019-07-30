@@ -4,6 +4,7 @@ const Utils = require('../../utils');
 const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
+const cloudinary = require('cloudinary').v2;
 
 exports.getOneBookReview = async (req, res, next) => {
   try {
@@ -183,6 +184,54 @@ exports.editBookReview = async (req, res, next) => {
       status: 200,
       message: 'Edit book successfully',
       data: upadatedBlog,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteBookReview = async (req, res, next) => {
+  try {
+    const book = await Post.findOne({
+      _id: req.params.postId,
+      type: 'Book',
+    })
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .populate({ path: 'authors', select: 'name' });
+    if (!book) {
+      throw Boom.badRequest('Not found blog book review');
+    }
+
+    const authorsId = book.authors.map(author => author._id);
+    const tagsId = book.tags.map(tag => tag._id);
+    const result = await Promise.props({
+      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+      isDeletedCoverImage: cloudinary.uploader.destroy(book.cover.public_id),
+      isDetetedInOwner: User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: { posts: req.params.postId },
+        },
+        { new: true },
+      ),
+      isDeletedInAuthors: Utils.post.deletePostInAuthors(book._id, authorsId),
+      isDeletedInTags: Utils.post.deletePostInTags(book._id, tagsId),
+    });
+
+    if (
+      !result.isDeletedPost ||
+      !result.isDetetedInOwner ||
+      !result.isDeletedCoverImage ||
+      !result.isDeletedInAuthors ||
+      !result.isDeletedInTags
+    ) {
+      throw Boom.badRequest(`Delete book failed`);
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete book successfully`,
     });
   } catch (error) {
     return next(error);
