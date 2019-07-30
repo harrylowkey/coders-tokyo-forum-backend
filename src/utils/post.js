@@ -81,10 +81,10 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
   const getNewTagsPromises = newTags.map(tag => getTagPromise(tag, postId));
 
   // remove posts in not used tags
-  const oldTagsNotUsed = post.tags.map(tag =>
+  const oldTagsNameNotUsed = post.tags.map(tag =>
     !newTags.includes(tag.tagName) ? tag.tagName : null,
   );
-  const removePostsPromises = oldTagsNotUsed.map(oldTag =>
+  const removePostsPromises = oldTagsNameNotUsed.map(oldTag =>
     removePostsPromise(oldTag, postId),
   );
 
