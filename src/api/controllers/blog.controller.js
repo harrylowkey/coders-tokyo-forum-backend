@@ -183,7 +183,7 @@ exports.deleteBlog = async (req, res, next) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      type: 'Blog',
+      type: 'blog',
     })
       .populate({ path: 'tags', select: 'tagName' })
       .lean();
@@ -208,7 +208,7 @@ exports.deleteBlog = async (req, res, next) => {
     if (
       !result.isDeletedPost ||
       !result.isDetetedInOwner ||
-      !result.isDeletedCoverImage ||
+      result.isDeletedCoverImage.result !== 'ok' ||
       !result.isDeletedInTags
     ) {
       throw Boom.badRequest(`Delete blog failed`);

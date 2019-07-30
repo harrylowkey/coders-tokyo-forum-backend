@@ -36,7 +36,7 @@ exports.uploadCoverImage = async coverImage => {
 };
 
 exports.uploadManyImages = async (images, config = {}) => {
-  const uploadImagePromise =  image => {
+  const uploadImagePromise = image => {
     return new Promise((resolve, reject) => {
       try {
         const uploadedImage = cloudinary.uploader.upload(image, config);
@@ -49,4 +49,20 @@ exports.uploadManyImages = async (images, config = {}) => {
 
   const uploadImagePromises = images.map(image => uploadImagePromise(image));
   return Promise.all(uploadImagePromises);
+};
+
+exports.deteteManyImages = async photos => {
+  const deleteImagePromise = image => {
+    return new Promise((resolve, reject) => {
+      try {
+        const deletedImage = cloudinary.uploader.destroy(image);
+        return resolve(deletedImage);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  };
+
+  const deleteImagePromises = photos.map(photo => deleteImagePromise(photo));
+  return Promise.all(deleteImagePromises);
 };

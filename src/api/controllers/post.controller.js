@@ -80,9 +80,11 @@ exports.deletePost = async (req, res, next) => {
       case 'book':
         BookController.deleteBookReview(req, res, next);
         break;
+      case 'food':
+        FoodController.deleteFoodReview(req, res, next);
+        break;
     }
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

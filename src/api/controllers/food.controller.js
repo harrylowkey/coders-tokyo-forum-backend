@@ -5,6 +5,7 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 const Food = require('../models').Food;
+const cloudinary = require('cloudinary').v2;
 
 exports.getOneFoodReview = async (req, res, next) => {
   try {
@@ -30,7 +31,6 @@ exports.getOneFoodReview = async (req, res, next) => {
       data: foodReview,
     });
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
@@ -139,6 +139,65 @@ exports.createFoodReview = async (req, res, next) => {
       message: 'Create new food blog review successfully',
       data: blog,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteFoodReview = async (req, res, next) => {
+  try {
+    const foodReview = await Post.findOne({
+      _id: req.params.postId,
+      type: 'food',
+    })
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .populate({
+        path: 'foodInstance',
+        select: 'foodName url price location star photos',
+      })
+      .select('-__v -mediaInstance -authors');
+    if (!foodReview) {
+      throw Boom.badRequest('Not found food blog review');
+    }
+    const tagsId = foodReview.tags.map(tag => tag._id);
+    const photos = foodReview.foodInstance.photos.map(photo => photo.public_id);
+
+    try {
+      const result = await Promise.props({
+        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+        isDeletedFoodInstace: Food.findByIdAndDelete(
+          foodReview.foodInstance._id,
+        ),
+        isDeletedCoverImage: cloudinary.uploader.destroy(
+          foodReview.cover.public_id,
+        ),
+        isDetetedInOwner: User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $pull: { posts: req.params.postId },
+          },
+          { new: true },
+        ),
+        isDeletedInTags: Utils.post.deletePostInTags(foodReview._id, tagsId),
+        isDeletedFoodPhotos: Utils.cloudinary.deteteManyImages(photos),
+      });
+      if (
+        !result.isDeletedPost ||
+        !result.isDeletedFoodInstace ||
+        !result.isDetetedInOwner ||
+        !result.isDeletedInTags
+      ) {
+        throw Boom.badRequest(`Delete book failed`);
+      }
+
+      return res.status(200).json({
+        status: 200,
+        message: `Delete food blog review successfully`,
+      });
+    } catch (error) {
+      throw Boom.badRequest('Delete food blog review failed');
+    }
   } catch (error) {
     return next(error);
   }

@@ -210,7 +210,7 @@ exports.deleteBookReview = async (req, res, next) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      type: 'Book',
+      type: 'book',
     })
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
@@ -234,11 +234,11 @@ exports.deleteBookReview = async (req, res, next) => {
       isDeletedInAuthors: Utils.post.deletePostInAuthors(book._id, authorsId),
       isDeletedInTags: Utils.post.deletePostInTags(book._id, tagsId),
     });
-
+    console.log(result.isDeletedCoverImage)
     if (
       !result.isDeletedPost ||
       !result.isDetetedInOwner ||
-      !result.isDeletedCoverImage ||
+      result.isDeletedCoverImage.result !== 'ok' ||
       !result.isDeletedInAuthors ||
       !result.isDeletedInTags
     ) {
