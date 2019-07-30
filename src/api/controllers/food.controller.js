@@ -6,6 +6,35 @@ const Post = require('../models').Post;
 const Promise = require('bluebird');
 const Food = require('../models').Food;
 
+exports.getOneFoodReview = async (req, res, next) => {
+  try {
+    const foodReview = await Post.findById(req.params.postId)
+      .lean()
+      .populate({
+        path: 'tags',
+        select: 'tagName',
+      })
+      .populate({
+        path: 'foodInstance',
+        select: 'foodName url price location star photos',
+      })
+      .select('-__v -mediaInstance -authors');
+
+    if (!foodReview) {
+      throw Boom.badRequest(`Not found blog food reivew`);
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      data: foodReview,
+    });
+  } catch (error) {
+    console.log(error)
+    return next(error);
+  }
+};
+
 exports.createFoodReview = async (req, res, next) => {
   const _id = mongoose.Types.ObjectId(); // postId
   const { tags, url, price, location, star, foodName } = req.body;
@@ -19,8 +48,8 @@ exports.createFoodReview = async (req, res, next) => {
       resource_type: 'image',
       transformation: [
         {
-          width: 480,
-          height: 480,
+          width: 730,
+          height: 730,
         },
       ],
     };
@@ -99,7 +128,10 @@ exports.createFoodReview = async (req, res, next) => {
     const blog = await Post.findById(isOk.createNewBlog._id)
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
-      .populate({ path: 'foodInstance', select: 'foodName url price location star photos' })
+      .populate({
+        path: 'foodInstance',
+        select: 'foodName url price location star photos',
+      })
       .select('-__v -mediaInstance -authors');
 
     return res.status(200).json({

@@ -16,6 +16,9 @@ exports.getOnePost = async (req, res, next) => {
       case 'book':
         BookController.getOneBookReview(req, res, next);
         break;
+      case 'food':
+        FoodController.getOneFoodReview(req, res, next);
+        break;
     }
   } catch (error) {
     return next(error);
