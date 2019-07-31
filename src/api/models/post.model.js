@@ -5,7 +5,6 @@ types = ['status', 'blog', 'book', 'food', 'movie', 'video', 'song'];
 
 const postSchema = new Schema(
   {
-    _id: Schema.Types.ObjectId,
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',

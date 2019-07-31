@@ -31,12 +31,20 @@ exports.getOneBlog = async (req, res, next) => {
 };
 
 exports.createBlog = async (req, res, next) => {
-  const _id = mongoose.Types.ObjectId(); // blogId
-  const { tags } = req.body;
   const coverImage = req.files['coverImage'][0].path;
+  const {
+    body: { tags },
+    user,
+  } = req;
   try {
+    const newBlog = new Post({
+      userId: user,
+      ...req.body,
+      type: 'blog',
+    });
+
     const result = await Promise.props({
-      tags: Utils.post.createTags(_id, tags),
+      tags: Utils.post.createTags(newBlog, tags),
       coverImage: Utils.cloudinary.uploadCoverImage(coverImage),
     });
 
@@ -54,24 +62,18 @@ exports.createBlog = async (req, res, next) => {
       secure_url: result.coverImage.secure_url,
     };
 
-    const blogData = {
-      _id,
-      userId: req.user._id,
-      ...req.body,
-      tags: tagsId,
-      type: 'blog',
-      cover,
-    };
+    newBlog.tags = tagsId;
+    newBlog.cover = cover;
 
     const isOk = await Promise.props({
       pushBlogIdToOwner: User.findByIdAndUpdate(
-        req.user._id,
+        user._id,
         {
-          $push: { posts: _id },
+          $push: { posts: newBlog },
         },
         { new: true },
       ),
-      createNewBlog: Post.create(blogData),
+      createNewBlog: newBlog.save(),
     });
 
     if (!isOk.createNewBlog || !isOk.pushBlogIdToOwner) {
@@ -89,7 +91,6 @@ exports.createBlog = async (req, res, next) => {
       data: blog,
     });
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
@@ -176,7 +177,7 @@ exports.editBlog = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return next(error);
   }
 };
