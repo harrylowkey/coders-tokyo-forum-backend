@@ -96,6 +96,7 @@ exports.createBlog = async (req, res, next) => {
 };
 
 exports.editBlog = async (req, res, next) => {
+  const { topic, description, content, tags } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
@@ -104,8 +105,6 @@ exports.editBlog = async (req, res, next) => {
     if (!blog) {
       throw Boom.badRequest('Not found blog, edit blog failed');
     }
-
-    const { topic, description, content, tags } = req.body;
 
     let query = {};
     if (topic) query.topic = topic;
@@ -177,7 +176,6 @@ exports.editBlog = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

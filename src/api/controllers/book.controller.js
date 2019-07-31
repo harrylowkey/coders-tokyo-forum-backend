@@ -21,7 +21,7 @@ exports.getOneBookReview = async (req, res, next) => {
       .select('-__v');
 
     if (!bookReivew) {
-      throw Boom.badRequest(`Not found blog book reivew`);
+      throw Boom.badRequest(`Not found book blog reivew`);
     }
 
     return res.status(200).json({
@@ -35,13 +35,22 @@ exports.getOneBookReview = async (req, res, next) => {
 };
 
 exports.createBookReview = async (req, res, next) => {
-  const _id = mongoose.Types.ObjectId(); // blogId
-  const { tags, authors } = req.body;
   const coverImage = req.files['coverImage'][0].path;
+  const {
+    body: { tags, authors },
+    user,
+  } = req;
+
   try {
+    const newBook = new Post({
+      userId: user._id,
+      ...req.body,
+      type: 'book',
+    });
+
     const result = await Promise.props({
-      tags: Utils.post.createTags(_id, tags),
-      authors: Utils.post.creatAuthors(_id, authors),
+      tags: Utils.post.createTags(newBook, tags),
+      authors: Utils.post.creatAuthors(newBook, authors),
       coverImage: Utils.cloudinary.uploadCoverImage(coverImage),
     });
 
@@ -62,26 +71,20 @@ exports.createBookReview = async (req, res, next) => {
       url: result.coverImage.url,
       secure_url: result.coverImage.secure_url,
     };
-
-    const bookData = {
-      _id,
-      userId: req.user._id,
-      ...req.body,
-      tags: tagsId,
-      authors: authorsId,
-      type: 'book',
-      cover,
-    };
+    
+    newBook.tags = tagsId;
+    newBook.authors = authorsId;
+    newBook.cover = cover;
 
     const isOk = await Promise.props({
       pushBookIdToOwner: User.findByIdAndUpdate(
-        req.user._id,
+        user._id,
         {
-          $push: { posts: _id },
+          $push: { posts: newBook },
         },
         { new: true },
       ),
-      createNewBook: Post.create(bookData),
+      createNewBook: newBook.save(),
     });
 
     if (!isOk.createNewBook || !isOk.pushBookIdToOwner) {
@@ -96,7 +99,7 @@ exports.createBookReview = async (req, res, next) => {
 
     return res.status(200).json({
       status: 200,
-      message: 'Create new book successfully',
+      message: 'Create new book blog review successfully',
       data: book,
     });
   } catch (error) {
@@ -201,7 +204,6 @@ exports.editBookReview = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-
     return next(error);
   }
 };
@@ -216,7 +218,7 @@ exports.deleteBookReview = async (req, res, next) => {
       .populate({ path: 'tags', select: 'tagName' })
       .populate({ path: 'authors', select: 'name' });
     if (!book) {
-      throw Boom.badRequest('Not found blog book review');
+      throw Boom.badRequest('Not found book blog review');
     }
 
     const authorsId = book.authors.map(author => author._id);
