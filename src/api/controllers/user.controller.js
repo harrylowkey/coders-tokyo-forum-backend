@@ -4,6 +4,7 @@ const Utils = require('../../utils');
 const User = require('../models/').User;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
+const { avatarConfig } = require('../../config/vars');
 
 exports.getOneUser = async (req, res) => {
   const user = await User.findById(req.params.userId)
@@ -62,22 +63,6 @@ exports.uploadAvatar = async (req, res, next) => {
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
     const data = { oldImageId: oldAvatarId, newImage: newAvatar };
-    const avatarConfig = {
-      folder: 'Coders-Tokyo-Forum/avatars',
-      use_filename: true,
-      unique_filename: true,
-      resource_type: 'image',
-      transformation: [
-        {
-          width: 400,
-          height: 400,
-          gravity: 'face',
-          radius: 'max',
-          crop: 'crop',
-        },
-        { width: 200, crop: 'scale' },
-      ],
-    };
     const uploadedAvatar = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
       data,
       avatarConfig,

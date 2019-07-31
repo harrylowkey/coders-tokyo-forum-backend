@@ -4,6 +4,7 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
+const { videoConfig } = require('../../config/vars');
 
 exports.createVideo = async (req, res, next, isUpload) => {
   const {
@@ -34,14 +35,6 @@ exports.createVideo = async (req, res, next, isUpload) => {
     // case: user upload video
     if (isUpload == 'true') {
       const video = req.files['video'][0].path;
-      const videoConfig = {
-        folder: 'Coders-Tokyo-Forum/posts/media',
-        use_filename: true,
-        unique_filename: true,
-        resource_type: 'video',
-        chunk_size: 10000000, // 10mb
-      };
-
       try {
         const result = await Promise.props({
           tags: Utils.post.createTags(newVideo, tags),
@@ -149,14 +142,6 @@ exports.editVideo = async (req, res, next, isUpload) => {
         const oldVideoId = oldVideo.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
         const data = { oldVideoId, newVideo };
-        const videoConfig = {
-          folder: 'Coders-Tokyo-Forum/posts/media',
-          use_filename: true,
-          unique_filename: true,
-          resource_type: 'video',
-          chunk_size: 10000000, // 10mb
-        };
-
         try {
           const uploadedVideo = await Utils.cloudinary.deleteOldVideoAndUploadNewVideo(
             data,

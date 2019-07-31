@@ -5,6 +5,7 @@ const Post = require('../models').Post;
 const Promise = require('bluebird');
 const Food = require('../models').Food;
 const cloudinary = require('cloudinary').v2;
+const { coverImageConfig } = require('../config/vars');
 
 exports.createFoodReview = async (req, res, next) => {
   const {
@@ -59,7 +60,7 @@ exports.createFoodReview = async (req, res, next) => {
 
     const result = await Promise.props({
       tags: Utils.post.createTags(newFoodBlog, tags),
-      coverImage: Utils.cloudinary.uploadCoverImage(coverImage),
+      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
     });
 
     if (!result) {
@@ -176,19 +177,6 @@ exports.editFoodReview = async (req, res, next) => {
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
-      const coverImageConfig = {
-        folder: 'Coders-Tokyo-Forum/posts',
-        use_filename: true,
-        unique_filename: true,
-        resource_type: 'image',
-        transformation: [
-          {
-            width: 730,
-            height: 480,
-          },
-        ],
-      };
-
       const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
         data,
         coverImageConfig,

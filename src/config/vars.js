@@ -15,5 +15,38 @@ module.exports = {
   cloudinary_name: process.env.CLOUDINARY_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRECT,
+  videoConfig: {
+    folder: 'Coders-Tokyo-Forum/posts/media',
+    use_filename: true,
+    resource_type: 'video',
+    chunk_size: 10000000, // 10mb
+  },
+  coverImageConfig: {
+    folder: 'Coders-Tokyo-Forum/posts',
+    use_filename: true,
+    resource_type: 'image',
+    chunk_size: 6000000,
+    transformation: [
+      {
+        width: 1080,
+        height: 730,
+      },
+    ],
+  },
+  avatarConfig: {
+    folder: 'Coders-Tokyo-Forum/avatars',
+    use_filename: true,
+    resource_type: 'image',
+    chunk_size: 6000000,
+    transformation: [
+      {
+        width: 760,
+        height: 760,
+        gravity: 'face',
+        radius: 'max',
+        crop: 'crop',
+      },
+      { width: 380, crop: 'scale' },
+    ],
+  };
 };
-  
