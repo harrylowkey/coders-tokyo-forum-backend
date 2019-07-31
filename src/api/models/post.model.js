@@ -40,11 +40,6 @@ const postSchema = new Schema(
       ref: 'Food',
       default: null,
     },
-    mediaInstance: {
-      type: Schema.Types.ObjectId,
-      ref: 'Media',
-      default: null,
-    },
     topic: {
       type: String,
       maxlength: 200,

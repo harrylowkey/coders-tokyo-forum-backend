@@ -102,7 +102,7 @@ exports.createFoodReview = async (req, res, next) => {
             select: 'foodName url price location star photos',
           },
         ])
-        .select('-__v -mediaInstance -authors');
+        .select('-__v -authors');
 
       return res.status(200).json({
         status: 200,
@@ -283,7 +283,7 @@ exports.editFoodReview = async (req, res, next) => {
             select: 'foodName url price location star photos',
           },
         ])
-        .select('-__v -mediaInstance -authors');
+        .select('-__v -authors');
 
       return res.status(200).json({
         status: 200,

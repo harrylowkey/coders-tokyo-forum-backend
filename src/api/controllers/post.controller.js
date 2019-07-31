@@ -22,24 +22,26 @@ exports.getOnePost = async (req, res, next) => {
       },
     ];
 
-    let negativeQuery = '-__v';
+    let negativeQuery = '-__v ';
 
     switch (type) {
       case 'blog':
-        negativeQuery =
-          negativeQuery + ' -authors -mediaInstance -foodInstance';
+        negativeQuery = negativeQuery + '-authors -foodInstance -url';
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
         });
-        negativeQuery = negativeQuery + ' -mediaInstance -foodInstance';
+        negativeQuery = negativeQuery + '-foodInstance -url';
       case 'food':
         populateQuery.push({
           path: 'foodInstance',
           select: 'foodName url price location star photos',
         });
-        negativeQuery = negativeQuery + ' -mediaInstance -authors';
+        negativeQuery = negativeQuery + '-authors';
+      case 'movie':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery = negativeQuery + '-foodInstance';
     }
 
     const post = await Post.findOne({
