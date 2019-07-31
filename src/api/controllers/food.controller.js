@@ -254,32 +254,34 @@ exports.editFoodReview = async (req, res, next) => {
         ],
       };
 
-      const oldFoodPhotosNotUsed = foodReview.foodInstance.photos.map(
-        photo => !foodPhotos.includes(photo.public_id),
-      );
-      if (foodPhotos) {
-        try {
-          const result = await Promise.props({
-            isDeletedOldFoodPhotos: Utils.cloudinary.deteteManyImages(
-              oldFoodPhotosNotUsed,
-            ),
-            isUploadedNewFoodPhotos: Utils.cloudinary.uploadManyImages(
-              foodPhotos,
-              foodPhotosConfig,
-            ),
-          });
-
-          const newPhotos = result.isUploadedNewFoodPhotos;
-          const newFoodPhotos = newPhotos.map(photo => ({
-            public_id: photo.public_id,
-            url: photo.url,
-            secure_url: photo.secure_url,
-          }));
-
-          queryFoodInstance.photos = newFoodPhotos;
-        } catch (error) {
-          throw Boom.badRequest('Update food blog review failed');
+      const oldFoodPhotosNotUsed = foodReview.foodInstance.photos.map(photo => {
+        if (!foodPhotos.includes(photo.public_id)) {
+          return photo.public_id;
         }
+        return null;
+      });
+
+      try {
+        const result = await Promise.props({
+          isDeletedoldFoodPhotosNotUsed: Utils.cloudinary.deteteManyImages(
+            oldFoodPhotosNotUsed,
+          ),
+          isUploadedNewFoodPhotos: Utils.cloudinary.uploadManyImages(
+            foodPhotos,
+            foodPhotosConfig,
+          ),
+        });
+
+        const newPhotos = result.isUploadedNewFoodPhotos;
+        const newFoodPhotos = newPhotos.map(photo => ({
+          public_id: photo.public_id,
+          url: photo.url,
+          secure_url: photo.secure_url,
+        }));
+
+        queryFoodInstance.photos = newFoodPhotos;
+      } catch (error) {
+        throw Boom.badRequest('Update food blog review failed');
       }
     }
 
@@ -320,7 +322,6 @@ exports.editFoodReview = async (req, res, next) => {
       throw Boom.badRequest('Update food blog review failed');
     }
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
