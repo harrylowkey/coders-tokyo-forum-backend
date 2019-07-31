@@ -8,7 +8,7 @@ const cloudinary = require('cloudinary').v2;
 exports.createMovieReview = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;
   const {
-    body: { tags, url, authors },
+    body: { tags, authors },
     user,
   } = req;
 
@@ -17,7 +17,6 @@ exports.createMovieReview = async (req, res, next) => {
       userId: user,
       ...req.body,
       type: 'movie',
-      url,
     });
 
     const result = await Promise.props({

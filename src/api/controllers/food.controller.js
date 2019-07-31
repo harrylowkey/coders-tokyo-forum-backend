@@ -8,7 +8,7 @@ const cloudinary = require('cloudinary').v2;
 
 exports.createFoodReview = async (req, res, next) => {
   const {
-    body: { tags, url, price, location, star, foodName },
+    body: { tags, price, location, star, foodName },
     user,
   } = req;
   const coverImage = req.files['coverImage'][0].path;
@@ -50,7 +50,6 @@ exports.createFoodReview = async (req, res, next) => {
     // create food instance
     const foodInstance = new Food({
       postId: newFoodBlog,
-      url,
       foodName,
       price,
       location,
@@ -94,7 +93,7 @@ exports.createFoodReview = async (req, res, next) => {
         createNewFoodInstace: foodInstance.save(),
       });
 
-      const blog = await Post.findById(isOk.createNewBlog._id)
+      const foodBlog = await Post.findById(isOk.createNewBlog._id)
         .lean()
         .populate([
           { path: 'tags', select: 'tagName' },
@@ -108,7 +107,7 @@ exports.createFoodReview = async (req, res, next) => {
       return res.status(200).json({
         status: 200,
         message: 'Create new food blog review successfully',
-        data: blog,
+        data: foodBlog,
       });
     } catch (error) {
       throw Boom.badRequest('Create new food blog review failed');
@@ -154,6 +153,7 @@ exports.editFoodReview = async (req, res, next) => {
     if (topic) queryPost.topic = topic;
     if (description) queryPost.description = description;
     if (content) queryPost.content = content;
+    if (url) queryPost.url = url;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         foodReview._id,
@@ -207,7 +207,6 @@ exports.editFoodReview = async (req, res, next) => {
 
     let queryFoodInstance = {};
     if (foodName) queryFoodInstance.foodName = foodName;
-    if (url) queryFoodInstance.url = url;
     if (price) queryFoodInstance.price = price;
     if (location) queryFoodInstance.location = location;
     if (star) queryFoodInstance.star = star;
