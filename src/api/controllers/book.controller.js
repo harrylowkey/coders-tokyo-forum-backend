@@ -4,7 +4,7 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../config/vars');
+const { coverImageConfig } = require('../../config/vars');
 
 exports.createBookReview = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;

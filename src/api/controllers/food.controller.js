@@ -5,7 +5,7 @@ const Post = require('../models').Post;
 const Promise = require('bluebird');
 const Food = require('../models').Food;
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../config/vars');
+const { coverImageConfig } = require('../../config/vars');
 
 exports.createFoodReview = async (req, res, next) => {
   const {
