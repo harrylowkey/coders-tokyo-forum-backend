@@ -51,7 +51,7 @@ exports.getOnePost = async (req, res, next) => {
       .select(negativeQuery);
 
     if (!post) {
-      throw Boom.badRequest(
+      throw Boom.notFound(
         `Not found ${
           type == 'blog'
             ? type
@@ -138,6 +138,9 @@ exports.deletePost = async (req, res, next) => {
         break;
       case 'food':
         FoodController.deleteFoodReview(req, res, next);
+        break;
+      case 'movie':
+        MovieController.deleteMovieReview(req, res, next);
         break;
     }
   } catch (error) {

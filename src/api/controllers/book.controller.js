@@ -90,7 +90,7 @@ exports.editBookReview = async (req, res, next) => {
       type: 'book',
     }).lean();
     if (!book) {
-      throw Boom.badRequest('Not found book blog reivew, edit failed');
+      throw Boom.notFound('Not found book blog reivew, edit failed');
     }
 
     let query = {};
@@ -195,10 +195,12 @@ exports.deleteBookReview = async (req, res, next) => {
       type: 'book',
     })
       .lean()
-      .populate({ path: 'tags', select: 'tagName' })
-      .populate({ path: 'authors', select: 'name' });
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name' },
+      ]);
     if (!book) {
-      throw Boom.badRequest('Not found book blog review');
+      throw Boom.notFound('Not found book blog review');
     }
 
     const authorsId = book.authors.map(author => author._id);

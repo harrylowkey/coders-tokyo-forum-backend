@@ -134,7 +134,7 @@ exports.editFoodReview = async (req, res, next) => {
       })
       .select('-__v -mediaInstance -authors');
     if (!foodReview) {
-      throw Boom.badRequest('Not found foodReview, edit foodReview failed');
+      throw Boom.notFound('Not found foodReview, edit foodReview failed');
     }
 
     const {
@@ -305,14 +305,16 @@ exports.deleteFoodReview = async (req, res, next) => {
       type: 'food',
     })
       .lean()
-      .populate({ path: 'tags', select: 'tagName' })
-      .populate({
-        path: 'foodInstance',
-        select: 'foodName url price location star photos',
-      })
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        {
+          path: 'foodInstance',
+          select: 'foodName url price location star photos',
+        },
+      ])
       .select('-__v -mediaInstance -authors');
     if (!foodReview) {
-      throw Boom.badRequest('Not found food blog review');
+      throw Boom.notFound('Not found food blog review');
     }
     const tagsId = foodReview.tags.map(tag => tag._id);
     const photos = foodReview.foodInstance.photos.map(photo => photo.public_id);
