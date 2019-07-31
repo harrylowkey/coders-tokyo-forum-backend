@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const tagSchema = new Schema({
-  _id: Schema.Types.ObjectId,
   tagName: {
     type: String,
     maxlength: 30,

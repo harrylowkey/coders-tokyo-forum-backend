@@ -4,7 +4,6 @@ const Schema = mongoose.Schema;
 const types = ['video', 'song', 'movie', 'podcast'];
 
 const mediaSchema = new Schema({
-  _id: Schema.Types.ObjectId,
   postId: {
     type: Schema.Types.ObjectId,
     ref: 'Post',

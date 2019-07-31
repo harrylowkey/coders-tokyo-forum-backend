@@ -4,7 +4,6 @@ const Schema = mongoose.Schema;
 const types = ['author', 'singer', 'composer', 'actor', 'director'];
 
 const authorSchema = new Schema({
-  _id: Schema.Types.ObjectId,
   name: {
     type: String,
     required: true,

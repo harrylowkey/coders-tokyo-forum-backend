@@ -2,7 +2,6 @@ const Tag = require('../api/models').Tag;
 const Post = require('../api/models').Post;
 const Author = require('../api/models').Author;
 const Promise = require('bluebird');
-const mongoose = require('mongoose');
 
 exports.createTags = async (postId, tags) => {
   const getTagPromise = (tagName, postId) => {
@@ -21,7 +20,6 @@ exports.createTags = async (postId, tags) => {
         }
 
         const newTag = Tag.create({
-          _id: mongoose.Types.ObjectId(),
           tagName,
           posts: [postId],
         });
@@ -50,7 +48,6 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
         }
 
         const newTag = Tag.create({
-          _id: mongoose.Types.ObjectId(),
           tagName,
           posts: [postId],
         });
@@ -140,7 +137,6 @@ exports.creatAuthors = async (postId, authors) => {
         }
 
         const newAuthor = Author.create({
-          _id: mongoose.Types.ObjectId(),
           name,
           type,
           posts: [postId],
@@ -179,7 +175,6 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
         }
 
         const newAuthor = Author.create({
-          _id: mongoose.Types.ObjectId(),
           name,
           type,
           posts: [postId],

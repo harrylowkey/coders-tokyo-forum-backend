@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Boom = require('@hapi/boom');
 const Utils = require('../../utils');
 const User = require('../models').User;
