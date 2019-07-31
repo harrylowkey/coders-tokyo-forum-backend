@@ -124,7 +124,7 @@ exports.editBlog = async (req, res, next) => {
         coverImageConfig,
       );
       if (!uploadedCoverImage) {
-        throw Boom.badRequest('Edit cover image failed');
+        throw Boom.serverUnavailable('Edit cover image failed');
       }
 
       query.cover = {

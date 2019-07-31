@@ -195,7 +195,7 @@ exports.editFoodReview = async (req, res, next) => {
       );
 
       if (!uploadedCoverImage) {
-        throw Boom.badRequest('Edit cover image failed');
+        throw Boom.serverUnavailable('Edit cover image failed');
       }
 
       queryPost.cover = {

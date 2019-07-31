@@ -5,12 +5,12 @@ exports.deleteOldImageAndUploadNewImage = async (data, config = {}) => {
   const { oldImageId, newImage } = data;
 
   const result = await Promise.props({
-    idDeleted: cloudinary.uploader.destroy(oldImageId),
+    isDeleted: cloudinary.uploader.destroy(oldImageId),
     isUploaded: cloudinary.uploader.upload(newImage, config),
   });
 
   if (
-    result.idDeleted.result !== (oldImageId == 'null' ? 'not found' : 'ok') ||
+    result.isDeleted.result !== (oldImageId == 'null' ? 'not found' : 'ok') ||
     !result.isUploaded
   ) {
     return false;
@@ -66,4 +66,24 @@ exports.deteteManyImages = async photos => {
 
   const deleteImagePromises = photos.map(photo => deleteImagePromise(photo));
   return Promise.all(deleteImagePromises);
+};
+
+exports.deleteOldVideoAndUploadNewVideo = async (data, config = {}) => {
+  const { oldVideoId, newVideo } = data;
+
+  const result = await Promise.props({
+    isDeleted: cloudinary.uploader.destroy(oldVideoId, {
+      resource_type: 'video',
+    }),
+    isUploaded: cloudinary.uploader.upload(newVideo, config),
+  });
+
+  if (
+    result.isDeleted.result !== (oldVideoId == 'null' ? 'not found' : 'ok') ||
+    !result.isUploaded
+  ) {
+    return false;
+  }
+
+  return result.isUploaded;
 };

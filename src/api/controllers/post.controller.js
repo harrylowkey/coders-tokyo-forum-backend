@@ -105,14 +105,13 @@ exports.createPost = (req, res, next) => {
         break;
     }
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
 
 exports.editPost = (req, res, next) => {
   try {
-    const type = req.query.type;
+    const { type, isUpload } = req.query;
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
@@ -128,6 +127,9 @@ exports.editPost = (req, res, next) => {
         break;
       case 'movie':
         MovieController.editMovieReview(req, res, next);
+        break;
+      case 'video':
+        MediaController.editVideo(req, res, next, isUpload);
         break;
     }
   } catch (error) {
