@@ -6,6 +6,7 @@ const tagSchema = new Schema({
     type: String,
     maxlength: 30,
     required: true,
+    trim: true,
   },
   posts: [
     {

@@ -55,7 +55,7 @@ exports.createBlog = async (req, res, next) => {
       const blog = await Post.findById(isOk.createNewBlog._id)
         .lean()
         .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -url -authors -foodInstance');
+        .select('-__v -media -url -authors -foodInstance');
 
       return res.status(200).json({
         status: 200,
@@ -144,7 +144,7 @@ exports.editBlog = async (req, res, next) => {
       )
         .lean()
         .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -url -foodInstance -authors');
+        .select('-__v -media -url -foodInstance -authors');
 
       return res.status(200).json({
         status: 200,

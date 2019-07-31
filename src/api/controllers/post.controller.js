@@ -3,6 +3,7 @@ const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
+const MediaController = require('./media.controller');
 const Post = require('../models').Post;
 
 exports.getOnePost = async (req, res, next) => {
@@ -26,22 +27,22 @@ exports.getOnePost = async (req, res, next) => {
 
     switch (type) {
       case 'blog':
-        negativeQuery = negativeQuery + '-authors -foodInstance -url';
+        negativeQuery = negativeQuery + '-authors -foodInstance -url -media';
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
         });
-        negativeQuery = negativeQuery + '-foodInstance -url';
+        negativeQuery = negativeQuery + '-foodInstance -url -media';
       case 'food':
         populateQuery.push({
           path: 'foodInstance',
           select: 'foodName url price location star photos',
         });
-        negativeQuery = negativeQuery + '-authors';
+        negativeQuery = negativeQuery + '-authors -media';
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
-        negativeQuery = negativeQuery + '-foodInstance';
+        negativeQuery = negativeQuery + '-foodInstance -media';
     }
 
     const post = await Post.findOne({
@@ -76,7 +77,7 @@ exports.getOnePost = async (req, res, next) => {
 
 exports.createPost = (req, res, next) => {
   try {
-    const type = req.query.type;
+    const { type, isUpload } = req.query;
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
@@ -93,8 +94,18 @@ exports.createPost = (req, res, next) => {
       case 'movie':
         MovieController.createMovieReview(req, res, next);
         break;
+      case 'video':
+        MediaController.createVideo(req, res, next, isUpload);
+        break;
+      case 'song':
+        MediaController.createMedia(req, res, next, type);
+        break;
+      case 'podcast':
+        MediaController.createMedia(req, res, next, type);
+        break;
     }
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };

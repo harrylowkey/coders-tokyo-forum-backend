@@ -67,7 +67,7 @@ exports.createMovieReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name type' },
         ])
-        .select('-__v -foodInstance');
+        .select('-__v -media -foodInstance');
 
       return res.status(200).json({
         status: 200,
@@ -174,7 +174,7 @@ exports.editMovieReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name type' },
         ])
-        .select('-__v -foodInstance');
+        .select('-__v -media -foodInstance');
 
       return res.status(200).json({
         status: 200,

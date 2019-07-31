@@ -62,7 +62,6 @@ const postSchema = new Schema(
     ],
     cover: {
       type: Object,
-      required: true,
       pubic_id: {
         type: String,
         trim: true,
@@ -90,6 +89,20 @@ const postSchema = new Schema(
       trim: true,
       required: false,
       default: null,
+    },
+    media: {
+      public_id: String,
+      url: String,
+      secure_url: String,
+      type: Object,
+      signature: String,
+      width: Number,
+      height: Number,
+      format: String,
+      resource_type: String,
+      frame_rate: Number,
+      bit_rate: Number,
+      duration: Number,
     },
   },
   { timestamps: true },

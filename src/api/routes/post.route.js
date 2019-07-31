@@ -21,6 +21,7 @@ router
     authorization.checkAccessToken,
     upload.fields([
       { name: 'coverImage', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
     postController.createPost,
@@ -32,6 +33,7 @@ router
     authorization.checkAccessToken,
     upload.fields([
       { name: 'coverImage', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
     postController.editPost,

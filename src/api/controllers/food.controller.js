@@ -102,7 +102,7 @@ exports.createFoodReview = async (req, res, next) => {
             select: 'foodName url price location star photos',
           },
         ])
-        .select('-__v -authors');
+        .select('-__v -media -authors');
 
       return res.status(200).json({
         status: 200,
@@ -132,7 +132,7 @@ exports.editFoodReview = async (req, res, next) => {
         path: 'foodInstance',
         select: 'foodName url price location star photos',
       })
-      .select('-__v -mediaInstance -authors');
+      .select('-__v -authors');
     if (!foodReview) {
       throw Boom.notFound('Not found foodReview, edit foodReview failed');
     }
@@ -283,7 +283,7 @@ exports.editFoodReview = async (req, res, next) => {
             select: 'foodName url price location star photos',
           },
         ])
-        .select('-__v -authors');
+        .select('-__v -media -authors');
 
       return res.status(200).json({
         status: 200,
@@ -312,7 +312,7 @@ exports.deleteFoodReview = async (req, res, next) => {
           select: 'foodName url price location star photos',
         },
       ])
-      .select('-__v -mediaInstance -authors');
+      .select('-__v -authors');
     if (!foodReview) {
       throw Boom.notFound('Not found food blog review');
     }
