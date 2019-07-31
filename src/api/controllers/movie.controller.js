@@ -2,7 +2,6 @@ const Boom = require('@hapi/boom');
 const Utils = require('../../utils');
 const User = require('../models').User;
 const Post = require('../models').Post;
-const Media = require('../models').Media;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 
@@ -18,12 +17,7 @@ exports.createMovieReview = async (req, res, next) => {
       userId: user,
       ...req.body,
       type: 'movie',
-    });
-
-    const movieInstance = new Media({
-      postId: newMovieReview,
       url,
-      type: 'movie',
     });
 
     const result = await Promise.props({
@@ -52,7 +46,6 @@ exports.createMovieReview = async (req, res, next) => {
       secure_url: result.coverImage.secure_url,
     };
 
-    newMovieReview.mediaInstance = movieInstance;
     newMovieReview.tags = tagsId;
     newMovieReview.authors = authorsId;
     newMovieReview.cover = cover;
@@ -66,7 +59,6 @@ exports.createMovieReview = async (req, res, next) => {
           },
           { new: true },
         ),
-        createMovieInstace: movieInstance,
         createNewBlog: newMovieReview.save(),
       });
 

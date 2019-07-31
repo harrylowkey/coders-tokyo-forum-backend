@@ -1,7 +1,16 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-types = ['discussion', 'blog', 'book', 'food', 'movie', 'video', 'song'];
+types = [
+  'discussion',
+  'blog',
+  'book',
+  'food',
+  'movie',
+  'video',
+  'song',
+  'podcast',
+];
 
 const postSchema = new Schema(
   {
@@ -81,11 +90,23 @@ const postSchema = new Schema(
         ref: 'User',
       },
     ],
+    url: {
+      type: String,
+      trim: true,
+      required: false,
+      default: null,
+    },
   },
   { timestamps: true },
 );
 
-postSchema.index({ tags: 1 }, { type: 1 }, { topic: 1 }, { authors: 1 });
+postSchema.index(
+  { name: 1 },
+  { tags: 1 },
+  { type: 1 },
+  { topic: 1 },
+  { authors: 1 },
+);
 
 const postModel = mongoose.model('Post', postSchema);
 
