@@ -9,6 +9,11 @@ const mediaSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Post',
   },
+  mediaName: {
+    type: String,
+    required: true,
+    maxlength: 250,
+  },
   url: {
     type: String,
     required: true,
