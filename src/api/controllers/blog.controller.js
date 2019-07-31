@@ -5,30 +5,6 @@ const Post = require('../models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 
-exports.getOneBlog = async (req, res, next) => {
-  try {
-    const blog = await Post.findById(req.params.postId)
-      .lean()
-      .populate({
-        path: 'tags',
-        select: 'tagName',
-      })
-      .select('-__v');
-
-    if (!blog) {
-      throw Boom.badRequest(`Not found blog`);
-    }
-
-    return res.status(200).json({
-      status: 200,
-      message: 'success',
-      data: blog,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.createBlog = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;
   const {

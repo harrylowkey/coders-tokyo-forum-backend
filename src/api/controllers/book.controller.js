@@ -5,34 +5,6 @@ const Post = require('../models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 
-exports.getOneBookReview = async (req, res, next) => {
-  try {
-    const bookReivew = await Post.findById(req.params.postId)
-      .lean()
-      .populate({
-        path: 'tags',
-        select: 'tagName',
-      })
-      .populate({
-        path: 'authors',
-        select: 'name',
-      })
-      .select('-__v');
-
-    if (!bookReivew) {
-      throw Boom.badRequest(`Not found book blog reivew`);
-    }
-
-    return res.status(200).json({
-      status: 200,
-      message: 'success',
-      data: bookReivew,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.createBookReview = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;
   const {
@@ -91,7 +63,7 @@ exports.createBookReview = async (req, res, next) => {
         .lean()
         .populate({ path: 'tags', select: 'tagName' })
         .populate({ path: 'authors', select: 'name' })
-        .select('-__v -mediaInstance -foodInstance -mediaInstance');
+        .select('-__v -mediaInstance -foodInstance');
 
       return res.status(200).json({
         status: 200,

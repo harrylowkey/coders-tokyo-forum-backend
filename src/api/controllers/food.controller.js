@@ -6,34 +6,6 @@ const Promise = require('bluebird');
 const Food = require('../models').Food;
 const cloudinary = require('cloudinary').v2;
 
-exports.getOneFoodReview = async (req, res, next) => {
-  try {
-    const foodReview = await Post.findById(req.params.postId)
-      .lean()
-      .populate({
-        path: 'tags',
-        select: 'tagName',
-      })
-      .populate({
-        path: 'foodInstance',
-        select: 'foodName url price location star photos',
-      })
-      .select('-__v -mediaInstance -authors');
-
-    if (!foodReview) {
-      throw Boom.badRequest(`Not found blog food reivew`);
-    }
-
-    return res.status(200).json({
-      status: 200,
-      message: 'success',
-      data: foodReview,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.createFoodReview = async (req, res, next) => {
   const {
     body: { tags, url, price, location, star, foodName },
@@ -140,6 +112,7 @@ exports.createFoodReview = async (req, res, next) => {
       throw Boom.badRequest('Create new food blog review failed');
     }
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
