@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
+const MovieController = require('./movie.controller');
 const Post = require('../models').Post;
 
 exports.getOnePost = async (req, res, next) => {
@@ -86,6 +87,9 @@ exports.createPost = (req, res, next) => {
         break;
       case 'food':
         FoodController.createFoodReview(req, res, next);
+        break;
+      case 'movie':
+        MovieController.createMovieReview(req, res, next);
         break;
     }
   } catch (error) {

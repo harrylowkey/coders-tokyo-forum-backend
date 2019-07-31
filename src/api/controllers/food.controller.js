@@ -96,11 +96,13 @@ exports.createFoodReview = async (req, res, next) => {
 
       const blog = await Post.findById(isOk.createNewBlog._id)
         .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .populate({
-          path: 'foodInstance',
-          select: 'foodName url price location star photos',
-        })
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          {
+            path: 'foodInstance',
+            select: 'foodName url price location star photos',
+          },
+        ])
         .select('-__v -mediaInstance -authors');
 
       return res.status(200).json({
@@ -112,7 +114,6 @@ exports.createFoodReview = async (req, res, next) => {
       throw Boom.badRequest('Create new food blog review failed');
     }
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -276,14 +277,13 @@ exports.editFoodReview = async (req, res, next) => {
 
       const foodReviewUpdated = await Post.findById(req.params.postId)
         .lean()
-        .populate({
-          path: 'tags',
-          select: 'tagName',
-        })
-        .populate({
-          path: 'foodInstance',
-          select: 'foodName url price location star photos',
-        })
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          {
+            path: 'foodInstance',
+            select: 'foodName url price location star photos',
+          },
+        ])
         .select('-__v -mediaInstance -authors');
 
       return res.status(200).json({

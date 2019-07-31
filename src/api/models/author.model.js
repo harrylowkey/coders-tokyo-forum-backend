@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const types = ['author', 'singer', 'composer', 'actor', 'director'];
+const types = ['author', 'singer', 'composer', 'actor', 'actress', 'director'];
 
 const authorSchema = new Schema({
   name: {
@@ -22,7 +22,7 @@ const authorSchema = new Schema({
   ],
 });
 
-authorSchema.index({ name: 1 });
+authorSchema.index({ name: 1, type: 1 });
 
 const authorModel = mongoose.model('Author', authorSchema);
 

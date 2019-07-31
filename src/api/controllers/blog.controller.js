@@ -23,7 +23,7 @@ exports.createBlog = async (req, res, next) => {
       coverImage: Utils.cloudinary.uploadCoverImage(coverImage),
     });
 
-    if (!result) {
+    if (!result.tags || !result.coverImage) {
       throw Boom.serverUnavailable('Create tag and upload cover image false');
     }
 

@@ -26,7 +26,9 @@ exports.createBookReview = async (req, res, next) => {
     });
 
     if (!result.tags || !result.authors || !result.coverImage) {
-      throw Boom.serverUnavailable('Create tag and upload cover image false');
+      throw Boom.serverUnavailable(
+        'Create tag and upload co and authors ver image false',
+      );
     }
 
     const tagsId = result.tags.map(tag => ({
@@ -61,8 +63,10 @@ exports.createBookReview = async (req, res, next) => {
 
       const book = await Post.findById(isOk.createNewBook._id)
         .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .populate({ path: 'authors', select: 'name' })
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          { path: 'authors', select: 'name' },
+        ])
         .select('-__v -mediaInstance -foodInstance');
 
       return res.status(200).json({
@@ -165,8 +169,10 @@ exports.editBookReview = async (req, res, next) => {
         { new: true },
       )
         .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .populate({ path: 'authors', select: 'name' })
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          { path: 'authors', select: 'name' },
+        ])
         .select('-__v -foodInstance -mediaInstance');
 
       return res.status(200).json({

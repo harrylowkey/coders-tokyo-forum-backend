@@ -22,12 +22,6 @@ const mediaSchema = new Schema({
     enum: types,
     default: 'video',
   },
-  authors: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Author',
-    },
-  ],
 });
 
 mediaSchema.index({ authors: 1 });

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-types = ['status', 'blog', 'book', 'food', 'movie', 'video', 'song'];
+types = ['discussion', 'blog', 'book', 'food', 'movie', 'video', 'song'];
 
 const postSchema = new Schema(
   {
@@ -24,7 +24,6 @@ const postSchema = new Schema(
     type: {
       type: String,
       enum: types,
-      default: 'status',
       required: true,
     },
     foodInstance: {
@@ -76,7 +75,7 @@ const postSchema = new Schema(
         lowercase: true,
       },
     },
-    flowers: [
+    likes: [
       {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User',
