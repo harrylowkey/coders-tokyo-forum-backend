@@ -113,6 +113,9 @@ exports.editPost = (req, res, next) => {
       case 'food':
         FoodController.editFoodReview(req, res, next);
         break;
+      case 'movie':
+        MovieController.editMovieReview(req, res, next);
+        break;
     }
   } catch (error) {
     return next();
