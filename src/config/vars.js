@@ -19,13 +19,13 @@ module.exports = {
     folder: 'Coders-Tokyo-Forum/posts/media',
     use_filename: true,
     resource_type: 'video',
-    chunk_size: 10000000, // 10mb
+    chunk_size: 10000000, //10mb
   },
   coverImageConfig: {
     folder: 'Coders-Tokyo-Forum/posts',
     use_filename: true,
     resource_type: 'image',
-    chunk_size: 6000000,
+    chunk_size: 6000000, //6mb
     transformation: [
       {
         width: 1080,
@@ -37,7 +37,7 @@ module.exports = {
     folder: 'Coders-Tokyo-Forum/avatars',
     use_filename: true,
     resource_type: 'image',
-    chunk_size: 6000000,
+    chunk_size: 6000000, //6mb
     transformation: [
       {
         width: 760,
@@ -48,5 +48,5 @@ module.exports = {
       },
       { width: 380, crop: 'scale' },
     ],
-  };
+  },
 };
