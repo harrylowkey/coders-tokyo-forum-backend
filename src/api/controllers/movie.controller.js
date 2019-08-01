@@ -68,7 +68,7 @@ exports.createMovieReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name type' },
         ])
-        .select('-__v -media -foodInstance');
+        .select('-__v -media');
 
       return res.status(200).json({
         status: 200,
@@ -76,9 +76,11 @@ exports.createMovieReview = async (req, res, next) => {
         data: movieBlog,
       });
     } catch (error) {
+      console.log(error);
       throw Boom.badRequest('Create new movie blog review failed');
     }
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
@@ -163,7 +165,7 @@ exports.editMovieReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name type' },
         ])
-        .select('-__v -media -foodInstance');
+        .select('-__v -media');
 
       return res.status(200).json({
         status: 200,

@@ -3,7 +3,7 @@ const Post = require('../api/models').Post;
 const Author = require('../api/models').Author;
 const Promise = require('bluebird');
 
-function getTagPromise(tagName, postId){
+function getTagPromise(tagName, postId) {
   return new Promise(async (resolve, reject) => {
     const isExistedTag = await Tag.findOne({ tagName }).lean();
     try {
@@ -29,7 +29,7 @@ function getTagPromise(tagName, postId){
   });
 }
 
-function getAuthorPromise (name, type, postId){
+function getAuthorPromise(name, type, postId) {
   return new Promise(async (resolve, reject) => {
     const isExistedAuthor = await Author.findOne({ name, type }).lean();
     try {
@@ -54,9 +54,9 @@ function getAuthorPromise (name, type, postId){
       return reject(error);
     }
   });
-};
+}
 
-function deletePostInAuthorsPromise (postId, authorId){
+function deletePostInAuthorsPromise(postId, authorId) {
   return new Promise(async (resolve, reject) => {
     try {
       const deletedPost = Author.findByIdAndUpdate(
@@ -71,7 +71,24 @@ function deletePostInAuthorsPromise (postId, authorId){
       return reject(error);
     }
   });
-};
+}
+
+function deletePostPromise(postId, tagId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const deletedPost = Tag.findByIdAndUpdate(
+        tagId,
+        {
+          $pull: { posts: postId },
+        },
+        { new: true },
+      );
+      return resolve(deletedPost);
+    } catch (error) {
+      return reject(error);
+    }
+  });
+}
 
 exports.createTags = async (postId, tags) => {
   const getTagsPromises = tags.map(tag => getTagPromise(tag, postId));
@@ -83,32 +100,11 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
     .lean()
     .populate({ path: 'tags', select: 'tagName' });
 
-  const removePostsPromise = (tagName, postId) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const removedPost = Tag.findOneAndUpdate(
-          { tagName },
-          {
-            $pull: { posts: postId },
-          },
-          { new: true },
-        );
-        return resolve(removedPost);
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  };
-
+  const oldTagsId = post.tags.map(tag => tag._id);
+  const removePostsPromises = oldTagsId.map(oldTagId =>
+    deletePostPromise(postId, oldTagId),
+  );
   const getNewTagsPromises = newTags.map(tag => getTagPromise(tag, postId));
-
-  // remove posts in not used tags
-  const oldTagsNameNotUsed = post.tags.map(tag =>
-    !newTags.includes(tag.tagName) ? tag.tagName : null,
-  );
-  const removePostsPromises = oldTagsNameNotUsed.map(oldTag =>
-    removePostsPromise(oldTag, postId),
-  );
 
   const result = await Promise.props({
     removePosts: Promise.all(removePostsPromises),
@@ -121,27 +117,9 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
 };
 
 exports.deletePostInTags = async (postId, tagsId) => {
-  const deletePostPromise = (postId, tagId) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const deletedPost = Tag.findByIdAndUpdate(
-          tagId,
-          {
-            $pull: { posts: postId },
-          },
-          { new: true },
-        );
-        return resolve(deletedPost);
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  };
-
   const deletePostPromises = tagsId.map(tagId =>
     deletePostPromise(postId, tagId),
   );
-
   return Promise.all(deletePostPromises);
 };
 
@@ -158,19 +136,14 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
     .populate({ path: 'tags', select: 'tagName' })
     .populate({ path: 'authors', select: 'name type' });
 
+  // remove posts in old authors
+  const oldAuthorsId = post.authors.map(author => author._id);
+  // get old author id
+  const deletePostsPromises = oldAuthorsId.map(oldAuthorId =>
+    deletePostInAuthorsPromise(postId, oldAuthorId),
+  );
   const getNewAuthorsPromises = newAuthors.map(author =>
     getAuthorPromise(author.name, author.type, postId),
-  );
-
-  // remove posts in not used authors
-  const newAuthorsName = newAuthors.map(newAuthor => newAuthor.name);
-  const oldAuthorsIdNotUsed = post.authors.map(author =>
-    !newAuthorsName.includes(author.name) ? author._id : null,
-  );
-
-  // get old author not used id
-  const deletePostsPromises = oldAuthorsIdNotUsed.map(oldAuthorId =>
-    deletePostInAuthorsPromise(postId, oldAuthorId),
   );
 
   const result = await Promise.props({

@@ -82,7 +82,7 @@ exports.createVideo = async (req, res, next, isUpload) => {
       const videoCreated = await Post.findById(isOk.createNewVideo._id)
         .lean()
         .populate([{ path: 'tags', select: 'tagName' }])
-        .select('-__v -authors -foodInstance');
+        .select('-__v -authors');
 
       return res.status(200).json({
         status: 200,
@@ -90,9 +90,11 @@ exports.createVideo = async (req, res, next, isUpload) => {
         data: videoCreated,
       });
     } catch (error) {
+      console.log(error);
       throw Boom.badRequest('Create video failed');
     }
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
@@ -182,7 +184,7 @@ exports.editVideo = async (req, res, next, isUpload) => {
       )
         .lean()
         .populate([{ path: 'tags', select: 'tagName' }])
-        .select('-__v -authors -foodInstance');
+        .select('-__v -authors');
 
       return res.status(200).json({
         status: 200,

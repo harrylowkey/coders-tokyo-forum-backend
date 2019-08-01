@@ -3,36 +3,21 @@ const Utils = require('../../utils');
 const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
-const Food = require('../models').Food;
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../../config/vars');
+const { coverImageConfig, foodPhotosConfig } = require('../../config/vars');
 
 exports.createFoodReview = async (req, res, next) => {
   const {
-    body: { tags, price, location, star, foodName },
+    body: {
+      tags,
+      food: { price, location, star, foodName },
+    },
     user,
   } = req;
+
   const coverImage = req.files['coverImage'][0].path;
   const foodPhotos = req.files['foodPhotos'].map(photo => photo.path);
   try {
-    const newFoodBlog = new Post({
-      userId: user._id,
-      ...req.body,
-      type: 'food',
-    });
-
-    const foodPhotosConfig = {
-      folder: 'Coders-Tokyo-Forum/posts/foodReview',
-      use_filename: true,
-      unique_filename: true,
-      resource_type: 'image',
-      transformation: [
-        {
-          width: 730,
-          height: 730,
-        },
-      ],
-    };
     const uploadedFoodPhotos = await Utils.cloudinary.uploadManyImages(
       foodPhotos,
       foodPhotosConfig,
@@ -48,14 +33,19 @@ exports.createFoodReview = async (req, res, next) => {
       secure_url: photo.secure_url,
     }));
 
-    // create food instance
-    const foodInstance = new Food({
-      postId: newFoodBlog,
+    const food = {
       foodName,
       price,
       location,
       star,
       photos,
+    };
+
+    const newFoodBlog = new Post({
+      userId: user._id,
+      ...req.body,
+      food,
+      type: 'food',
     });
 
     const result = await Promise.props({
@@ -77,7 +67,6 @@ exports.createFoodReview = async (req, res, next) => {
       secure_url: result.coverImage.secure_url,
     };
 
-    newFoodBlog.foodInstance = foodInstance;
     newFoodBlog.tags = tagsId;
     newFoodBlog.cover = cover;
 
@@ -91,18 +80,11 @@ exports.createFoodReview = async (req, res, next) => {
           { new: true },
         ),
         createNewBlog: newFoodBlog.save(),
-        createNewFoodInstace: foodInstance.save(),
       });
 
       const foodBlog = await Post.findById(isOk.createNewBlog._id)
         .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          {
-            path: 'foodInstance',
-            select: 'foodName url price location star photos',
-          },
-        ])
+        .populate({ path: 'tags', select: 'tagName' })
         .select('-__v -media -authors');
 
       return res.status(200).json({
@@ -111,9 +93,11 @@ exports.createFoodReview = async (req, res, next) => {
         data: foodBlog,
       });
     } catch (error) {
+      console.log(error);
       throw Boom.badRequest('Create new food blog review failed');
     }
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
@@ -129,32 +113,25 @@ exports.editFoodReview = async (req, res, next) => {
         path: 'tags',
         select: 'tagName',
       })
-      .populate({
-        path: 'foodInstance',
-        select: 'foodName url price location star photos',
-      })
       .select('-__v -authors');
     if (!foodReview) {
       throw Boom.notFound('Not found foodReview, edit foodReview failed');
     }
 
     const {
+      url,
       topic,
       description,
       content,
       tags,
-      foodName,
-      url,
-      price,
-      location,
-      star,
+      food: { price, location, star, foodName },
     } = req.body;
 
-    let queryPost = {};
-    if (topic) queryPost.topic = topic;
-    if (description) queryPost.description = description;
-    if (content) queryPost.content = content;
-    if (url) queryPost.url = url;
+    let query = {};
+    if (topic) query.topic = topic;
+    if (description) query.description = description;
+    if (content) query.content = content;
+    if (url) query.url = url;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         foodReview._id,
@@ -166,7 +143,7 @@ exports.editFoodReview = async (req, res, next) => {
       }
 
       const newTagsId = newTags.map(newTag => newTag._id);
-      queryPost.tags = newTagsId;
+      query.tags = newTagsId;
     }
 
     const files = req.files || {};
@@ -186,41 +163,32 @@ exports.editFoodReview = async (req, res, next) => {
         throw Boom.serverUnavailable('Edit cover image failed');
       }
 
-      queryPost.cover = {
+      query.cover = {
         public_id: uploadedCoverImage.public_id,
         url: uploadedCoverImage.url,
         secure_url: uploadedCoverImage.secure_url,
       };
     }
 
-    let queryFoodInstance = {};
-    if (foodName) queryFoodInstance.foodName = foodName;
-    if (price) queryFoodInstance.price = price;
-    if (location) queryFoodInstance.location = location;
-    if (star) queryFoodInstance.star = star;
+    query.food = {};
+    if (foodName) query.food.foodName = foodName;
+    if (price) query.food.price = price;
+    if (location) query.food.location = location;
+    if (star) query.food.star = star;
 
     const foodPhotosInput = files['foodPhotos'] || null;
     if (foodPhotosInput) {
       const foodPhotos = foodPhotosInput.map(photo => photo.path);
-      const foodPhotosConfig = {
-        folder: 'Coders-Tokyo-Forum/posts/foodReview',
-        use_filename: true,
-        unique_filename: true,
-        resource_type: 'image',
-        transformation: [
-          {
-            width: 730,
-            height: 730,
-          },
-        ],
-      };
-
-      const oldFoodPhotosNotUsed = foodReview.foodInstance.photos.map(photo => {
-        if (!foodPhotos.includes(photo.public_id)) {
-          return photo.public_id;
-        }
-        return null;
-      });
+      const oldFoodPhotos = foodReview.food.photos || null;
+      let oldFoodPhotosNotUsed = [];
+      if (oldFoodPhotos) {
+        oldFoodPhotosNotUsed = oldFoodPhotos.map(photo => {
+          if (!foodPhotos.includes(photo.public_id)) {
+            return photo.public_id;
+          }
+          return null;
+        });
+      }
 
       try {
         const result = await Promise.props({
@@ -240,45 +208,34 @@ exports.editFoodReview = async (req, res, next) => {
           secure_url: photo.secure_url,
         }));
 
-        queryFoodInstance.photos = newFoodPhotos;
+        query.food.photos = newFoodPhotos;
       } catch (error) {
+        console.log(error);
         throw Boom.badRequest('Update food blog review failed');
       }
     }
 
     try {
-      await Promise.props({
-        isUpdatedFoodInstance: Food.findByIdAndUpdate(
-          foodReview.foodInstance._id,
-          { $set: queryFoodInstance },
-          { new: true },
-        ),
-        isUpdatedPost: Post.findByIdAndUpdate(
-          req.params.postId,
-          {
-            $set: queryPost,
-          },
-          { new: true },
-        ),
-      });
+      await Post.findByIdAndUpdate(
+        req.params.postId,
+        {
+          $set: query,
+        },
+        { new: true },
+      );
 
-      const foodReviewUpdated = await Post.findById(req.params.postId)
+      const upadatedFoodReview = await Post.findById(req.params.postId)
         .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          {
-            path: 'foodInstance',
-            select: 'foodName url price location star photos',
-          },
-        ])
+        .populate({ path: 'tags', select: 'tagName' })
         .select('-__v -media -authors');
 
       return res.status(200).json({
         status: 200,
-        message: 'Edit foodReview successfully',
-        data: foodReviewUpdated,
+        message: 'Edit food blog review successfully',
+        data: upadatedFoodReview,
       });
     } catch (error) {
+      console.log(error);
       throw Boom.badRequest('Update food blog review failed');
     }
   } catch (error) {
@@ -293,26 +250,17 @@ exports.deleteFoodReview = async (req, res, next) => {
       type: 'food',
     })
       .lean()
-      .populate([
-        { path: 'tags', select: 'tagName' },
-        {
-          path: 'foodInstance',
-          select: 'foodName url price location star photos',
-        },
-      ])
+      .populate({ path: 'tags', select: 'tagName' })
       .select('-__v -authors');
     if (!foodReview) {
       throw Boom.notFound('Not found food blog review');
     }
     const tagsId = foodReview.tags.map(tag => tag._id);
-    const photos = foodReview.foodInstance.photos.map(photo => photo.public_id);
+    const photos = foodReview.food.photos.map(photo => photo.public_id);
 
     try {
       await Promise.props({
         isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedFoodInstace: Food.findByIdAndDelete(
-          foodReview.foodInstance._id,
-        ),
         isDeletedCoverImage: cloudinary.uploader.destroy(
           foodReview.cover.public_id,
         ),

@@ -27,22 +27,18 @@ exports.getOnePost = async (req, res, next) => {
 
     switch (type) {
       case 'blog':
-        negativeQuery = negativeQuery + '-authors -foodInstance -url -media';
+        negativeQuery = negativeQuery + '-authors -url -media';
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
         });
-        negativeQuery = negativeQuery + '-foodInstance -url -media';
+        negativeQuery = negativeQuery + '-url -media';
       case 'food':
-        populateQuery.push({
-          path: 'foodInstance',
-          select: 'foodName url price location star photos',
-        });
         negativeQuery = negativeQuery + '-authors -media';
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
-        negativeQuery = negativeQuery + '-foodInstance -media';
+        negativeQuery = negativeQuery + '-media';
     }
 
     const post = await Post.findOne({

@@ -68,7 +68,7 @@ exports.createBookReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name' },
         ])
-        .select('-__v -media -url -foodInstance');
+        .select('-__v -media -url');
 
       return res.status(200).json({
         status: 200,
@@ -162,7 +162,7 @@ exports.editBookReview = async (req, res, next) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name' },
         ])
-        .select('-__v -media -url -foodInstance');
+        .select('-__v -media -url');
 
       return res.status(200).json({
         status: 200,

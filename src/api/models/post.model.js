@@ -35,11 +35,6 @@ const postSchema = new Schema(
       enum: types,
       required: true,
     },
-    foodInstance: {
-      type: Schema.Types.ObjectId,
-      ref: 'Food',
-      default: null,
-    },
     topic: {
       type: String,
       maxlength: 200,
@@ -48,10 +43,10 @@ const postSchema = new Schema(
     description: {
       type: String,
       maxlength: 400,
-      required: true,
     },
     content: {
       type: String,
+      required: true,
     },
     authors: [
       {
@@ -87,10 +82,10 @@ const postSchema = new Schema(
     url: {
       type: String,
       trim: true,
-      required: false,
       default: null,
     },
     media: {
+      type: Object,
       public_id: String,
       url: String,
       secure_url: String,
@@ -103,6 +98,51 @@ const postSchema = new Schema(
       frame_rate: Number,
       bit_rate: Number,
       duration: Number,
+    },
+    food: {
+      type: Object,
+      foodName: {
+        type: String,
+        maxlength: 30,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      location: {
+        type: String,
+        maxlength: 100,
+        required: true,
+      },
+      star: {
+        type: Number,
+        default: 0,
+        max: 5,
+        min: 0,
+        required: true,
+      },
+      photos: [
+        {
+          type: Object,
+          required: true,
+          pubic_id: {
+            type: String,
+            trim: true,
+            lowercase: true,
+          },
+          url: {
+            type: String,
+            trim: true,
+            lowercase: true,
+          },
+          secure_url: {
+            type: String,
+            trim: true,
+            lowercase: true,
+          },
+        },
+      ],
     },
   },
   { timestamps: true },
