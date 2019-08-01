@@ -180,20 +180,15 @@ exports.editFoodReview = async (req, res, next) => {
     if (foodPhotosInput) {
       const foodPhotos = foodPhotosInput.map(photo => photo.path);
       const oldFoodPhotos = foodReview.food.photos || null;
-      let oldFoodPhotosNotUsed = [];
-      if (oldFoodPhotos) {
-        oldFoodPhotosNotUsed = oldFoodPhotos.map(photo => {
-          if (!foodPhotos.includes(photo.public_id)) {
-            return photo.public_id;
-          }
-          return null;
-        });
-      }
+      let oldFoodPhotosId = [];
 
+      if (oldFoodPhotos) {
+        oldFoodPhotosId = oldFoodPhotos.map(photo => photo.public_id);
+      }
       try {
         const result = await Promise.props({
           isDeletedoldFoodPhotosNotUsed: Utils.cloudinary.deteteManyImages(
-            oldFoodPhotosNotUsed,
+            oldFoodPhotosId,
           ),
           isUploadedNewFoodPhotos: Utils.cloudinary.uploadManyImages(
             foodPhotos,
