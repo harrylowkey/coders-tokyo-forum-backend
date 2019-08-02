@@ -123,9 +123,7 @@ exports.editVideo = async (req, res, next, isUpload) => {
       if (!newTags) {
         throw Boom.serverUnavailable('Get new tags failed');
       }
-
-      const newTagsId = newTags.map(newTag => newTag._id);
-      query.tags = newTagsId;
+      query.tags = newTags;
     }
 
     if (isUpload == 'false') {

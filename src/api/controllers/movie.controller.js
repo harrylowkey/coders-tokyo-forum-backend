@@ -107,9 +107,7 @@ exports.editMovieReview = async (req, res, next) => {
       if (!newTags) {
         throw Boom.serverUnavailable('Get new tags failed');
       }
-
-      const newTagsId = newTags.map(newTag => newTag._id);
-      query.tags = newTagsId;
+      query.tags = newTags;
     }
 
     if (authors) {
@@ -122,8 +120,7 @@ exports.editMovieReview = async (req, res, next) => {
         throw Boom.serverUnavailable('Get new authors failed');
       }
 
-      const newAuthorsId = newAuthors.map(newAuthor => newAuthor._id);
-      query.authors = newAuthorsId;
+      query.authors = newAuthors;
     }
 
     const files = req.files || {};
@@ -174,9 +171,11 @@ exports.editMovieReview = async (req, res, next) => {
         data: upadatedBlog,
       });
     } catch (error) {
+      console.log(error);
       throw Boom.badRequest('Update movie blog review failed');
     }
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

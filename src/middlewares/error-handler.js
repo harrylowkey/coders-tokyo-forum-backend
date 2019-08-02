@@ -33,7 +33,7 @@ exports.handler = (err, req, res, next) => {
   if ((err.message = 'validation error')) {
     response.status = err.status || err.http_code;
     response.message = err.message;
-
+    console.log(err)
     res.status(err.status || err.http_code).json(response);
     return res.end();
   }

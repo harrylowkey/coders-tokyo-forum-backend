@@ -96,15 +96,28 @@ exports.createTags = async (postId, tags) => {
 };
 
 exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
-  const post = await Post.findById(postId)
-    .lean()
-    .populate({ path: 'tags', select: 'tagName' });
+  const tagsOfPost = await Tag.find({ posts: { $in: postId } }).lean(); //all old tags
+  const oldTag = tagsOfPost.map(tag => tag.tagName);
 
-  const oldTagsId = post.tags.map(tag => tag._id);
-  const removePostsPromises = oldTagsId.map(oldTagId =>
+  // only delete post in old tag
+  const oldTagNames = tagsOfPost.reduce(
+    (oldTagNamesArr, oldTag) =>
+      newTags.includes(oldTag.tagName)
+        ? oldTagNamesArr
+        : [...oldTagNamesArr, oldTag],
+    [],
+  );
+  const removePostsPromises = oldTagNames.map(oldTagId =>
     deletePostPromise(postId, oldTagId),
   );
-  const getNewTagsPromises = newTags.map(tag => getTagPromise(tag, postId));
+
+  // only create new tag
+  const newTagsName = newTags.reduce(
+    (newTagsArr, newTag) =>
+      oldTag.includes(newTag) ? newTagsArr : [...newTagsArr, newTag],
+    [],
+  );
+  const getNewTagsPromises = newTagsName.map(tag => getTagPromise(tag, postId));
 
   const result = await Promise.props({
     removePosts: Promise.all(removePostsPromises),
@@ -113,7 +126,9 @@ exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
 
   if (!result) return false;
 
-  return result.getNewTags;
+  const updatedTag = await Tag.find({ posts: { $in: postId } }).lean();
+  let tags = updatedTag.map(tag => tag._id);
+  return tags;
 };
 
 exports.deletePostInTags = async (postId, tagsId) => {
@@ -135,7 +150,7 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
     .lean()
     .populate({ path: 'tags', select: 'tagName' })
     .populate({ path: 'authors', select: 'name type' });
-
+  
   // remove posts in old authors
   const oldAuthorsId = post.authors.map(author => author._id);
   // get old author id
@@ -152,7 +167,8 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
   });
 
   if (!result) return false;
-  return result.getNewAuthors;
+  const newAuthorsId = result.getNewAuthors.map(author => author._id);
+  return newAuthorsId
 };
 
 exports.deletePostInAuthors = async (postId, authorsId) => {

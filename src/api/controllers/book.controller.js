@@ -104,9 +104,7 @@ exports.editBookReview = async (req, res, next) => {
       if (!newTags) {
         throw Boom.serverUnavailable('Get new tags failed');
       }
-
-      const newTagsId = newTags.map(newTag => newTag._id);
-      query.tags = newTagsId;
+      query.tags = newTags;
     }
 
     if (authors) {
@@ -119,8 +117,7 @@ exports.editBookReview = async (req, res, next) => {
         throw Boom.serverUnavailable('Get new authors failed');
       }
 
-      const newAuthorsId = newAuthors.map(newAuthor => newAuthor._id);
-      query.authors = newAuthorsId;
+      query.authors = newAuthors;
     }
 
     const files = req.files || {};

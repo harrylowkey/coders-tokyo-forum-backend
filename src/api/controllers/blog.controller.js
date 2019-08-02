@@ -98,9 +98,7 @@ exports.editBlog = async (req, res, next) => {
       if (!newTags) {
         throw Boom.serverUnavailable('Get new tags failed');
       }
-
-      const newTagsId = newTags.map(newTag => newTag._id);
-      query.tags = newTagsId;
+      query.tags = newTags;
     }
 
     const files = req.files || {};
