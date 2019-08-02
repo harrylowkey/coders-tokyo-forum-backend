@@ -39,6 +39,8 @@ exports.getOnePost = async (req, res, next) => {
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery = negativeQuery + '-media';
+      case 'video':
+        negativeQuery = negativeQuery + '-authors';
     }
 
     const post = await Post.findOne({
