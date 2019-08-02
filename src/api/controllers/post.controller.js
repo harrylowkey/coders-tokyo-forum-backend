@@ -137,7 +137,7 @@ exports.editPost = (req, res, next) => {
 
 exports.deletePost = async (req, res, next) => {
   try {
-    const type = req.query.type;
+    const { type, isUpload } = req.query;
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
@@ -154,6 +154,9 @@ exports.deletePost = async (req, res, next) => {
         break;
       case 'movie':
         MovieController.deleteMovieReview(req, res, next);
+        break;
+      case 'video':
+        MediaController.deleteVideo(req, res, next, isUpload);
         break;
     }
   } catch (error) {

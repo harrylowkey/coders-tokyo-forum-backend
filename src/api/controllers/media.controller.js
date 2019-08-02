@@ -197,3 +197,58 @@ exports.editVideo = async (req, res, next, isUpload) => {
     return next(error);
   }
 };
+
+exports.deleteVideo = async (req, res, next, isUpload) => {
+  try {
+    const video = await Post.findOne({
+      _id: req.params.postId,
+      type: 'video',
+    })
+      .lean()
+      .populate([{ path: 'tags', select: 'tagName' }]);
+    if (!video) {
+      throw Boom.notFound('Not found video');
+    }
+
+    const authorsId = video.authors.map(author => author._id);
+    const tagsId = video.tags.map(tag => tag._id);
+
+    let promiesProps = {
+      isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+      isDetetedInOwner: User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: { posts: req.params.postId },
+        },
+        { new: true },
+      ),
+      isDeletedInAuthors: Utils.post.deletePostInAuthors(video._id, authorsId),
+      isDeletedInTags: Utils.post.deletePostInTags(video._id, tagsId),
+    };
+    if (!video.url) {
+      try {
+        promiesProps.isDeletedVideo = cloudinary.uploader.destroy(
+          video.media.public_id,
+          {
+            resource_type: 'video',
+          },
+        );
+      } catch (error) {
+        throw Boom.badRequest(error.message);
+      }
+    }
+
+    try {
+      await Promise.props(promiesProps);
+
+      return res.status(200).json({
+        status: 200,
+        message: `Delete video successfully`,
+      });
+    } catch (error) {
+      throw Boom.badRequest('Delete video failed');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
