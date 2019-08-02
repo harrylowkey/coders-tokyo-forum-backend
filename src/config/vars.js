@@ -18,12 +18,14 @@ module.exports = {
   videoConfig: {
     folder: 'Coders-Tokyo-Forum/posts/media',
     use_filename: true,
+    unique_filename: true,
     resource_type: 'video',
     chunk_size: 10000000, //10mb
   },
   coverImageConfig: {
     folder: 'Coders-Tokyo-Forum/posts',
     use_filename: true,
+    unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
     transformation: [
@@ -36,6 +38,7 @@ module.exports = {
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',
     use_filename: true,
+    unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
     transformation: [
@@ -52,6 +55,7 @@ module.exports = {
   foodPhotosConfig: {
     folder: 'Coders-Tokyo-Forum/posts/foodReview',
     use_filename: true,
+    unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
     transformation: [
