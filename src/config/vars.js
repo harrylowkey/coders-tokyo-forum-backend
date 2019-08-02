@@ -53,6 +53,7 @@ module.exports = {
     folder: 'Coders-Tokyo-Forum/posts/foodReview',
     use_filename: true,
     resource_type: 'image',
+    chunk_size: 6000000, //6mb
     transformation: [
       {
         width: 760,

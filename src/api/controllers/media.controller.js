@@ -63,7 +63,7 @@ exports.createVideo = async (req, res, next, isUpload) => {
         newVideo.tags = tagsId;
         newVideo.media = media;
       } catch (error) {
-        throw Boom.serverUnavailable('Upload video failed');
+        throw Boom.badRequest(error.message);
       }
     }
 
@@ -168,8 +168,7 @@ exports.editVideo = async (req, res, next, isUpload) => {
           query.media = media;
           query.url = null;
         } catch (error) {
-          console.log(error);
-          throw Boom.serverUnavailable('Edit video failed');
+          throw Boom.badRequest(error.message);
         }
       }
     }

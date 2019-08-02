@@ -20,36 +20,33 @@ exports.createBookReview = async (req, res, next) => {
       type: 'book',
     });
 
-    const result = await Promise.props({
-      tags: Utils.post.createTags(newBook, tags),
-      authors: Utils.post.creatAuthors(newBook, authors),
-      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-    });
+    try {
+      const result = await Promise.props({
+        tags: Utils.post.createTags(newBook, tags),
+        authors: Utils.post.creatAuthors(newBook, authors),
+        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
+      });
 
-    if (!result.tags || !result.authors || !result.coverImage) {
-      throw Boom.serverUnavailable(
-        'Create tag and upload cover and authors image failed',
-      );
+      const tagsId = result.tags.map(tag => ({
+        _id: tag.id,
+      }));
+
+      const authorsId = result.authors.map(author => ({
+        _id: author.id,
+      }));
+
+      const cover = {
+        public_id: result.coverImage.public_id,
+        url: result.coverImage.url,
+        secure_url: result.coverImage.secure_url,
+      };
+
+      newBook.tags = tagsId;
+      newBook.authors = authorsId;
+      newBook.cover = cover;
+    } catch (error) {
+      throw Boom.badRequest(error.message);
     }
-
-    const tagsId = result.tags.map(tag => ({
-      _id: tag.id,
-    }));
-
-    const authorsId = result.authors.map(author => ({
-      _id: author.id,
-    }));
-
-    const cover = {
-      public_id: result.coverImage.public_id,
-      url: result.coverImage.url,
-      secure_url: result.coverImage.secure_url,
-    };
-
-    newBook.tags = tagsId;
-    newBook.authors = authorsId;
-    newBook.cover = cover;
-
     try {
       const isOk = await Promise.props({
         pushBookIdToOwner: User.findByIdAndUpdate(
@@ -134,19 +131,20 @@ exports.editBookReview = async (req, res, next) => {
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
-      const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
-        data,
-        coverImageConfig,
-      );
-      if (!uploadedCoverImage) {
-        throw Boom.badRequest('Edit cover image failed');
-      }
+      try {
+        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+          data,
+          coverImageConfig,
+        );
 
-      query.cover = {
-        public_id: uploadedCoverImage.public_id,
-        url: uploadedCoverImage.url,
-        secure_url: uploadedCoverImage.secure_url,
-      };
+        query.cover = {
+          public_id: uploadedCoverImage.public_id,
+          url: uploadedCoverImage.url,
+          secure_url: uploadedCoverImage.secure_url,
+        };
+      } catch (error) {
+        throw Boom.badRequest(error.message);
+      }
     }
 
     try {

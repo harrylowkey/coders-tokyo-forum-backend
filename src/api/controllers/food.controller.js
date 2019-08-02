@@ -18,57 +18,51 @@ exports.createFoodReview = async (req, res, next) => {
   const coverImage = req.files['coverImage'][0].path;
   const foodPhotos = req.files['foodPhotos'].map(photo => photo.path);
   try {
-    const uploadedFoodPhotos = await Utils.cloudinary.uploadManyImages(
-      foodPhotos,
-      foodPhotosConfig,
-    );
-
-    if (!uploadedFoodPhotos) {
-      throw Boom.badRequest('Create food blog review failed');
-    }
-
-    const photos = uploadedFoodPhotos.map(photo => ({
-      public_id: photo.public_id,
-      url: photo.url,
-      secure_url: photo.secure_url,
-    }));
-
-    const food = {
-      foodName,
-      price,
-      location,
-      star,
-      photos,
-    };
-
     const newFoodBlog = new Post({
       userId: user._id,
       ...req.body,
-      food,
       type: 'food',
     });
+    try {
+      const result = await Promise.props({
+        tags: Utils.post.createTags(newFoodBlog, tags),
+        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
+        foodPhotos: Utils.cloudinary.uploadManyImages(
+          foodPhotos,
+          foodPhotosConfig,
+        ),
+      });
 
-    const result = await Promise.props({
-      tags: Utils.post.createTags(newFoodBlog, tags),
-      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-    });
+      const tagsId = result.tags.map(tag => ({
+        _id: tag.id,
+      }));
 
-    if (!result) {
-      throw Boom.serverUnavailable('Create tag and upload cover image false');
+      const cover = {
+        public_id: result.coverImage.public_id,
+        url: result.coverImage.url,
+        secure_url: result.coverImage.secure_url,
+      };
+
+      const photos = result.foodPhotos.map(photo => ({
+        public_id: photo.public_id,
+        url: photo.url,
+        secure_url: photo.secure_url,
+      }));
+
+      const food = {
+        foodName,
+        price,
+        location,
+        star,
+        photos,
+      };
+
+      newFoodBlog.tags = tagsId;
+      newFoodBlog.cover = cover;
+      newFoodBlog.food = food;
+    } catch (error) {
+      throw Boom.badRequest(error.message);
     }
-
-    const tagsId = result.tags.map(tag => ({
-      _id: tag.id,
-    }));
-
-    const cover = {
-      public_id: result.coverImage.public_id,
-      url: result.coverImage.url,
-      secure_url: result.coverImage.secure_url,
-    };
-
-    newFoodBlog.tags = tagsId;
-    newFoodBlog.cover = cover;
 
     try {
       const isOk = await Promise.props({
@@ -154,20 +148,20 @@ exports.editFoodReview = async (req, res, next) => {
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
-      const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
-        data,
-        coverImageConfig,
-      );
+      try {
+        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+          data,
+          coverImageConfig,
+        );
 
-      if (!uploadedCoverImage) {
-        throw Boom.serverUnavailable('Edit cover image failed');
+        query.cover = {
+          public_id: uploadedCoverImage.public_id,
+          url: uploadedCoverImage.url,
+          secure_url: uploadedCoverImage.secure_url,
+        };
+      } catch (error) {
+        throw Boom.badRequest(error.message);
       }
-
-      query.cover = {
-        public_id: uploadedCoverImage.public_id,
-        url: uploadedCoverImage.url,
-        secure_url: uploadedCoverImage.secure_url,
-      };
     }
 
     query.food = {};
@@ -205,8 +199,7 @@ exports.editFoodReview = async (req, res, next) => {
 
         query.food.photos = newFoodPhotos;
       } catch (error) {
-        console.log(error);
-        throw Boom.badRequest('Update food blog review failed');
+        throw Boom.badRequest(error.message);
       }
     }
 
@@ -230,8 +223,7 @@ exports.editFoodReview = async (req, res, next) => {
         data: upadatedFoodReview,
       });
     } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Update food blog review failed');
+      throw Boom.badRequest(error.message);
     }
   } catch (error) {
     return next(error);

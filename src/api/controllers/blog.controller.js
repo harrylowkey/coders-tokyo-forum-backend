@@ -18,28 +18,31 @@ exports.createBlog = async (req, res, next) => {
       ...req.body,
       type: 'blog',
     });
+    try {
+      const result = await Promise.props({
+        tags: Utils.post.createTags(newBlog, tags),
+        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
+      });
 
-    const result = await Promise.props({
-      tags: Utils.post.createTags(newBlog, tags),
-      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-    });
+      if (!result.tags || !result.coverImage) {
+        throw Boom.serverUnavailable('Create tag and upload cover image false');
+      }
 
-    if (!result.tags || !result.coverImage) {
-      throw Boom.serverUnavailable('Create tag and upload cover image false');
+      const tagsId = result.tags.map(tag => ({
+        _id: tag.id,
+      }));
+
+      const cover = {
+        public_id: result.coverImage.public_id,
+        url: result.coverImage.url,
+        secure_url: result.coverImage.secure_url,
+      };
+
+      newBlog.tags = tagsId;
+      newBlog.cover = cover;
+    } catch (error) {
+      throw Boom.badRequest(error.message);
     }
-
-    const tagsId = result.tags.map(tag => ({
-      _id: tag.id,
-    }));
-
-    const cover = {
-      public_id: result.coverImage.public_id,
-      url: result.coverImage.url,
-      secure_url: result.coverImage.secure_url,
-    };
-
-    newBlog.tags = tagsId;
-    newBlog.cover = cover;
 
     try {
       const isOk = await Promise.props({
@@ -108,19 +111,20 @@ exports.editBlog = async (req, res, next) => {
       const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
-      const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
-        data,
-        coverImageConfig,
-      );
-      if (!uploadedCoverImage) {
-        throw Boom.serverUnavailable('Edit cover image failed');
-      }
+      try {
+        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+          data,
+          coverImageConfig,
+        );
 
-      query.cover = {
-        public_id: uploadedCoverImage.public_id,
-        url: uploadedCoverImage.url,
-        secure_url: uploadedCoverImage.secure_url,
-      };
+        query.cover = {
+          public_id: uploadedCoverImage.public_id,
+          url: uploadedCoverImage.url,
+          secure_url: uploadedCoverImage.secure_url,
+        };
+      } catch (error) {
+        throw Boom.badRequest(error.message);
+      }
     }
 
     try {

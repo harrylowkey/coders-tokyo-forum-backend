@@ -31,13 +31,10 @@ exports.handler = (err, req, res, next) => {
     return res.end();
   }
   if ((err.message = 'validation error')) {
-    console.log(err);
-    response.status = err.status;
+    response.status = err.status || err.http_code;
     response.message = err.message;
-    response.data = err.errors;
-    delete response.data[0].types;
 
-    res.status(err.status).json(response);
+    res.status(err.status || err.http_code).json(response);
     return res.end();
   }
 
