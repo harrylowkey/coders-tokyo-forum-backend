@@ -427,7 +427,7 @@ exports.editMedia = async (req, res, next, type) => {
           { path: 'tags', select: 'tagName' },
           { path: 'authors', select: 'name type' },
         ])
-        .select('-__v');
+        .select('-__v -url');
 
       return res.status(200).json({
         status: 200,
