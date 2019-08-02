@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('../../config/vars');
 
-exports.createBlog = async (req, res, next) => {
+exports.createBlog = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
   const {
     body: { tags },
@@ -16,7 +16,7 @@ exports.createBlog = async (req, res, next) => {
     const newBlog = new Post({
       userId: user,
       ...req.body,
-      type: 'blog',
+      type,
     });
     try {
       const result = await Promise.props({
@@ -74,12 +74,12 @@ exports.createBlog = async (req, res, next) => {
   }
 };
 
-exports.editBlog = async (req, res, next) => {
+exports.editBlog = async (req, res, next, type) => {
   const { topic, description, content, tags } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      type: 'blog',
+      type,
     }).lean();
     if (!blog) {
       throw Boom.notFound('Not found blog, edit blog failed');
@@ -150,11 +150,11 @@ exports.editBlog = async (req, res, next) => {
   }
 };
 
-exports.deleteBlog = async (req, res, next) => {
+exports.deleteBlog = async (req, res, next, type) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      type: 'blog',
+      type,
     })
       .populate({ path: 'tags', select: 'tagName' })
       .lean();

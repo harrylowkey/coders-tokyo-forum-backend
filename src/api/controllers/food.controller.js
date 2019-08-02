@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig, foodPhotosConfig } = require('../../config/vars');
 
-exports.createFoodReview = async (req, res, next) => {
+exports.createFoodReview = async (req, res, next, type) => {
   const {
     body: {
       tags,
@@ -21,7 +21,7 @@ exports.createFoodReview = async (req, res, next) => {
     const newFoodBlog = new Post({
       userId: user._id,
       ...req.body,
-      type: 'food',
+      type,
     });
     try {
       const result = await Promise.props({
@@ -96,11 +96,11 @@ exports.createFoodReview = async (req, res, next) => {
   }
 };
 
-exports.editFoodReview = async (req, res, next) => {
+exports.editFoodReview = async (req, res, next, type) => {
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
-      type: 'food',
+      type,
     })
       .lean()
       .populate({
@@ -228,11 +228,11 @@ exports.editFoodReview = async (req, res, next) => {
   }
 };
 
-exports.deleteFoodReview = async (req, res, next) => {
+exports.deleteFoodReview = async (req, res, next, type) => {
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
-      type: 'food',
+      type,
     })
       .lean()
       .populate({ path: 'tags', select: 'tagName' })

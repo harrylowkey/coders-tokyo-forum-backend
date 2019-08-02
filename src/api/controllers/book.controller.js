@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('../../config/vars');
 
-exports.createBookReview = async (req, res, next) => {
+exports.createBookReview = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
   const {
     body: { tags, authors },
@@ -17,7 +17,7 @@ exports.createBookReview = async (req, res, next) => {
     const newBook = new Post({
       userId: user._id,
       ...req.body,
-      type: 'book',
+      type,
     });
 
     try {
@@ -80,12 +80,12 @@ exports.createBookReview = async (req, res, next) => {
   }
 };
 
-exports.editBookReview = async (req, res, next) => {
+exports.editBookReview = async (req, res, next, type) => {
   const { topic, description, content, tags, authors } = req.body;
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      type: 'book',
+      type,
     }).lean();
     if (!book) {
       throw Boom.notFound('Not found book blog reivew, edit failed');
@@ -172,11 +172,11 @@ exports.editBookReview = async (req, res, next) => {
   }
 };
 
-exports.deleteBookReview = async (req, res, next) => {
+exports.deleteBookReview = async (req, res, next, type) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      type: 'book',
+      type,
     })
       .lean()
       .populate([

@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('../../config/vars');
 
-exports.createMovieReview = async (req, res, next) => {
+exports.createMovieReview = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
   const {
     body: { tags, authors },
@@ -17,7 +17,7 @@ exports.createMovieReview = async (req, res, next) => {
     const newMovieReview = new Post({
       userId: user,
       ...req.body,
-      type: 'movie',
+      type,
     });
     try {
       const result = await Promise.props({
@@ -82,12 +82,12 @@ exports.createMovieReview = async (req, res, next) => {
   }
 };
 
-exports.editMovieReview = async (req, res, next) => {
+exports.editMovieReview = async (req, res, next, type) => {
   const { topic, description, content, tags, authors, url } = req.body;
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      type: 'movie',
+      type,
     }).lean();
     if (!movieReview) {
       throw Boom.badRequest('Not found food blog reivew, edit failed');
@@ -180,11 +180,11 @@ exports.editMovieReview = async (req, res, next) => {
   }
 };
 
-exports.deleteMovieReview = async (req, res, next) => {
+exports.deleteMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      type: 'movie',
+      type,
     })
       .lean()
       .populate([

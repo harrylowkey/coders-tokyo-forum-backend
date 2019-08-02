@@ -103,19 +103,19 @@ exports.createPost = (req, res, next) => {
     }
     switch (type) {
       case 'blog':
-        BlogController.createBlog(req, res, next);
+        BlogController.createBlog(req, res, next, type);
         break;
       case 'book':
-        BookController.createBookReview(req, res, next);
+        BookController.createBookReview(req, res, next, type);
         break;
       case 'food':
-        FoodController.createFoodReview(req, res, next);
+        FoodController.createFoodReview(req, res, next, type);
         break;
       case 'movie':
-        MovieController.createMovieReview(req, res, next);
+        MovieController.createMovieReview(req, res, next, type);
         break;
       case 'video':
-        MediaController.createVideo(req, res, next, isUpload);
+        MediaController.createVideo(req, res, next, type, isUpload);
         break;
       case 'song':
         MediaController.createMedia(req, res, next, type);
@@ -140,19 +140,19 @@ exports.editPost = (req, res, next) => {
     }
     switch (type) {
       case 'blog':
-        BlogController.editBlog(req, res, next);
+        BlogController.editBlog(req, res, next, type);
         break;
       case 'book':
-        BookController.editBookReview(req, res, next);
+        BookController.editBookReview(req, res, next, type);
         break;
       case 'food':
-        FoodController.editFoodReview(req, res, next);
+        FoodController.editFoodReview(req, res, next, type);
         break;
       case 'movie':
-        MovieController.editMovieReview(req, res, next);
+        MovieController.editMovieReview(req, res, next, type);
         break;
       case 'video':
-        MediaController.editVideo(req, res, next, isUpload);
+        MediaController.editVideo(req, res, next, type, isUpload);
         break;
       case 'song':
         MediaController.editMedia(req, res, next, type);
@@ -178,19 +178,25 @@ exports.deletePost = async (req, res, next) => {
 
     switch (type) {
       case 'blog':
-        BlogController.deleteBlog(req, res, next);
+        BlogController.deleteBlog(req, res, next, type);
         break;
       case 'book':
-        BookController.deleteBookReview(req, res, next);
+        BookController.deleteBookReview(req, res, next, type);
         break;
       case 'food':
-        FoodController.deleteFoodReview(req, res, next);
+        FoodController.deleteFoodReview(req, res, next, type);
         break;
       case 'movie':
-        MovieController.deleteMovieReview(req, res, next);
+        MovieController.deleteMovieReview(req, res, next, type);
         break;
       case 'video':
-        MediaController.deleteVideo(req, res, next);
+        MediaController.deleteVideo(req, res, next, type);
+        break;
+      case 'song':
+        MediaController.deleteMedia(req, res, next, type);
+        break;
+      case 'podcast':
+        MediaController.deleteMedia(req, res, next, type);
         break;
     }
   } catch (error) {

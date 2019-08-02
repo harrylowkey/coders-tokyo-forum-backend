@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { videoConfig, audioConfig } = require('../../config/vars');
 
-exports.createVideo = async (req, res, next, isUpload) => {
+exports.createVideo = async (req, res, next, type, isUpload) => {
   const {
     body: { tags },
     user,
@@ -16,7 +16,7 @@ exports.createVideo = async (req, res, next, isUpload) => {
     const newVideo = new Post({
       userId: user._id,
       ...req.body,
-      type: 'video',
+      type,
     });
 
     // case: gán link video bên ngoài
@@ -99,12 +99,12 @@ exports.createVideo = async (req, res, next, isUpload) => {
   }
 };
 
-exports.editVideo = async (req, res, next, isUpload) => {
+exports.editVideo = async (req, res, next, type, isUpload) => {
   const { topic, description, content, tags, url } = req.body;
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      type: 'video',
+      type,
     }).lean();
     if (!video) {
       throw Boom.notFound('Not found video, edit video failed');
@@ -198,11 +198,11 @@ exports.editVideo = async (req, res, next, isUpload) => {
   }
 };
 
-exports.deleteVideo = async (req, res, next) => {
+exports.deleteVideo = async (req, res, next, type) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      type: 'video',
+      type,
     })
       .lean()
       .populate([{ path: 'tags', select: 'tagName' }]);
@@ -210,7 +210,6 @@ exports.deleteVideo = async (req, res, next) => {
       throw Boom.notFound('Not found video');
     }
 
-    const authorsId = video.authors.map(author => author._id);
     const tagsId = video.tags.map(tag => tag._id);
 
     let promiesProps = {
@@ -222,7 +221,9 @@ exports.deleteVideo = async (req, res, next) => {
         },
         { new: true },
       ),
-      isDeletedInAuthors: Utils.post.deletePostInAuthors(video._id, authorsId),
+      isDeletedVideo: cloudinary.uploader.destroy(video.media.public_id, {
+        resource_type: 'video',
+      }),
       isDeletedInTags: Utils.post.deletePostInTags(video._id, tagsId),
     };
     if (!video.url) {
@@ -262,7 +263,7 @@ exports.createMedia = async (req, res, next, type) => {
     const newAudio = new Post({
       userId: user._id,
       ...req.body,
-      type: type,
+      type,
     });
 
     const audio = req.files['audio'][0].path;
@@ -345,7 +346,7 @@ exports.editMedia = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
-      type: type,
+      type,
     }).lean();
     if (!audio) {
       throw Boom.notFound(`Not found ${type}, edit ${type} failed`);
@@ -440,6 +441,56 @@ exports.editMedia = async (req, res, next, type) => {
     }
   } catch (error) {
     console.log(error);
+    return next(error);
+  }
+};
+
+exports.deleteMedia = async (req, res, next, type) => {
+  try {
+    const audio = await Post.findOne({
+      _id: req.params.postId,
+      type,
+    })
+      .lean()
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name type' },
+      ]);
+    if (!audio) {
+      throw Boom.notFound('Not found audio');
+    }
+
+    const authorsId = audio.authors.map(author => author._id);
+    const tagsId = audio.tags.map(tag => tag._id);
+
+    try {
+      await Promise.props({
+        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+        isDetetedInOwner: User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $pull: { posts: req.params.postId },
+          },
+          { new: true },
+        ),
+        isDeletedInAuthors: Utils.post.deletePostInAuthors(
+          audio._id,
+          authorsId,
+        ),
+        isDeletedAudio: cloudinary.uploader.destroy(audio.media.public_id, {
+          resource_type: 'video',
+        }),
+        isDeletedInTags: Utils.post.deletePostInTags(audio._id, tagsId),
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: `Delete ${type} successfully`,
+      });
+    } catch (error) {
+      throw Boom.badRequest('Delete ${type} failed');
+    }
+  } catch (error) {
     return next(error);
   }
 };
