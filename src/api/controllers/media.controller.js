@@ -338,3 +338,108 @@ exports.createMedia = async (req, res, next, type) => {
     return next(error);
   }
 };
+
+exports.editMedia = async (req, res, next, type) => {
+  const { topic, description, content, tags, authors } = req.body;
+
+  try {
+    const audio = await Post.findOne({
+      _id: req.params.postId,
+      type: type,
+    }).lean();
+    if (!audio) {
+      throw Boom.notFound(`Not found ${type}, edit ${type} failed`);
+    }
+
+    let query = {};
+    if (topic) query.topic = topic;
+    if (description) query.description = description;
+    if (content) query.content = content;
+    if (tags) {
+      const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
+        audio._id,
+        tags,
+      );
+
+      if (!newTags) {
+        throw Boom.serverUnavailable('Get new tags failed');
+      }
+      query.tags = newTags;
+    }
+
+    if (authors) {
+      const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
+        audio._id,
+        authors,
+      );
+
+      if (!authors) {
+        throw Boom.serverUnavailable('Get new authors failed');
+      }
+      query.authors = newAuthors;
+    }
+
+    const files = req.files || {};
+    const audioInput = files['audio'] || null;
+    if (audioInput) {
+      const newAudio = audioInput[0].path;
+      const oldAudio = video.media || {};
+      const oldAudioId = oldAudio.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+
+      const data = { oldAudioId, newAudio };
+      try {
+        const uploadedAudio = await Utils.cloudinary.deleteOldVideoAndUploadNewVideo(
+          data,
+          audioConfig,
+        );
+
+        const media = {
+          public_id: uploadedAudio.public_id,
+          url: uploadedAudio.url,
+          secure_url: uploadedAudio.secure_url,
+          type: uploadedAudio.type,
+          signature: uploadedAudio.signature,
+          width: uploadedAudio.width,
+          height: uploadedAudio.height,
+          format: uploadedAudio.format,
+          resource_type: uploadedAudio.resource_type,
+          frame_rate: uploadedAudio.frame_rate,
+          bit_rate: uploadedAudio.bit_rate,
+          duration: uploadedAudio.duration,
+        };
+
+        query.media = media;
+      } catch (error) {
+        throw Boom.badRequest(error.message);
+      }
+    }
+
+    try {
+      const updatedAudio = await Post.findByIdAndUpdate(
+        req.params.postId,
+        {
+          $set: query,
+        },
+        { new: true },
+      )
+        .lean()
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          { path: 'authors', select: 'name type' },
+        ])
+        .select('-__v');
+
+      return res.status(200).json({
+        status: 200,
+        message: `Edit ${type} successfully`,
+        data: updatedAudio,
+      });
+    } catch (error) {
+      console.log(error);
+      throw Boom.badRequest(`Edit ${type} failed`);
+    }
+  } catch (error) {
+    console.log(error);
+    return next(error);
+  }
+};

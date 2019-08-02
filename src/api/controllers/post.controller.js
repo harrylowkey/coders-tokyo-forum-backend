@@ -148,6 +148,12 @@ exports.editPost = (req, res, next) => {
       case 'video':
         MediaController.editVideo(req, res, next, isUpload);
         break;
+      case 'song':
+        MediaController.editMedia(req, res, next, type);
+        break;
+      case 'podcast':
+        MediaController.editMedia(req, res, next, type);
+        break;
     }
   } catch (error) {
     return next();
