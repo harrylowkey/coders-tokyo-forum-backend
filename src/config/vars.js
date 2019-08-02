@@ -20,6 +20,13 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'video',
+    chunk_size: 15000000, //15mb
+  },
+  audioConfig: {
+    folder: 'Coders-Tokyo-Forum/posts/media',
+    use_filename: true,
+    unique_filename: true,
+    resource_type: 'video',
     chunk_size: 10000000, //10mb
   },
   coverImageConfig: {

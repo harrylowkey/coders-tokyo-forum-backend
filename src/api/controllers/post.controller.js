@@ -5,6 +5,16 @@ const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const Post = require('../models').Post;
+const types = [
+  'discussion',
+  'blog',
+  'book',
+  'food',
+  'movie',
+  'video',
+  'song',
+  'podcast',
+];
 
 exports.getOnePost = async (req, res, next) => {
   try {
@@ -14,6 +24,9 @@ exports.getOnePost = async (req, res, next) => {
     } = req;
     if (!type) {
       throw Boom.badRequest('Type query is required');
+    }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
     }
 
     let populateQuery = [
@@ -79,6 +92,9 @@ exports.createPost = (req, res, next) => {
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
+    }
     switch (type) {
       case 'blog':
         BlogController.createBlog(req, res, next);
@@ -113,6 +129,9 @@ exports.editPost = (req, res, next) => {
     if (!type) {
       throw Boom.badRequest('Type is required');
     }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
+    }
     switch (type) {
       case 'blog':
         BlogController.editBlog(req, res, next);
@@ -137,9 +156,12 @@ exports.editPost = (req, res, next) => {
 
 exports.deletePost = async (req, res, next) => {
   try {
-    const { type, isUpload } = req.query;
+    const { type } = req.query;
     if (!type) {
       throw Boom.badRequest('Type is required');
+    }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
     }
 
     switch (type) {
@@ -156,7 +178,7 @@ exports.deletePost = async (req, res, next) => {
         MovieController.deleteMovieReview(req, res, next);
         break;
       case 'video':
-        MediaController.deleteVideo(req, res, next, isUpload);
+        MediaController.deleteVideo(req, res, next);
         break;
     }
   } catch (error) {

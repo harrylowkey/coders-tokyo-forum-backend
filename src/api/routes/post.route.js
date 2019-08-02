@@ -22,6 +22,7 @@ router
     upload.fields([
       { name: 'coverImage', maxCount: 1 },
       { name: 'video', maxCount: 1 },
+      { name: 'audio', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
     postController.createPost,
@@ -34,6 +35,7 @@ router
     upload.fields([
       { name: 'coverImage', maxCount: 1 },
       { name: 'video', maxCount: 1 },
+      { name: 'audio', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
     postController.editPost,

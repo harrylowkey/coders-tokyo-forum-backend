@@ -4,7 +4,7 @@ const User = require('../models').User;
 const Post = require('../models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { videoConfig } = require('../../config/vars');
+const { videoConfig, audioConfig } = require('../../config/vars');
 
 exports.createVideo = async (req, res, next, isUpload) => {
   const {
@@ -198,7 +198,7 @@ exports.editVideo = async (req, res, next, isUpload) => {
   }
 };
 
-exports.deleteVideo = async (req, res, next, isUpload) => {
+exports.deleteVideo = async (req, res, next) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
@@ -249,6 +249,92 @@ exports.deleteVideo = async (req, res, next, isUpload) => {
       throw Boom.badRequest('Delete video failed');
     }
   } catch (error) {
+    return next(error);
+  }
+};
+
+exports.createMedia = async (req, res, next, type) => {
+  const {
+    body: { tags, authors },
+    user,
+  } = req;
+  try {
+    const newAudio = new Post({
+      userId: user._id,
+      ...req.body,
+      type: type,
+    });
+
+    const audio = req.files['audio'][0].path;
+    try {
+      const result = await Promise.props({
+        tags: Utils.post.createTags(newAudio, tags),
+        authors: Utils.post.creatAuthors(newAudio, authors),
+        uploadedVideo: cloudinary.uploader.upload(audio, audioConfig),
+      });
+
+      const tagsId = result.tags.map(tag => ({
+        _id: tag.id,
+      }));
+
+      const authorsId = result.authors.map(author => ({
+        _id: author.id,
+      }));
+
+      const media = {
+        public_id: result.uploadedVideo.public_id,
+        url: result.uploadedVideo.url,
+        secure_url: result.uploadedVideo.secure_url,
+        type: result.uploadedVideo.type,
+        signature: result.uploadedVideo.signature,
+        width: result.uploadedVideo.width,
+        height: result.uploadedVideo.height,
+        format: result.uploadedVideo.format,
+        resource_type: result.uploadedVideo.resource_type,
+        frame_rate: result.uploadedVideo.frame_rate,
+        bit_rate: result.uploadedVideo.bit_rate,
+        duration: result.uploadedVideo.duration,
+      };
+
+      newAudio.tags = tagsId;
+      newAudio.authors = authorsId;
+      newAudio.media = media;
+    } catch (error) {
+      console.log(error);
+      throw Boom.badRequest(error.message);
+    }
+
+    try {
+      const isOk = await Promise.props({
+        pushAudioIdToOwner: User.findByIdAndUpdate(
+          user._id,
+          {
+            $push: { posts: newAudio },
+          },
+          { new: true },
+        ),
+        createNewAudio: newAudio.save(),
+      });
+
+      const audioCreated = await Post.findById(isOk.createNewAudio._id)
+        .lean()
+        .populate([
+          { path: 'tags', select: 'tagName' },
+          { path: 'authors', select: 'name type' },
+        ])
+        .select('-__v -url');
+
+      return res.status(200).json({
+        status: 200,
+        message: `Create new ${type} successfully`,
+        data: audioCreated,
+      });
+    } catch (error) {
+      console.log(error);
+      throw Boom.badRequest(`Create new ${type} failed`);
+    }
+  } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
