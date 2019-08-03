@@ -37,4 +37,8 @@ router
   .route('/:userId/posts')
   .get(paginate({ limit: 15 }), postController.getPosts);
 
+router
+  .route('/:userId/saved-posts')
+  .get(paginate({ limit: 15 }), postController.getSavedPosts);
+
 module.exports = router;

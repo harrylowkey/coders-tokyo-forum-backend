@@ -507,3 +507,44 @@ exports.unsavePost = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.getSavedPosts = async (req, res, next) => {
+  try {
+    const {
+      skip: skip,
+      limit: limit,
+      params: { userId },
+    } = req;
+
+    const savedPosts = await User.findById(userId)
+      .lean()
+      .populate({
+        path: 'savedPosts',
+        select: '-__v',
+        populate: { path: 'tags', select: 'tagName type' },
+      })
+      .select('-__v -links -hobbies -posts -likedPosts')
+      .skip(skip)
+      .limit(limit);
+    if (!savedPosts) {
+      throw Boom.notFound('Get saved posts failed');
+    }
+
+    let metaData = {
+      pageSize: req.limit,
+      currentPage: req.query.page ? Number(req.query.page) : 1,
+    };
+    let totalPage = savedPosts[0]
+      ? Math.ceil(savedPosts[0].posts.length / req.limit)
+      : 0;
+    metaData.totalPage = totalPage;
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      metaData,
+      data: savedPosts,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
