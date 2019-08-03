@@ -50,4 +50,8 @@ router
   .route('/:postId')
   .delete(authorization.checkAccessToken, postController.deletePost);
 
+router
+  .route('/:postId/like')
+  .post(authorization.checkAccessToken, postController.likePost);
+
 module.exports = router;
