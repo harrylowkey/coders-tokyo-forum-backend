@@ -7,6 +7,7 @@ const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
 const Post = require('../models').Post;
 const User = require('../models').User;
+const Tag = require('../models').Tag;
 const types = [
   'discussion',
   'blog',
@@ -110,11 +111,6 @@ exports.getPosts = async (req, res, next) => {
       throw Boom.badRequest(`This ${type} type is not supported yet`);
     }
 
-    const user = await User.findById(req.params.userId).lean();
-    if (!user) {
-      throw Boom.notFound(`Not found user to get ${type}s`);
-    }
-
     let populateQuery = [
       {
         path: 'tags',
@@ -150,10 +146,17 @@ exports.getPosts = async (req, res, next) => {
         negativeQuery += '-url -media -authors';
     }
 
-    const posts = await Post.find({
-      userId: req.params.userId,
-      type,
-    })
+    let user;
+    let query = { type };
+    if (req.params.userId) {
+      user = await User.findById(req.params.userId).lean();
+      if (!user) {
+        throw Boom.notFound(`Not found user to get ${type}s`);
+      }
+      query.userId = req.params.userId;
+    }
+
+    const posts = await Post.find(query)
       .lean()
       .skip(skip)
       .limit(limit)
@@ -168,7 +171,7 @@ exports.getPosts = async (req, res, next) => {
             : type === 'songs' || type === 'podcasts' || type === 'videos'
             ? type
             : type + ' blog reivews'
-        } of you`,
+        }`,
       );
     }
 
@@ -185,6 +188,50 @@ exports.getPosts = async (req, res, next) => {
       data: posts,
     });
   } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getPostsByTagsName = async (req, res, next) => {
+  try {
+    const {
+      query: { tag },
+      limit: { limit },
+      skip: { skip },
+    } = req;
+
+    let query = { tagName: tag };
+    const tagsMatched = await Tag.find(query)
+      .lean()
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: 'posts',
+        select: '-__v',
+        populate: { path: 'authors', select: 'name type' },
+        populate: { path: 'tags', select: 'tagName' },
+      })
+      .select('-__v');
+    if (!tagsMatched) {
+      throw Boom.badRequest('Get posts by tag failed');
+    }
+    
+    let metaData = {
+      pageSize: req.limit,
+      currentPage: req.query.page ? Number(req.query.page) : 1,
+    };
+    let totalPage = tagsMatched[0]
+      ? Math.ceil(tagsMatched[0].posts.length / req.limit)
+      : 0;
+    metaData.totalPage = totalPage;
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      metaData,
+      data: tagsMatched,
+    });
+  } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

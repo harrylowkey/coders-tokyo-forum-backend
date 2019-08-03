@@ -35,6 +35,6 @@ router
 
 router
   .route('/:userId/posts')
-  .get(paginate({ limit: 2 }), postController.getPosts);
+  .get(paginate({ limit: 15 }), postController.getPosts);
 
 module.exports = router;

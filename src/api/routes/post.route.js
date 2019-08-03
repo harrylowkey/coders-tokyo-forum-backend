@@ -4,6 +4,7 @@ const multer = require('multer');
 
 const postController = require('../controllers/post.controller');
 const authorization = require('../../middlewares/authorize');
+const paginate = require('../../middlewares/pagination');
 
 const router = express.Router();
 var storage = multer.diskStorage({
@@ -13,6 +14,10 @@ var storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+router.route('/').get(paginate({ limit: 15 }), postController.getPosts);
+router
+  .route('/by-tag')
+  .get(paginate({ limit: 15 }), postController.getPostsByTagsName);
 router.route('/:postId').get(postController.getOnePost);
 
 router
