@@ -164,6 +164,9 @@ exports.editPost = (req, res, next) => {
       case 'podcast':
         MediaController.editMedia(req, res, next, type);
         break;
+      case 'discussion':
+        DiscussionController.editDiscussion(req, res, next, type);
+        break;
     }
   } catch (error) {
     return next();
