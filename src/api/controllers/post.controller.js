@@ -177,10 +177,10 @@ exports.getPosts = async (req, res, next) => {
     }
 
     let metaData = {
-      pageSize: req.limit,
+      pageSize: limit,
       currentPage: req.query.page ? Number(req.query.page) : 1,
     };
-    let totalPage = Math.ceil(posts.length / req.limit);
+    let totalPage = Math.ceil(posts.length / limit);
     metaData.totalPage = totalPage;
     return res.status(200).json({
       status: 200,
@@ -218,11 +218,11 @@ exports.getPostsByTagsName = async (req, res, next) => {
     }
 
     let metaData = {
-      pageSize: req.limit,
+      pageSize: limit,
       currentPage: req.query.page ? Number(req.query.page) : 1,
     };
     let totalPage = tagsMatched[0]
-      ? Math.ceil(tagsMatched[0].posts.length / req.limit)
+      ? Math.ceil(tagsMatched[0].posts.length / limit)
       : 0;
     metaData.totalPage = totalPage;
     return res.status(200).json({
