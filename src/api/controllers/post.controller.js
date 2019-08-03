@@ -441,3 +441,69 @@ exports.unlikePost = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.savePost = async (req, res, next) => {
+  const {
+    user,
+    params: { postId },
+  } = req;
+
+  try {
+    const post = await Post.findById(postId).lean();
+    if (!post) {
+      throw Boom.badRequest('Not found post to save');
+    }
+
+    try {
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $push: { savedPosts: postId },
+        },
+        { new: true },
+      );
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Save post succesfully',
+      });
+    } catch (error) {
+      throw Boom.badRequest('Save post failed, try later');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.unsavePost = async (req, res, next) => {
+  const {
+    user,
+    params: { postId },
+  } = req;
+
+  try {
+    const post = await Post.findById(postId).lean();
+    if (!post) {
+      throw Boom.badRequest('Not found post to unsave');
+    }
+
+    try {
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $pull: { savedPosts: postId },
+        },
+        { new: true },
+      );
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Unsave post succesfully',
+      });
+    } catch (error) {
+      throw Boom.badRequest('Unsave post failed, try later');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};

@@ -88,6 +88,12 @@ const userSchema = new Schema(
         ref: 'Post',
       },
     ],
+    savedPosts: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Post',
+      },
+    ],
     verifyCode: {
       code: Number,
       expiresIn: Number,

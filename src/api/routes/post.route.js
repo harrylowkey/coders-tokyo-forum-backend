@@ -58,4 +58,12 @@ router
   .route('/:postId/unlike')
   .post(authorization.checkAccessToken, postController.unlikePost);
 
+router
+  .route('/:postId/save')
+  .post(authorization.checkAccessToken, postController.savePost);
+
+router
+  .route('/:postId/unsave')
+  .post(authorization.checkAccessToken, postController.unsavePost);
+
 module.exports = router;
