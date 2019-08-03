@@ -254,7 +254,7 @@ exports.deleteVideo = async (req, res, next, type) => {
   }
 };
 
-exports.createMedia = async (req, res, next, type) => {
+exports.createAudio = async (req, res, next, type) => {
   const {
     body: { tags, authors },
     user,
@@ -340,7 +340,7 @@ exports.createMedia = async (req, res, next, type) => {
   }
 };
 
-exports.editMedia = async (req, res, next, type) => {
+exports.editAudio = async (req, res, next, type) => {
   const { topic, description, content, tags, authors } = req.body;
 
   try {
@@ -445,7 +445,7 @@ exports.editMedia = async (req, res, next, type) => {
   }
 };
 
-exports.deleteMedia = async (req, res, next, type) => {
+exports.deleteAudio = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,

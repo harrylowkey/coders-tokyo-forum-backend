@@ -102,8 +102,8 @@ exports.getPosts = async (req, res, next) => {
   try {
     const {
       query: { type },
-      limit: { limit },
-      skip: { skip },
+      limit,
+      skip,
     } = req;
     if (!type) {
       throw Boom.badRequest('Type query is required');
@@ -197,8 +197,8 @@ exports.getPostsByTagsName = async (req, res, next) => {
   try {
     const {
       query: { tag },
-      limit: { limit },
-      skip: { skip },
+      limit,
+      skip,
     } = req;
 
     let query = { tagName: tag };
@@ -263,10 +263,10 @@ exports.createPost = (req, res, next) => {
         MediaController.createVideo(req, res, next, type, isUpload);
         break;
       case 'song':
-        MediaController.createMedia(req, res, next, type);
+        MediaController.createAudio(req, res, next, type);
         break;
       case 'podcast':
-        MediaController.createMedia(req, res, next, type);
+        MediaController.createAudio(req, res, next, type);
         break;
       case 'discussion':
         DiscussionController.createDiscussion(req, res, next, type);
@@ -303,10 +303,10 @@ exports.editPost = (req, res, next) => {
         MediaController.editVideo(req, res, next, type, isUpload);
         break;
       case 'song':
-        MediaController.editMedia(req, res, next, type);
+        MediaController.editAudio(req, res, next, type);
         break;
       case 'podcast':
-        MediaController.editMedia(req, res, next, type);
+        MediaController.editAudio(req, res, next, type);
         break;
       case 'discussion':
         DiscussionController.editDiscussion(req, res, next, type);
@@ -344,10 +344,10 @@ exports.deletePost = async (req, res, next) => {
         MediaController.deleteVideo(req, res, next, type);
         break;
       case 'song':
-        MediaController.deleteMedia(req, res, next, type);
+        MediaController.deleteAudio(req, res, next, type);
         break;
       case 'podcast':
-        MediaController.deleteMedia(req, res, next, type);
+        MediaController.deleteAudio(req, res, next, type);
         break;
       case 'discussion':
         DiscussionController.deleteDiscussion(req, res, next, type);
@@ -511,8 +511,8 @@ exports.unsavePost = async (req, res, next) => {
 exports.getSavedPosts = async (req, res, next) => {
   try {
     const {
-      skip: skip,
-      limit: limit,
+      skip ,
+      limit ,
       params: { userId },
     } = req;
 
@@ -531,11 +531,11 @@ exports.getSavedPosts = async (req, res, next) => {
     }
 
     let metaData = {
-      pageSize: req.limit,
+      pageSize: limit,
       currentPage: req.query.page ? Number(req.query.page) : 1,
     };
     let totalPage = savedPosts[0]
-      ? Math.ceil(savedPosts[0].posts.length / req.limit)
+      ? Math.ceil(savedPosts[0].posts.length / limit)
       : 0;
     metaData.totalPage = totalPage;
     return res.status(200).json({

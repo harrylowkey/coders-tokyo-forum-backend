@@ -154,6 +154,7 @@ postSchema.index(
   { type: 1 },
   { topic: 1 },
   { authors: 1 },
+  { createdAt: -1 },
 );
 
 const postModel = mongoose.model('Post', postSchema);
