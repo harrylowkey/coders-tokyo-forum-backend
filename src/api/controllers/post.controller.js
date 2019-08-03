@@ -4,6 +4,7 @@ const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
+const DiscussionController = require('./discussion.controller');
 const Post = require('../models').Post;
 const types = [
   'discussion',
@@ -122,6 +123,9 @@ exports.createPost = (req, res, next) => {
         break;
       case 'podcast':
         MediaController.createMedia(req, res, next, type);
+        break;
+      case 'discussion':
+        DiscussionController.createDiscussion(req, res, next, type);
         break;
     }
   } catch (error) {
