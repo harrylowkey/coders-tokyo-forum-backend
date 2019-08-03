@@ -379,7 +379,7 @@ exports.likePost = async (req, res, next) => {
           },
           { new: true },
         ),
-        pushlikedPostToUser: User.findByIdAndUpdate(
+        pushLikedPostToUser: User.findByIdAndUpdate(
           user._id,
           {
             $push: { likedPosts: postId },
@@ -394,6 +394,48 @@ exports.likePost = async (req, res, next) => {
       });
     } catch (error) {
       throw Boom.badRequest('Like post failed, try later');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.unlikePost = async (req, res, next) => {
+  const {
+    user,
+    params: { postId },
+  } = req;
+
+  try {
+    const post = await Post.findById(postId).lean();
+    if (!post) {
+      throw Boom.badRequest('Not found post to unlike');
+    }
+
+    try {
+      await Promise.props({
+        pushUserIdToPost: Post.findByIdAndUpdate(
+          postId,
+          {
+            $pull: { likes: user._id },
+          },
+          { new: true },
+        ),
+        pullLikedPostToUser: User.findByIdAndUpdate(
+          user._id,
+          {
+            $pull: { likedPosts: postId },
+          },
+          { new: true },
+        ),
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Unlike post succesfully',
+      });
+    } catch (error) {
+      throw Boom.badRequest('Unlike post failed, try later');
     }
   } catch (error) {
     return next(error);

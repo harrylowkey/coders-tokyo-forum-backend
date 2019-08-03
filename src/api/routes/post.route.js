@@ -54,4 +54,8 @@ router
   .route('/:postId/like')
   .post(authorization.checkAccessToken, postController.likePost);
 
+router
+  .route('/:postId/unlike')
+  .post(authorization.checkAccessToken, postController.unlikePost);
+
 module.exports = router;
