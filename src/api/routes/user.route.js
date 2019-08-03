@@ -4,6 +4,8 @@ const multer = require('multer');
 
 const userController = require('../controllers/user.controller');
 const authorization = require('../../middlewares/authorize');
+const paginate = require('../../middlewares/pagination');
+const postController = require('../controllers/post.controller');
 
 const router = express.Router();
 var storage = multer.diskStorage({
@@ -30,5 +32,9 @@ router
 router
   .route('/:userId/avatars/:avatarId')
   .delete(authorization.checkAccessToken, userController.deleteAvatar);
+
+router
+  .route('/:userId/posts')
+  .get(paginate({ limit: 2 }), postController.getPosts);
 
 module.exports = router;

@@ -6,6 +6,7 @@ const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
 const Post = require('../models').Post;
+const User = require('../models').User;
 const types = [
   'discussion',
   'blog',
@@ -89,6 +90,99 @@ exports.getOnePost = async (req, res, next) => {
       status: 200,
       message: 'success',
       data: post,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getPosts = async (req, res, next) => {
+  try {
+    const {
+      query: { type },
+      limit: { limit },
+      skip: { skip },
+    } = req;
+    if (!type) {
+      throw Boom.badRequest('Type query is required');
+    }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
+    }
+
+    const user = await User.findById(req.params.userId).lean();
+    if (!user) {
+      throw Boom.notFound(`Not found user to get ${type}s`);
+    }
+
+    let populateQuery = [
+      {
+        path: 'tags',
+        select: 'tagName',
+      },
+    ];
+
+    let negativeQuery = '-__v ';
+
+    switch (type) {
+      case 'blog':
+        negativeQuery += '-authors -url -media';
+      case 'book':
+        populateQuery.push({
+          path: 'authors',
+          select: 'name',
+        });
+        negativeQuery += '-url -media';
+      case 'food':
+        negativeQuery += '-authors -media';
+      case 'movie':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-media';
+      case 'video':
+        negativeQuery += '-authors';
+      case 'podcast':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+      case 'song':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+      case 'discussion':
+        negativeQuery += '-url -media -authors';
+    }
+
+    const posts = await Post.find({
+      userId: req.params.userId,
+      type,
+    })
+      .lean()
+      .skip(skip)
+      .limit(limit)
+      .populate(populateQuery)
+      .select(negativeQuery);
+
+    if (!posts) {
+      throw Boom.notFound(
+        `Not found ${
+          type == 'blogs'
+            ? type
+            : type === 'songs' || type === 'podcasts' || type === 'videos'
+            ? type
+            : type + ' blog reivews'
+        } of you`,
+      );
+    }
+
+    let metaData = {
+      pageSize: req.limit,
+      currentPage: req.query.page ? Number(req.query.page) : 1,
+    };
+    let totalPage = Math.ceil(posts.length / req.limit);
+    metaData.totalPage = totalPage;
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      metaData,
+      data: posts,
     });
   } catch (error) {
     return next(error);

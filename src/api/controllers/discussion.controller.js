@@ -11,6 +11,7 @@ exports.createDiscussion = async (req, res, next, type) => {
   } = req;
   try {
     const newDiscusstion = new Post({
+      userId: user,
       topic,
       content,
       type,
