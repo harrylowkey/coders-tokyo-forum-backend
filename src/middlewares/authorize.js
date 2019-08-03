@@ -8,7 +8,11 @@ exports.checkAccessToken = async (req, res, next) => {
     const decodedToken = Utils.verifyToken(access_token);
     if (!decodedToken)
       throw Boom.badRequest('Invalid token or token expired time');
+
     const user = await User.findById(decodedToken.id);
+    if (!user) {
+      throw Boom.unauthorized(`User haven't registed account yet`);
+    }
     req.user = user;
     return next();
   } catch (error) {

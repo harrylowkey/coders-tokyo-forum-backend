@@ -82,7 +82,7 @@ const userSchema = new Schema(
         ref: 'Post',
       },
     ],
-    lovedPosts: [
+    likedPosts: [
       {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Post',

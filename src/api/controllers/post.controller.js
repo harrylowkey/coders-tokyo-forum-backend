@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const Promise = require('bluebird');
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
@@ -215,7 +216,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
     if (!tagsMatched) {
       throw Boom.badRequest('Get posts by tag failed');
     }
-    
+
     let metaData = {
       pageSize: req.limit,
       currentPage: req.query.page ? Number(req.query.page) : 1,
@@ -351,6 +352,48 @@ exports.deletePost = async (req, res, next) => {
       case 'discussion':
         DiscussionController.deleteDiscussion(req, res, next, type);
         break;
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.likePost = async (req, res, next) => {
+  const {
+    user,
+    params: { postId },
+  } = req;
+
+  try {
+    const post = await Post.findById(postId).lean();
+    if (!post) {
+      throw Boom.badRequest('Not found post to like');
+    }
+
+    try {
+      await Promise.props({
+        pushUserIdToPost: Post.findByIdAndUpdate(
+          postId,
+          {
+            $push: { likes: user._id },
+          },
+          { new: true },
+        ),
+        pushlikedPostToUser: User.findByIdAndUpdate(
+          user._id,
+          {
+            $push: { likedPosts: postId },
+          },
+          { new: true },
+        ),
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: 'Like post succesfully',
+      });
+    } catch (error) {
+      throw Boom.badRequest('Like post failed, try later');
     }
   } catch (error) {
     return next(error);

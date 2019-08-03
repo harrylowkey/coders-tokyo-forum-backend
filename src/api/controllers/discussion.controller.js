@@ -9,6 +9,7 @@ exports.createDiscussion = async (req, res, next, type) => {
     body: { topic, tags, content },
     user,
   } = req;
+
   try {
     const newDiscusstion = new Post({
       userId: user,
