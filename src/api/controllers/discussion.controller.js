@@ -111,3 +111,41 @@ exports.editDiscussion = async (req, res, next, type) => {
     return next(error);
   }
 };
+
+exports.deleteDiscussion = async (req, res, next, type) => {
+  try {
+    const discussion = await Post.findOne({
+      _id: req.params.postId,
+      type,
+    })
+      .lean()
+      .populate([{ path: 'tags', select: 'tagName' }]);
+    if (!discussion) {
+      throw Boom.notFound('Not found discussion');
+    }
+
+    const tagsId = discussion.tags.map(tag => tag._id);
+    try {
+      await Promise.props({
+        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
+        isDetetedInOwner: User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $pull: { posts: req.params.postId },
+          },
+          { new: true },
+        ),
+        isDeletedInTags: Utils.post.deletePostInTags(discussion._id, tagsId),
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: `Delete discussion successfully`,
+      });
+    } catch (error) {
+      throw Boom.badRequest(error.message);
+    }
+  } catch (error) {
+    return next(error);
+  }
+};

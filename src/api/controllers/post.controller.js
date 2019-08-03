@@ -205,6 +205,9 @@ exports.deletePost = async (req, res, next) => {
       case 'podcast':
         MediaController.deleteMedia(req, res, next, type);
         break;
+      case 'discussion':
+        DiscussionController.deleteDiscussion(req, res, next, type);
+        break;
     }
   } catch (error) {
     return next(error);
