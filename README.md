@@ -10,8 +10,8 @@
 
 ## What is the Coders.Tokyo forum?
 - This project is aim to make a playground for every members of Coders.Tokyo. 
-- In there, you are a blogger. That you can 
- - [ ] Write you own blog
+- In there, you are a blogger, reviewer. That you can:
+ - [ ] Write your own blog
  - [ ] Write the book, movie review
  - [ ] Share with others about the food you like through blog
  - [ ] Ask question, make discussion at there
