@@ -1,17 +1,20 @@
 {
   "openapi": "3.0.0",
-  "swagger": "3.0",
   "info": {
-    "description": "This is the APIs docs for Coders.Tokyo forum backend v1. [Github Repo](http://github.com/hongquangraem/coders-tokyo-forum-backend)",
+    "description": "This is the APIs docs for Coders.Tokyo forum backend v1.0.0",
     "version": "1.0.0",
     "title": "Coders.Tokyo Forum",
     "contact": {
       "email": "danghongquang99@gmail.com"
     }
   },
+  "externalDocs": {
+    "description": "Find out more in repo on Github",
+    "url": "http://github.com/hongquangraem/coders-tokyo-forum-backend"
+  },
   "servers": [
     {
-       "url": "http://localhost:3000/api/v1"
+      "url": "http://localhost:3000/api/v1"
     }
   ],
   "basePath": "/v1",
@@ -43,12 +46,327 @@
   ],
   "components": {
     "schemas": {
-      "response": {
+      "Author": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
         "properties": {
-          "status": {
+          "name": {
+            "type": "string",
+            "maximum": 20
+          },
+          "type": {
+            "type": "array",
+            "enum": [
+              "author",
+              "singer",
+              "composer",
+              "actor",
+              "actress",
+              "director"
+            ]
+          },
+          "posts": {
+            "type": "array",
+            "xml": {
+              "name": "postId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "required": [
+          "tagName"
+        ],
+        "properties": {
+          "tagName": {
+            "type": "string",
+            "maximum": 30
+          },
+          "posts": {
+            "type": "array",
+            "xml": {
+              "name": "postId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "required": [
+          "type",
+          "topic",
+          "content"
+        ],
+        "properties": {
+          "userId": {
+            "$ref": "#/components/schemas/User"
+          },
+          "tags": {
+            "type": "array",
+            "xml": {
+              "name": "tagId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "comments": {
+            "type": "array",
+            "xml": {
+              "name": "commentId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "discussion",
+              "blog",
+              "book",
+              "food",
+              "movie",
+              "video",
+              "song",
+              "podcast"
+            ]
+          },
+          "topic": {
+            "type": "string",
+            "maximum": 200
+          },
+          "description": {
+            "type": "string",
+            "maximum": 400
+          },
+          "content": {
             "type": "string"
           },
-          "message": {
+          "authors": {
+            "type": "array",
+            "xml": {
+              "name": "authorId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Author"
+            }
+          },
+          "cover": {
+            "type": "object",
+            "properties": {
+              "public_id": {
+                "type": "string"
+              }
+            }
+          },
+          "likes": {
+            "type": "array",
+            "xml": {
+              "name": "userId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "url": {
+            "type": "string"
+          },
+          "media": {
+            "type": "object",
+            "properties": {
+              "public_id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "object"
+              },
+              "signature": {
+                "type": "string"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "format": {
+                "type": "string"
+              },
+              "resource_type": {
+                "type": "string"
+              },
+              "frame_rate": {
+                "type": "number"
+              },
+              "bit_rate": {
+                "type": "number"
+              },
+              "duration": {
+                "type": "number"
+              }
+            }
+          },
+          "food": {
+            "type": "object",
+            "properties": {
+              "foodName": {
+                "type": "string",
+                "required": true
+              },
+              "price": {
+                "type": "number",
+                "required": true
+              },
+              "location": {
+                "type": "string",
+                "maximum": 100,
+                "required": true
+              },
+              "star": {
+                "type": "number",
+                "maximum": 5,
+                "minium": 0,
+                "required": true
+              },
+              "photos": {
+                "type": "array",
+                "public_id": {
+                  "type": "string"
+                },
+                "required": true
+              }
+            }
+          }
+        }
+      },
+      "User": {
+        "required": [
+          "username",
+          "password",
+          "email"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "maximum": 20
+          },
+          "password": {
+            "type": "string",
+            "minimum": 6,
+            "maximum": 128
+          },
+          "email": {
+            "type": "string",
+            "unique": true
+          },
+          "avatar": {
+            "type": "object",
+            "properties": {
+              "public_id": {
+                "type": "string"
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "xml": {
+              "wrapped": true
+            },
+            "items": {}
+          },
+          "sex": {
+            "type": "string",
+            "mininum": 4,
+            "maximum": 6
+          },
+          "age": {
+            "type": "number"
+          },
+          "job": {
+            "type": "string",
+            "maximum": 30
+          },
+          "hobbies": {
+            "type": "array",
+            "xml": {
+              "wrapped": true
+            },
+            "maximum": 30
+          },
+          "rankId": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "posts": {
+            "type": "array",
+            "xml": {
+              "name": "postId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          },
+          "likedPosts": {
+            "type": "array",
+            "xml": {
+              "name": "postId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          },
+          "savedPosts": {
+            "type": "array",
+            "xml": {
+              "name": "postId",
+              "wrapped": true
+            },
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          },
+          "verifyCode": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "number"
+              },
+              "expiresIn": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "Comment": {
+        "properties": {
+          "parent": {
+            "$ref": "#/components/schemas/Comment"
+          },
+          "userId": {
+            "$ref": "#/components/schemas/User"
+          },
+          "postId": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "text": {
             "type": "string"
           }
         }
@@ -65,29 +383,28 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "tags": [ "auth" ],
+        "tags": [
+          "auth"
+        ],
         "summary": "Sign up account",
         "description": "",
         "operationId": "register",
-        "consumes": [
-          "application/json",
-          "application/xml"
-        ],
         "requestBody": {
           "content": {
             "application/json": {
-              "description": "email and password required",
-              "required": true,
               "schema": {
                 "properties": {
                   "username": {
-                    "type": "string"
+                    "type": "string",
+                    "required": true
                   },
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "required": true
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "required": true
                   }
                 },
                 "example": {
@@ -100,30 +417,18 @@
           }
         },
         "responses": {
-          "409": {
-            "description": "Email already existed", 
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "$ref": "#/components/schemas/response"
-                  },
-                  "example": {
-                    "status": "409",
-                    "message": "Email already existed"
-                  }
-                }
-              }
-            }
-          },
           "200": {
             "description": "Register successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
-                    "$ref": "#/components/schemas/response"
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
                   "example": {
                     "status": "200",
@@ -132,90 +437,73 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Email already existed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "409",
+                    "message": "Email already existed"
+                  }
+                }
+              }
+            }
           }
         }
-
       }
     },
     "/auth/login": {
       "post": {
-        "tags": [ "auth" ],
+        "tags": [
+          "auth"
+        ],
         "summary": "Login",
         "description": "",
         "operationId": "login",
-        "consumes": [
-          "application/json",
-          "application/xml"
-        ],
         "requestBody": {
           "content": {
             "application/json": {
-              "description": "email and password required",
-              "required": true,
               "schema": {
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "required": true
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "required": true
                   }
                 },
                 "example": {
                   "email": "danghongquang99@gmail.com",
-                  "password": "123456789"
+                  "password": "12346578"
                 }
               }
             }
           }
         },
         "responses": {
-          "404": {
-            "description": "User not found", 
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "status": "404",
-                    "message": "User not found"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Wrong password", 
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "status": "400",
-                    "message": "Wrong password"
-                  }
-                }
-              }
-            }
-          },
           "200": {
             "description": "Register successfully",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "access_token=abcd.efgh.ijklm; Path=/; HttpOnly"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -236,12 +524,10 @@
                               "type": "string"
                             },
                             "links": {
-                              "type": "array",
-                              "allowEmptyValue": true
+                              "type": "array"
                             },
                             "hobbies": {
-                              "type": "array",
-                              "allowEmptyValue": true
+                              "type": "array"
                             },
                             "username": {
                               "type": "string"
@@ -268,41 +554,45 @@
                     "message": "Register successfully",
                     "data": {
                       "user": {
-                          "_id": "5d45334cc2077677930e60f2",
-                          "links": [],
-                          "hobbies": [],
-                          "username": "danghongquang",
-                          "email": "danghongquang99@gmail.com",
-                          "createdAt": "2019-08-03T07:10:04.739Z",
-                          "updatedAt": "2019-08-05T02:40:23.561Z"
+                        "_id": "5d45334cc2077677930e60f2",
+                        "links": [],
+                        "hobbies": [],
+                        "username": "danghongquang",
+                        "email": "danghongquang99@gmail.com",
+                        "createdAt": "2019-08-03T07:10:04.739Z",
+                        "updatedAt": "2019-08-05T02:40:23.561Z"
                       },
                       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVkNDUzMzRjYzIwNzc2Nzc5MzBlNjBmMiIsImVtYWlsIjoiZGFuZ2hvbmdxdWFuZzk5QGdtYWlsLmNvbSIsImlhdCI6MTU2NTEwNjk3NSwiZXhwIjoxNTY1MTEwNTc1fQ.BYXcssWsoK_aOvWCrcWnwXlM3kzUvYt-yNoMwR7822o"
-                  }
+                    }
                   }
                 }
               }
             }
-          }
-        }
-
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "tags": [ "auth" ],
-        "summary": "Logout",
-        "description": "",
-        "operationId": "logout",
-        "consumes": [
-          "application/json",
-          "application/xml"
-        ],
-        "security": {
-          "cookieAuth": []
-        },
-        "responses": {
+          },
+          "400": {
+            "description": "Wrong password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Wrong password"
+                  }
+                }
+              }
+            }
+          },
           "404": {
-            "description": "'Invalid token or token expired time'", 
+            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -317,14 +607,30 @@
                   },
                   "example": {
                     "status": "404",
-                    "message": "'Invalid token or token expired time'"
+                    "message": "User not found"
                   }
                 }
               }
             }
-          },
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout",
+        "responses": {
           "200": {
-            "description": "'Invalid token or token expired time'",
+            "description": "Logout successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -338,6 +644,28 @@
                   },
                   "example": {
                     "status": "200",
+                    "message": "Logout successfully"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid token or token expired time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "401",
                     "message": "Invalid token or token expired time"
                   }
                 }
@@ -345,616 +673,517 @@
             }
           }
         }
-
       }
     },
-    "/store/inventory": {
-      "get": {
+    "/auth/forgot-password": {
+      "put": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
         "tags": [
-          "store"
+          "auth"
         ],
-        "summary": "Returns pet inventories by status",
-        "description": "Returns a map of status codes to quantities",
-        "operationId": "getInventory",
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          
-        ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "integer",
-                "format": "int32"
+        "summary": "Forgot Password",
+        "operationId": "forgot-password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "newPassword": {
+                    "type": "string",
+                    "require": true
+                  },
+                  "confirmPassword": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "code": {
+                    "type": "string",
+                    "required": true
+                  }
+                }
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Update password successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Update password successfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Confirm password isn't matched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Confirm password isn't matched"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Wrong code or code expired time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Wrong code or code expired time"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/send-verify-code": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Send Verify Code",
+        "operationId": "send-verify-code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "require": true
+                  }
+                },
+                "example": {
+                  "email": "danghongquang99@gmail.com"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Send email verify code successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Send email verify code successfully"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Email is not registed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Email is not registed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "put": {
         "security": [
           {
-            "api_key": [
-              
-            ]
+            "cookieAuth": []
           }
-        ]
-      }
-    },
-    "/store/order": {
-      "post": {
+        ],
         "tags": [
-          "store"
+          "auth"
         ],
-        "summary": "Place an order for a pet",
-        "description": "",
-        "operationId": "placeOrder",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "order placed for purchasing the pet",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Order"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
-            "schema": {
-              "$ref": "#/definitions/Order"
-            }
-          },
-          "400": {
-            "description": "Invalid Order"
-          }
-        }
-      }
-    },
-    "/store/order/{orderId}": {
-      "get": {
-        "tags": [
-          "store"
-        ],
-        "summary": "Find purchase order by ID",
-        "description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
-        "operationId": "getOrderById",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "orderId",
-            "in": "path",
-            "description": "ID of pet that needs to be fetched",
-            "required": true,
-            "type": "integer",
-            "maximum": 10.0,
-            "minimum": 1.0,
-            "format": "int64"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
-            "schema": {
-              "$ref": "#/definitions/Order"
-            }
-          },
-          "400": {
-            "description": "Invalid ID supplied"
-          },
-          "404": {
-            "description": "Order not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "store"
-        ],
-        "summary": "Delete purchase order by ID",
-        "description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
-        "operationId": "deleteOrder",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "orderId",
-            "in": "path",
-            "description": "ID of the order that needs to be deleted",
-            "required": true,
-            "type": "integer",
-            "minimum": 1.0,
-            "format": "int64"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Invalid ID supplied"
-          },
-          "404": {
-            "description": "Order not found"
-          }
-        }
-      }
-    },
-    "/user": {
-      "post": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Create user",
-        "description": "This can only be done by the logged in user.",
-        "operationId": "createUser",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "Created user object",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/User"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "successful operation"
-          }
-        }
-      }
-    },
-    "/user/createWithArray": {
-      "post": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Creates list of users with given input array",
-        "description": "",
-        "operationId": "createUsersWithArrayInput",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "List of user object",
-            "required": true,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/User"
+        "summary": "Change Password",
+        "operationId": "change-password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "oldPassword": {
+                    "type": "string",
+                    "required": true
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "require": true
+                  },
+                  "confirmPassword": {
+                    "type": "string",
+                    "required": true
+                  }
+                }
               }
             }
           }
-        ],
+        },
         "responses": {
-          "default": {
-            "description": "successful operation"
-          }
-        }
-      }
-    },
-    "/user/createWithList": {
-      "post": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Creates list of users with given input array",
-        "description": "",
-        "operationId": "createUsersWithListInput",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "List of user object",
-            "required": true,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/User"
+          "200": {
+            "description": "Change password successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Change password successfully"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "2 cases: 1) Wrong old password; 2) Confirm passowrd wrong",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "2 cases: 1) Wrong old password; 2) Confirm passowrd wrong"
+                  }
+                }
               }
             }
           }
-        ],
-        "responses": {
-          "default": {
-            "description": "successful operation"
-          }
         }
       }
     },
-    "/user/login": {
+    "/users/{userId}": {
       "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
         "tags": [
           "user"
         ],
-        "summary": "Logs user into the system",
-        "description": "",
-        "operationId": "loginUser",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
+        "summary": "Get profile",
+        "operationId": "get-profile",
         "parameters": [
           {
-            "name": "username",
-            "in": "query",
-            "description": "The user name for login",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "password",
-            "in": "query",
-            "description": "The password for login in clear text",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
+            "in": "path",
+            "name": "userId",
             "schema": {
               "type": "string"
             },
-            "headers": {
-              "X-Rate-Limit": {
-                "type": "integer",
-                "format": "int32",
-                "description": "calls per hour allowed by the user"
-              },
-              "X-Expires-After": {
-                "type": "string",
-                "format": "date-time",
-                "description": "date in UTC when token expires"
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid username/password supplied"
-          }
-        }
-      }
-    },
-    "/user/logout": {
-      "get": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Logs out current logged in user session",
-        "description": "",
-        "operationId": "logoutUser",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          
-        ],
-        "responses": {
-          "default": {
-            "description": "successful operation"
-          }
-        }
-      }
-    },
-    "/user/{username}": {
-      "get": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Get user by user name",
-        "description": "",
-        "operationId": "getUserByName",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "username",
-            "in": "path",
-            "description": "The name that needs to be fetched. Use user1 for testing. ",
-            "required": true,
-            "type": "string"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "successful operation",
-            "schema": {
-              "$ref": "#/definitions/User"
+            "description": "sucess",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "sucess",
+                    "data": {
+                      "_id": "5d45334cc2077677930e60f2",
+                      "links": [],
+                      "hobbies": [],
+                      "posts": [
+                        "5d453353c2077677930e60f3"
+                      ],
+                      "likedPosts": [
+                        "5d453353c2077677930e60f3"
+                      ],
+                      "username": "danghongquang",
+                      "email": "danghongquang99@gmail.com",
+                      "createdAt": "2019-08-03T07:10:04.739Z",
+                      "updatedAt": "2019-08-07T04:05:05.883Z",
+                      "savedPosts": []
+                    }
+                  }
+                }
+              }
             }
           },
-          "400": {
-            "description": "Invalid username supplied"
-          },
           "404": {
-            "description": "User not found"
+            "description": "Not found user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Not found user profile"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "put": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
         "tags": [
           "user"
         ],
-        "summary": "Updated user",
-        "description": "This can only be done by the logged in user.",
-        "operationId": "updateUser",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
+        "summary": "Update profile",
+        "operationId": "update-profile",
         "parameters": [
           {
-            "name": "username",
             "in": "path",
-            "description": "name that need to be updated",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "description": "Updated user object",
-            "required": true,
+            "name": "userId",
             "schema": {
-              "$ref": "#/definitions/User"
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "hobbies": {
+                    "type": "array"
+                  },
+                  "links": {
+                    "type": "object"
+                  },
+                  "sex": {
+                    "type": "string"
+                  },
+                  "age": {
+                    "type": "string"
+                  },
+                  "job": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "username": "mitxiu",
+                "sex": "male",
+                "age": 20,
+                "job": "dev",
+                "hobbies": [
+                  "music, reading book"
+                ],
+                "links": [
+                  {
+                    "github": "https://github.com/hongquangraem"
+                  },
+                  {
+                    "facebook": "https://facebook.com/spacemanraem"
+                  }
+                ]
+              }
             }
           }
-        ],
+        },
         "responses": {
+          "200": {
+            "description": "Update profile successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Update profile successfully",
+                    "data": {
+                      "_id": "5d45334cc2077677930e60f2",
+                      "links": [
+                        {
+                          "github": "https://github.com/hongquangraem"
+                        },
+                        {
+                          "facebook": "https://facebook.com/spacemanraem"
+                        }
+                      ],
+                      "hobbies": [
+                        "music, reading book"
+                      ],
+                      "posts": [
+                        "5d453353c2077677930e60f3"
+                      ],
+                      "likedPosts": [
+                        "5d453353c2077677930e60f3"
+                      ],
+                      "username": "mitxiu",
+                      "email": "danghongquang99@gmail.com",
+                      "createdAt": "2019-08-03T07:10:04.739Z",
+                      "updatedAt": "2019-08-07T08:53:02.446Z",
+                      "savedPosts": [
+                        "5d45349aa9cc662a0b94dbfb",
+                        "5d453b0f757a757c42dfe781"
+                      ],
+                      "sex": "male",
+                      "age": 20,
+                      "job": "dev"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "400": {
-            "description": "Invalid user supplied"
+            "description": "Update profile failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Update profile failed"
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "User not found"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Delete user",
-        "description": "This can only be done by the logged in user.",
-        "operationId": "deleteUser",
-        "produces": [
-          "application/xml",
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "username",
-            "in": "path",
-            "description": "The name that needs to be deleted",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Invalid username supplied"
-          },
-          "404": {
-            "description": "User not found"
+            "description": "Not found user to update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Not found user to update"
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
-  },
-  "securityDefinitions": {
-    "petstore_auth": {
-      "type": "oauth2",
-      "authorizationUrl": "https://petstore.swagger.io/oauth/authorize",
-      "flow": "implicit",
-      "scopes": {
-        "write:pets": "modify pets in your account",
-        "read:pets": "read your pets"
-      }
-    },
-    "api_key": {
-      "type": "apiKey",
-      "name": "api_key",
-      "in": "header"
-    }
-  },
-  "definitions": {
-    "Order": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "petId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "quantity": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "shipDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "Order Status",
-          "enum": [
-            "placed",
-            "approved",
-            "delivered"
-          ]
-        },
-        "complete": {
-          "type": "boolean",
-          "default": false
-        }
-      },
-      "xml": {
-        "name": "Order"
-      }
-    },
-    "User": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "username": {
-          "type": "string"
-        },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "userStatus": {
-          "type": "integer",
-          "format": "int32",
-          "description": "User Status"
-        }
-      },
-      "xml": {
-        "name": "User"
-      }
-    },
-    "Category": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "xml": {
-        "name": "Category"
-      }
-    },
-    "Tag": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "xml": {
-        "name": "Tag"
-      }
-    },
-    "Pet": {
-      "type": "object",
-      "required": [
-        "name",
-        "photoUrls"
-      ],
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "category": {
-          "$ref": "#/definitions/Category"
-        },
-        "name": {
-          "type": "string",
-          "example": "doggie"
-        },
-        "photoUrls": {
-          "type": "array",
-          "xml": {
-            "name": "photoUrl",
-            "wrapped": true
-          },
-          "items": {
-            "type": "string"
-          }
-        },
-        "tags": {
-          "type": "array",
-          "xml": {
-            "name": "tag",
-            "wrapped": true
-          },
-          "items": {
-            "$ref": "#/definitions/Tag"
-          }
-        },
-        "status": {
-          "type": "string",
-          "description": "pet status in the store",
-          "enum": [
-            "available",
-            "pending",
-            "sold"
-          ]
-        }
-      },
-      "xml": {
-        "name": "Pet"
-      }
-    },
-    "ApiResponse": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "type": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "externalDocs": {
-    "description": "Find out more about Swagger",
-    "url": "http://swagger.io"
   }
 }

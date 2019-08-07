@@ -45,27 +45,35 @@ exports.getOnePost = async (req, res, next) => {
     switch (type) {
       case 'blog':
         negativeQuery += '-authors -url -media';
+        break;
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
         });
         negativeQuery += '-url -media';
+        break;
       case 'food':
         negativeQuery += '-authors -media';
+        break;
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-media';
+        break;
       case 'video':
         negativeQuery += '-authors';
+        break;
       case 'podcast':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
+        break;
       case 'song':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
+        break;
       case 'discussion':
         negativeQuery += '-url -media -authors';
+        break;
     }
 
     const post = await Post.findOne({
@@ -124,27 +132,35 @@ exports.getPosts = async (req, res, next) => {
     switch (type) {
       case 'blog':
         negativeQuery += '-authors -url -media';
+        break;
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
         });
         negativeQuery += '-url -media';
+        break;
       case 'food':
         negativeQuery += '-authors -media';
+        break;
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-media';
+        break;
       case 'video':
         negativeQuery += '-authors';
+        break;
       case 'podcast':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
+        break;
       case 'song':
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
+        break;
       case 'discussion':
         negativeQuery += '-url -media -authors';
+        break;
     }
 
     let user;

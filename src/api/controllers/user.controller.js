@@ -25,39 +25,50 @@ exports.getOneUser = async (req, res) => {
 
 exports.updateProfile = async (req, res, next) => {
   const { username, hobbies, links, sex, age, job } = req.body;
+  try {
+    const user = await User.findById(req.params.userId).lean();
+    if (!user) {
+      throw Boom.notFound('Not found user to update');
+    }
+    const query = {};
+    if (username) query.username = username;
+    if (sex) query.sex = sex;
+    if (age) query.age = age;
+    if (job) query.job = job;
+    if (hobbies) query.hobbies = hobbies;
+    if (links) query.links = links;
 
-  const query = {};
-  if (username) query.username = username;
-  if (sex) query.sex = sex;
-  if (age) query.age = age;
-  if (job) query.job = job;
-  if (hobbies) query.hobbies = hobbies;
-  if (links) query.links = links;
+    const result = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $set: query },
+      { new: true },
+    )
+      .lean()
+      .select('-__v -password -verifyCode');
 
-  const result = await User.findByIdAndUpdate(
-    req.params.userId,
-    { $set: query },
-    { new: true },
-  )
-    .lean()
-    .select('-__v -password -verifyCode');
+    if (!result) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        status: httpStatus.BAD_REQUEST,
+        message: 'Update profile failed',
+      });
+    }
 
-  if (!result) {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      status: httpStatus.BAD_REQUEST,
-      message: 'Update profile failed',
+    return res.status(200).json({
+      status: 200,
+      message: 'Update profile successfully',
+      data: result,
     });
+  } catch (error) {
+    return next(error)   
   }
-
-  return res.status(200).json({
-    status: 200,
-    message: 'Update profile successfully',
-    data: result,
-  });
 };
 
 exports.uploadAvatar = async (req, res, next) => {
   try {
+    const user = await User.findById(req.params.userId).lean();
+    if (!user) {
+      throw Boom.badRequest('Not found user to upload avatar')
+    }
     const newAvatar = req.file.path;
     const avatar = req.user.avatar || {};
     const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
@@ -78,6 +89,7 @@ exports.uploadAvatar = async (req, res, next) => {
         $set: {
           'avatar.public_id': uploadedAvatar.public_id,
           'avatar.url': uploadedAvatar.url,
+          'avatar.secure_url': uploadedAvatar.secure_url
         },
       },
       { new: true },
@@ -94,12 +106,17 @@ exports.uploadAvatar = async (req, res, next) => {
       data: updatedAvatar.avatar,
     });
   } catch (error) {
+    
     return next(error);
   }
 };
 
 exports.deleteAvatar = async (req, res, next) => {
   try {
+    const user = await User.findById(req.params.userId).lean();
+    if (!user) {
+      throw Boom.badRequest('Not found user to delete avatar')
+    }
     const isDeleted = await Promise.props({
       onCloudinary: cloudinary.uploader.destroy(req.params.avatarId),
       onDatabase: User.findByIdAndUpdate(

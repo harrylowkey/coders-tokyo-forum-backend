@@ -7,7 +7,7 @@ exports.checkAccessToken = async (req, res, next) => {
     const access_token = req.cookies.access_token;
     const decodedToken = Utils.verifyToken(access_token);
     if (!decodedToken)
-      throw Boom.badRequest('Invalid token or token expired time');
+      throw Boom.unauthorized('Invalid token or token expired time');
 
     const user = await User.findById(decodedToken.id);
     if (!user) {
