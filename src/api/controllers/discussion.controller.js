@@ -52,7 +52,7 @@ exports.createDiscussion = async (req, res, next, type) => {
         data: discussionCreated,
       });
     } catch (error) {
-      throw Boom.badRequest(error.message);
+      throw Boom.badRequest("Create new discusstion failed");
     }
   } catch (error) {
     return next(error);

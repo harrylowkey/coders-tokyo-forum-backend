@@ -24,10 +24,6 @@ exports.createBlog = async (req, res, next, type) => {
         coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
       });
 
-      if (!result.tags || !result.coverImage) {
-        throw Boom.serverUnavailable('Create tag and upload cover image false');
-      }
-
       const tagsId = result.tags.map(tag => ({
         _id: tag.id,
       }));

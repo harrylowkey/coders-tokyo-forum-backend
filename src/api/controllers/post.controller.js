@@ -38,6 +38,10 @@ exports.getOnePost = async (req, res, next) => {
         path: 'tags',
         select: 'tagName',
       },
+      {
+        path: 'likes',
+        select: 'username',
+      },
     ];
 
     let negativeQuery = '-__v ';
@@ -124,6 +128,10 @@ exports.getPosts = async (req, res, next) => {
       {
         path: 'tags',
         select: 'tagName',
+      },
+      {
+        path: 'likes',
+        select: 'username',
       },
     ];
 
@@ -227,6 +235,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
         select: '-__v',
         populate: { path: 'authors', select: 'name type' },
         populate: { path: 'tags', select: 'tagName' },
+        populate: { path: 'likes', select: 'username' },
       })
       .select('-__v');
     if (!tagsMatched) {
@@ -537,9 +546,16 @@ exports.getSavedPosts = async (req, res, next) => {
       .populate({
         path: 'savedPosts',
         select: '-__v',
-        populate: { path: 'tags', select: 'tagName type' },
+        populate: [
+          { 
+            path: 'tags', 
+            select: 'tagName type', 
+            populate: {
+              path: 'likes', select: 'username' 
+          }},
+        ],
       })
-      .select('-__v -links -hobbies -posts -likedPosts')
+      .select('savedPosts')
       .skip(skip)
       .limit(limit);
     if (!savedPosts) {
