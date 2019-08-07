@@ -8,7 +8,15 @@ const mongooseDb = require('./src/config/mongoose');
 const { port } = require('./src/config/vars');
 const error = require('./src/middlewares/error-handler');
 const cloudinary = require('./src/config/cloudinary');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 const app = express();
+
+//config swagger-ui-express
+var options = {
+  explorer: true
+};
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, options));
 
 // connect to database
 mongooseDb.connect();

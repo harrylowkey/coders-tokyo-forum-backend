@@ -20,7 +20,8 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'video',
-    chunk_size: 15000000, //15mb
+    chunk_size: 15000000, //15mb,
+    async: true,
   },
   audioConfig: {
     folder: 'Coders-Tokyo-Forum/posts/media',
@@ -28,6 +29,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'video',
     chunk_size: 10000000, //10mb
+    async: true,
   },
   coverImageConfig: {
     folder: 'Coders-Tokyo-Forum/posts',
@@ -35,6 +37,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
+    async: true,
     transformation: [
       {
         width: 1080,
@@ -48,6 +51,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
+    async: true,
     transformation: [
       {
         width: 400,
@@ -65,6 +69,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
+    async: true,
     transformation: [
       {
         width: 760,

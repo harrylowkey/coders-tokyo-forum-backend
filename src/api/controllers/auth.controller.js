@@ -10,7 +10,7 @@ exports.login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email })
       .lean()
-      .select('-__v -verifyCode');
+      .select('-__v -verifyCode -posts -likedPosts -savedPosts');
     if (!user) throw Boom.notFound('User not found');
 
     const isMatchedPassword = Utils.bcrypt.comparePassword(
@@ -41,7 +41,7 @@ exports.login = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   const isExistingEmail = await User.findOne({ email: req.body.email });
   try {
-    if (isExistingEmail) throw Boom.badRequest('Email already existed');
+    if (isExistingEmail) throw Boom.conflict('Email already existed');
 
     const result = await Promise.props({
       sentEmail: Utils.email.sendEmailWelcome(

@@ -32,8 +32,7 @@ exports.handler = (err, req, res, next) => {
   }
   if ((err.message = 'validation error')) {
     response.status = err.status || err.http_code;
-    response.message = err.message;
-    console.log(err)
+    response.message = 'field ' + err.errors[0].messages + ' in ' + err.errors[0].location;
     res.status(err.status || err.http_code).json(response);
     return res.end();
   }
