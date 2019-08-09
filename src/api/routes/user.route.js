@@ -30,7 +30,7 @@ router
     userController.uploadAvatar,
   );
 router
-  .route('/:userId/avatars/:avatarId')
+  .route('/:userId/avatar')
   .delete(authorization.checkAccessToken, userController.deleteAvatar);
 
 router

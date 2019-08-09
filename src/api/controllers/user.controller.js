@@ -106,7 +106,6 @@ exports.uploadAvatar = async (req, res, next) => {
       data: updatedAvatar.avatar,
     });
   } catch (error) {
-    
     return next(error);
   }
 };
@@ -115,10 +114,14 @@ exports.deleteAvatar = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
-      throw Boom.badRequest('Not found user to delete avatar')
+      throw Boom.notFound('Not found user to delete avatar')
+    }
+    const avatarId = user.avatar.public_id;
+    if (!avatarId) {
+      throw Boom.badRequest('Not exist avatar to delete')
     }
     const isDeleted = await Promise.props({
-      onCloudinary: cloudinary.uploader.destroy(req.params.avatarId),
+      onCloudinary: cloudinary.uploader.destroy(avatarId),
       onDatabase: User.findByIdAndUpdate(
         req.params.userId,
         {

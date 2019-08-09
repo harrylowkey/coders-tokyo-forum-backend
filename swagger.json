@@ -377,6 +377,11 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "access_token"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
@@ -617,7 +622,7 @@
       }
     },
     "/auth/logout": {
-      "post": {
+      "get": {
         "security": [
           {
             "cookieAuth": []
@@ -667,6 +672,28 @@
                   "example": {
                     "status": "401",
                     "message": "Invalid token or token expired time"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Missing authorization token"
                   }
                 }
               }
@@ -1290,7 +1317,7 @@
         }
       }
     },
-    "/users/{userId}/avatar/{avatarId}": {
+    "/users/{userId}/avatar": {
       "delete": {
         "security": [
           {
@@ -1306,14 +1333,6 @@
           {
             "in": "path",
             "name": "userId",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "path",
-            "name": "avatarId",
             "schema": {
               "type": "string"
             },
@@ -2192,6 +2211,484 @@
                   "example": {
                     "status": "400",
                     "message": "Create new post failed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/like": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "post"
+        ],
+        "summary": "like post",
+        "operationId": "like-post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "postId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like post succesfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Like post succesfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Like post failed, try later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Like post failed, try later"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found post to like",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Not found post to like"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/unlike": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "post"
+        ],
+        "summary": "unlike post",
+        "operationId": "unlike-post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "postId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unlike post succesfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Unlike post succesfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unlike post failed, try later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Unlike post failed, try later"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found post to unlike",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Not found post to unlike"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/save": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "post"
+        ],
+        "summary": "save post",
+        "operationId": "save-post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "postId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Save post succesfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Save post succesfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Save post failed, try later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Save post failed, try later"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found post to save",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Not found post to save"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/unsave": {
+      "post": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "post"
+        ],
+        "summary": "unsave post",
+        "operationId": "unsave-post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "postId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsave post succesfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "200",
+                    "message": "Unsave post succesfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsave post failed, try later",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Unsave post failed, try later"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found post to unsave",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Not found post to unsave"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream": {
+      "get": {
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "tags": [
+          "stream"
+        ],
+        "summary": "index",
+        "description": "Get 5 newest posts of each type",
+        "operationId": "index-stream",
+        "responses": {
+          "200": {
+            "description": "Get newest posts successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "totalPage": {
+                          "type": "number"
+                        },
+                        "pageSize": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "data": {
+                      "type": "array"
+                    }
+                  },
+                  "example": {
+                    "status": 200,
+                    "message": "Get newest posts successfully",
+                    "metaData": {
+                      "totalPage": 9,
+                      "pageSize": 5,
+                      "currentPage": 1
+                    },
+                    "data": [
+                      {
+                        "newestBlogs": [
+                          {
+                            "_id": "5d4565d8285d506a34e9f984",
+                            "tags": null,
+                            "comments": [],
+                            "likes": [],
+                            "userId": "5d45334cc2077677930e60f2",
+                            "topic": "edit topic v2",
+                            "description": "edit description v2",
+                            "content": "edit content v2",
+                            "type": "blog",
+                            "cover": null,
+                            "createdAt": "2019-08-03T10:46:02.987Z",
+                            "updatedAt": "2019-08-03T10:46:02.987Z"
+                          }
+                        ]
+                      },
+                      {
+                        "newestBookReviews": []
+                      },
+                      {
+                        "newestBookReviews": []
+                      },
+                      {
+                        "newestFoodReviews": []
+                      },
+                      {
+                        "newestMovieReviews": []
+                      },
+                      {
+                        "newestVideos": []
+                      },
+                      {
+                        "newestSongs": []
+                      },
+                      {
+                        "newestPodcasts": []
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error not defined yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "Error not defined yet"
                   }
                 }
               }

@@ -392,7 +392,7 @@ exports.likePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.badRequest('Not found post to like');
+      throw Boom.notFound('Not found post to like');
     }
 
     try {
@@ -434,7 +434,7 @@ exports.unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.badRequest('Not found post to unlike');
+      throw Boom.notFound('Not found post to unlike');
     }
 
     try {
@@ -476,7 +476,7 @@ exports.savePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.badRequest('Not found post to save');
+      throw Boom.notFound('Not found post to save');
     }
 
     try {
@@ -509,7 +509,7 @@ exports.unsavePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.badRequest('Not found post to unsave');
+      throw Boom.notFound('Not found post to unsave');
     }
 
     try {

@@ -16,7 +16,7 @@ exports.index = async (req, res, next) => {
           .populate({ path: 'tags', select: 'tagName' })
           .select('-__v -media -url -authors')
           .skip(skip)
-          .limit(limit),
+          .limit(limit), 
         newestBookReviews: Post.find({
           type: 'book',
         })
