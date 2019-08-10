@@ -20,10 +20,6 @@ exports.login = async (req, res, next) => {
     if (!isMatchedPassword) throw Boom.badRequest('Wrong password');
 
     const token = Utils.jwt.generateToken(user);
-    res.cookie('access_token', token, {
-      httpOnly: true,
-    });
-
     user.password = undefined;
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
