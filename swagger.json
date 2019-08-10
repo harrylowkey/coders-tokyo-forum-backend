@@ -625,7 +625,7 @@
       "get": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -706,7 +706,7 @@
       "put": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -880,7 +880,7 @@
       "put": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -961,7 +961,7 @@
       "get": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -1047,7 +1047,7 @@
       "put": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -1216,7 +1216,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -1321,7 +1321,7 @@
       "delete": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -1797,7 +1797,7 @@
       "put": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -1976,7 +1976,7 @@
       "delete": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2064,7 +2064,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2223,7 +2223,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2312,7 +2312,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2401,7 +2401,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2490,7 +2490,7 @@
       "post": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
@@ -2579,7 +2579,7 @@
       "get": {
         "security": [
           {
-            "cookieAuth": []
+            "bearerAuth": []
           }
         ],
         "tags": [
