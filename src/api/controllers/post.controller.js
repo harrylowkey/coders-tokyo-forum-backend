@@ -541,24 +541,24 @@ exports.getSavedPosts = async (req, res, next) => {
       params: { userId },
     } = req;
 
-    const savedPosts = await User.findById(userId)
-      .lean()
-      .populate({
-        path: 'savedPosts',
-        select: '-__v',
-        populate: [
-          { 
-            path: 'tags', 
-            select: 'tagName type', 
-            populate: {
-              path: 'likes', select: 'username' 
-          }},
-        ],
-      })
-      .select('savedPosts')
-      .skip(skip)
-      .limit(limit);
-    if (!savedPosts) {
+    const [allPosts, posts] = await Promise.all([ 
+      User.findById(userId).lean().select('savedPosts -_id'),
+      User.findById(userId, { savedPosts: { $slice: [ skip, limit ]}})
+          .lean()
+          .populate({
+            path: 'savedPosts',
+            select: '-__v',
+            populate: [
+              { 
+                path: 'tags', 
+                select: 'tagName type', 
+                populate: {
+                  path: 'likes', select: 'username' 
+              }},
+            ],
+          })
+    ])
+    if (!posts) {
       throw Boom.notFound('Get saved posts failed');
     }
 
@@ -566,15 +566,15 @@ exports.getSavedPosts = async (req, res, next) => {
       pageSize: limit,
       currentPage: req.query.page ? Number(req.query.page) : 1,
     };
-    let totalPage = savedPosts[0]
-      ? Math.ceil(savedPosts[0].posts.length / limit)
+    let totalPage = allPosts.savedPosts.length
+      ? allPosts.savedPosts.length / limit | 1
       : 0;
     metaData.totalPage = totalPage;
     return res.status(200).json({
       status: 200,
       message: 'success',
       metaData,
-      data: savedPosts,
+      data: posts.savedPosts,
     });
   } catch (error) {
     return next(error);
