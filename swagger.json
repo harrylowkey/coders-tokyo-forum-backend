@@ -373,11 +373,6 @@
       }
     },
     "securitySchemes": {
-      "cookieAuth": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "access_token"
-      },
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
@@ -1795,6 +1790,10 @@
         }
       },
       "put": {
+        "externalDocs": {
+          "description": "To edit post you have to follow in the detail docs here",
+          "url": "https://docs.google.com/document/d/1jBw9uiBkXc8R-5bOcgbJFNIGcbihT6367qNIY7njvYk/edit#"
+        },
         "security": [
           {
             "bearerAuth": []
@@ -2062,6 +2061,10 @@
     },
     "/posts": {
       "post": {
+        "externalDocs": {
+          "description": "To create post you have to follow in the detail docs here",
+          "url": "https://docs.google.com/document/d/1jBw9uiBkXc8R-5bOcgbJFNIGcbihT6367qNIY7njvYk/edit#"
+        },
         "security": [
           {
             "bearerAuth": []
