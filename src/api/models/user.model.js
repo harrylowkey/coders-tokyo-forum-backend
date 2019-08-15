@@ -43,11 +43,14 @@ const userSchema = new Schema(
         lowercase: true,
       },
     },
-    links: [
+    socialLinks: [
       {
-        type: Object,
-        trim: true,
-        lowercase: true,
+        type: {
+          type: String,
+        },
+        url: {
+          type: String,
+        },
       },
     ],
     sex: {

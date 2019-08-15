@@ -24,7 +24,7 @@ exports.getOneUser = async (req, res) => {
 };
 
 exports.updateProfile = async (req, res, next) => {
-  const { username, hobbies, links, sex, age, job } = req.body;
+  const { username, hobbies, socialLinks, sex, age, job } = req.body;
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
@@ -36,7 +36,7 @@ exports.updateProfile = async (req, res, next) => {
     if (age) query.age = age;
     if (job) query.job = job;
     if (hobbies) query.hobbies = hobbies;
-    if (links) query.links = links;
+    if (socialLinks) query.socialLinks = socialLinks;
 
     const result = await User.findByIdAndUpdate(
       req.params.userId,
