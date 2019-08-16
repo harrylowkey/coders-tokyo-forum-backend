@@ -47,6 +47,14 @@ router
   );
 
 router
+  .route('/users/:userId')
+  .get(paginate({ limit: 15 }), postController.getPosts);
+
+  router
+  .route('/saved-posts/users/:userId/')
+  .get(paginate({ limit: 15 }), postController.getSavedPosts);
+
+router
   .route('/:postId')
   .delete(authorization.checkAccessToken, postController.deletePost);
 
