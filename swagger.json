@@ -1402,215 +1402,6 @@
         }
       }
     },
-    "/users/{userId}/posts": {
-      "get": {
-        "tags": [
-          "user"
-        ],
-        "summary": "get posts of user",
-        "operationId": "get-posts-of-user",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "userId",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "number"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "type",
-            "schema": {
-              "type": "array",
-              "items": {
-                "enum": [
-                  "book",
-                  "blog",
-                  "dicussion",
-                  "movie",
-                  "food",
-                  "video",
-                  "song",
-                  "podcast"
-                ]
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "properties": {
-                        "pageSize": {
-                          "type": "number"
-                        },
-                        "currentPage": {
-                          "type": "number"
-                        },
-                        "totalPage": {
-                          "type": "number"
-                        }
-                      }
-                    },
-                    "data": {
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "2 cases: 1)Type query is required 2) This ${type} type is not supported yet`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "status": "400",
-                    "message": "2 cases: 1)Type query is required 2) This ${type} type is not supported yet`"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "2 cases: 1)Not found user to get ${type} 2) Not found ${type}`",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "status": "404",
-                    "message": "2 cases: 1)Not found user to get ${type} 2) Not found ${type}`"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/{userId}/saved-posts": {
-      "get": {
-        "tags": [
-          "user"
-        ],
-        "summary": "get saved posts of user",
-        "operationId": "get-saved-posts-of-user",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "userId",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "number"
-            },
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "properties": {
-                        "pageSize": {
-                          "type": "number"
-                        },
-                        "currentPage": {
-                          "type": "number"
-                        },
-                        "totalPage": {
-                          "type": "number"
-                        }
-                      }
-                    },
-                    "data": {
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Get saved posts failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "example": {
-                    "status": "400",
-                    "message": "Get saved posts failed"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/posts/by-tag": {
       "get": {
         "tags": [
@@ -2214,6 +2005,215 @@
                   "example": {
                     "status": "400",
                     "message": "Create new post failed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/users/{userId}/": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "summary": "get posts of user",
+        "operationId": "get-posts-of-user",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "book",
+                  "blog",
+                  "dicussion",
+                  "movie",
+                  "food",
+                  "video",
+                  "song",
+                  "podcast"
+                ]
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "pageSize": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "2 cases: 1)Type query is required 2) This ${type} type is not supported yet`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "2 cases: 1)Type query is required 2) This ${type} type is not supported yet`"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "2 cases: 1)Not found user to get ${type} 2) Not found ${type}`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "404",
+                    "message": "2 cases: 1)Not found user to get ${type} 2) Not found ${type}`"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/saved-posts/users/{userId}": {
+      "get": {
+        "tags": [
+          "post"
+        ],
+        "summary": "get saved posts of user",
+        "operationId": "get-saved-posts-of-user",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "pageSize": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        },
+                        "totalPage": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Get saved posts failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "status": "400",
+                    "message": "Get saved posts failed"
                   }
                 }
               }
