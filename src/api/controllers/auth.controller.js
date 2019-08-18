@@ -39,17 +39,25 @@ exports.register = async (req, res, next) => {
   try {
     if (isExistingEmail) throw Boom.conflict('Email already existed');
 
-    const newUser = await User.create(req.body);
-    newUser.password = undefined;
-    newUser.__v = undefined;
+    try {
+      const [newUser] = await Promise.all([
+        User.create(req.body),
+        Utils.email.sendEmailWelcome(req.body.email, req.body.username),
+      ]);
+      newUser.password = undefined;
+      newUser.__v = undefined;
 
-    Utils.email.sendEmailWelcome(req.body.email, req.body.username);
-    return res.status(httpStatus.OK).json({
-      status: 200,
-      message: 'Register successfully',
-    });
+      return res.status(httpStatus.OK).json({
+        status: 200,
+        message: 'Register successfully',
+      });
+    } catch (error) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Register failed',
+      });
+    }
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -64,16 +72,24 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
       code: Math.floor(Math.random() * (99999 - 10000)) + 100000, // 5 characters
       expiresIn: new Date().getTime() + 120000,
     };
-    await Promise.all([
-      Utils.email.sendEmailVerifyCode(email, verifyCode),
-      User.findOneAndUpdate(
-        { email },
-        {
-          $set: { verifyCode },
-        },
-        { upsert: true },
-      ),
-    ]);
+
+    try {
+      await Promise.all([
+        Utils.email.sendEmailVerifyCode(email, verifyCode),
+        User.findOneAndUpdate(
+          { email },
+          {
+            $set: { verifyCode },
+          },
+          { upsert: true },
+        ),
+      ]);
+    } catch (error) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Send email verify code failed',
+      });
+    }
     return res.status(200).json({
       status: 200,
       message: 'Send email verify code successfully',
@@ -91,9 +107,11 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     const user = await User.findOne({ 'verifyCode.code': code }).lean();
-    if (!user) throw Boom.notFound('Wrong code or code expired time');
+    if (!user) throw Boom.notFound('Wrong code');
+    const isExpired = Date.now() > user.verifyCode.expiresIn;
+    if (isExpired) throw Boom.badRequest('Code expired time');
 
-    if (user.verifyCode.code != code) throw Boom.badRequest('Wrong code');
+    if (user.verifyCode.code != code) throw Boom.badRequest('Code not matched');
     const hashPassword = bcrypt.hashSync(newPassword, 10);
     await User.findOneAndUpdate(
       { 'verifyCode.code': code },

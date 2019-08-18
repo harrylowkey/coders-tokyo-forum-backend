@@ -23,15 +23,12 @@ let emailConfig = async (subject, template, email) => {
     html: template,
   };
 
-  await transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.log(err);
-      console.log(err.message);
-      return false;
-    }
-    return;
-  });
-  return true;
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    throw new Error;
+  }
 };
 
 let sendEmailVerifyCode = async (email, codeVerify) => {
@@ -40,21 +37,28 @@ let sendEmailVerifyCode = async (email, codeVerify) => {
     path.join(__dirname, '../../views/verifyCode.pug'),
     { code: codeVerify.code },
   );
-  const result = await emailConfig(subject, template, email);
-  if (result) return codeVerify.code;
-  return false;
+  try {
+    return await emailConfig(subject, template, email);
+  } catch (error) {
+    throw new Error('Send email failed');
+  }
 };
 
 let sendEmailWelcome = async (email, name) => {
-  const subject = "Coders.Tokyo forum Welcome";
+  const subject = 'Coders.Tokyo forum Welcome';
   const template = pug.renderFile(
-    path.join(__dirname, "../../views/welcome.pug"),
-    { name }
+    path.join(__dirname, '../../views/welcome.pug'),
+    { name },
   );
-  return await emailConfig(subject, template, email);
+  try {
+    return await emailConfig(subject, template, email);
+  } catch (error) {
+    throw new Error('Send email failed');
+  }
+  
 };
 
 module.exports = {
   sendEmailVerifyCode,
-  sendEmailWelcome
+  sendEmailWelcome,
 };
