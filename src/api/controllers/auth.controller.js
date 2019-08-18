@@ -39,20 +39,17 @@ exports.register = async (req, res, next) => {
   try {
     if (isExistingEmail) throw Boom.conflict('Email already existed');
 
-    const result = await Promise.props({
-      sentEmail: Utils.email.sendEmailWelcome(
-        req.body.email,
-        req.body.username,
-      ),
-      newUser: User.create(req.body),
-    });
-    result.newUser.password = undefined;
-    result.newUser.__v = undefined;
+    const newUser = await User.create(req.body);
+    newUser.password = undefined;
+    newUser.__v = undefined;
+
+    Utils.email.sendEmailWelcome(req.body.email, req.body.username);
     return res.status(httpStatus.OK).json({
       status: 200,
       message: 'Register successfully',
     });
   } catch (error) {
+    console.log(error);
     return next(error);
   }
 };

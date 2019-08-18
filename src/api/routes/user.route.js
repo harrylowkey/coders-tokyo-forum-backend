@@ -7,13 +7,13 @@ const authorization = require('../../middlewares/authorize');
 const multerCloudinary = require('../../config/multer-cloudinary');
 
 const router = express.Router();
-// var storage = multer.diskStorage({
-//   filename: function(req, file, cb) {
-//     cb(null, file.originalname);
-//   },
-// });
+var storage = multer.diskStorage({
+  filename: function(req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
 
-// const upload = multer({ storage: storage });
+const upload = multer({ storage: storage });
 
 router
   .route('/:userId')
@@ -25,7 +25,7 @@ router
   .route('/:userId/avatars')
   .post(
     authorization.checkAccessToken,
-    // upload.single('path'),
+    upload.single('path'),
     userController.uploadAvatar,
   );
 router
