@@ -84,16 +84,16 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
           { upsert: true },
         ),
       ]);
+      return res.status(200).json({
+        status: 200,
+        message: 'Send email verify code successfully',
+      });
     } catch (error) {
       return res.status(400).json({
         status: 400,
         message: 'Send email verify code failed',
       });
     }
-    return res.status(200).json({
-      status: 200,
-      message: 'Send email verify code successfully',
-    });
   } catch (error) {
     return next(error);
   }
