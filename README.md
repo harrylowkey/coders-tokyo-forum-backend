@@ -7,6 +7,7 @@
  3. Checkout `develop branch`
  4. Run command `npm i`
  5. Run command `npm run dev` to start server
+ 6. APIs docs in the endpoint: http://localhost:3000/api-docs
 
 ## What is the Coders.Tokyo forum?
 - This project is aim to make a playground for every members of Coders.Tokyo. 
