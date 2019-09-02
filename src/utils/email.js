@@ -38,7 +38,7 @@ let sendEmailVerifyCode = async (email, codeVerify) => {
     { code: codeVerify.code },
   );
   try {
-    return await emailConfig(subject, template, email);
+    return emailConfig(subject, template, email);
   } catch (error) {
     throw new Error('Send email failed');
   }
@@ -51,7 +51,7 @@ let sendEmailWelcome = async (email, name) => {
     { name },
   );
   try {
-    return await emailConfig(subject, template, email);
+    return emailConfig(subject, template, email);
   } catch (error) {
     throw new Error('Send email failed');
   }

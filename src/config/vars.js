@@ -76,4 +76,33 @@ module.exports = {
       },
     ],
   },
+  queues: {
+    EMAIL_QUEUE: {
+      name: 'emailQueue',
+      prefix: '@@email_'
+    },
+    USER_QUEUE: {
+      name: 'userQueue',
+      prefix: '@@user_'
+    } ,
+    CLOUDINARY_QUEUE: {
+      name: 'cloudinaryQueue',
+      prefix: '@@cloudinaryPrefix_'
+    },
+    FILE_REFERENCE_QUEUE: {
+      name: 'fileReferenceQueue',
+      prefix: '@@fileReference_'
+    } 
+  },
+  redis: {
+    isCacheEnabled: true,
+    host: '127.0.0.1',
+    port: 6379
+  },
+  arena: {
+    port: 3001,
+    host: '127.0.0.1',
+    basePath: '/arena',
+    disableListen: false,
+  }
 };
