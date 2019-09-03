@@ -13,13 +13,23 @@ const filereferenceQueue = new Queue('filereference_queue', redis);
 
 emailQueue.send_welcome_email.process(async (job, done) => {
   try {
-    console.log('&&&&&&&&&&&&&&&&&&&')
-    const { email, username } = job;
-    const result = await Utils.sendEmailWelcome(email, username)
+    const { data: { email, username} } = job;
+    const result = Utils.sendEmailWelcome(email, username)
     done(null, result);
   } catch (e) {
-    console.log('Exception in send welcome email queue', e)
+    console.log('Exception in send welcome email queue', e);
     done(e, null);
+  }
+})
+
+emailQueue.send_verify_code.process(async (job, done) => {
+  try {
+    const { data: { email, verifyCode} } = job;
+    const result = await Utils.sendEmailVerifyCode(email, verifyCode);
+    done(null, result);
+  } catch (error) {
+    console.log('Exception in send verify email queue', error);
+    done(error, null);
   }
 })
 

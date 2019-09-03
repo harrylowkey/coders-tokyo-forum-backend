@@ -5,7 +5,6 @@ const Utils = require('../../utils');
 const User = require('../models/').User;
 const Promise = require('bluebird');
 const { emailQueue } = require('../../bull');
-const SEND_WELOME_EMAIL_QUEUE = 'send_welcome_email_queue';
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -44,8 +43,7 @@ exports.register = async (req, res, next) => {
     try {
       const [newUser] = await Promise.all([
         User.create(req.body),
-        // Utils.email.sendEmailWelcome(req.body.email, req.body.username),
-        emailQueue.send_welcome_email.add(SEND_WELOME_EMAIL_QUEUE, { email: req.body.email, username: req.body.username})
+        emailQueue.send_welcome_email.add({ email: req.body.email, username: req.body.username})
       ]);
       newUser.password = undefined;
       newUser.__v = undefined;
@@ -78,7 +76,7 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 
     try {
       await Promise.all([
-        Utils.email.sendEmailVerifyCode(email, verifyCode),
+        emailQueue.send_verify_code.add({ email, verifyCode: verifyCode.code }),
         User.findOneAndUpdate(
           { email },
           {

@@ -31,11 +31,11 @@ let emailConfig = async (subject, template, email) => {
   }
 };
 
-let sendEmailVerifyCode = async (email, codeVerify) => {
+let sendEmailVerifyCode = async (email, verifyCode) => {
   const subject = 'Verify Code';
   const template = pug.renderFile(
     path.join(__dirname, '../../views/verifyCode.pug'),
-    { code: codeVerify.code },
+    { verifyCode },
   );
   try {
     return emailConfig(subject, template, email);
