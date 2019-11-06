@@ -1,4 +1,4 @@
-const Boom = require('@hapi/boom');
+  const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
 const Utils = require('../../utils');

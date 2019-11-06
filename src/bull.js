@@ -27,9 +27,9 @@ emailQueue.send_verify_code.process(async (job, done) => {
     const { data: { email, verifyCode} } = job;
     const result = await Utils.sendEmailVerifyCode(email, verifyCode);
     done(null, result);
-  } catch (error) {
-    console.log('Exception in send verify email queue', error);
-    done(error, null);
+  } catch (e) {
+    console.log('Exception in send verify email queue', e);
+    done(e, null);
   }
 })
 
