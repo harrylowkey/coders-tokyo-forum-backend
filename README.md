@@ -17,7 +17,4 @@
  - [ ] Share with others about the food you like through blog
  - [ ] Ask question, make discussion at there
  - [ ] *Specially*, you can upload the songs or videos you like and share your thoughts, feelings about them.
-- ***After a week and a month***, there will be a ranking table showing the most popular bloggesr in this playground. 
-- And the most view blog of top 5 bloggers will be published on the official website of **Coders.Tokyo** - [coders.tokyo/blog](https://coders.tokyo/blog) 
-
 > ***Hope you can improve your writing skill and have many joys in this playground***
