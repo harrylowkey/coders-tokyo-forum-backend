@@ -84,12 +84,6 @@ const userSchema = new Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Rank',
     },
-    posts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
     likedPosts: [
       {
         type: mongoose.SchemaTypes.ObjectId,

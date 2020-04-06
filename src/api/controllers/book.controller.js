@@ -8,73 +8,53 @@ const { coverImageConfig } = require('../../config/vars');
 
 exports.createBookReview = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
+  req.body = JSON.parse(JSON.stringify(req.body))
   const {
     body: { tags, authors },
     user,
   } = req;
 
   try {
-    const newBook = new Post({
+    const newBook = {
       userId: user._id,
       ...req.body,
       type,
+    };
+
+    let promises = {
+      coverImageUploaded: cloudinary.uploader.upload(coverImage, coverImageConfig),
+      authorsCreated: Utils.post.creatAuthors(authors),
+      tagsCreated: Utils.post.createTags(tags)
+    }
+
+    let data = await Promise.props(promises)
+
+    const cover = {
+      public_id: data.coverImageUploaded.public_id,
+      url: data.coverImageUploaded.url,
+      secure_url: data.coverImageUploaded.secure_url,
+    };
+
+    newBook.cover = cover;
+    if (data.tagsCreated) newBook.tags = data.tagsCreated
+    if (data.authorsCreated) newBook.authors = data.authorsCreated
+
+    const createdBook = await new Post(newBook).save()
+    const dataRes = {
+      _id: createdBook._id,
+      topic: createdBook.topic,
+      description: createdBook.description,
+      content: createdBook.content,
+      type: createdBook.type,
+      cover: createdBook.cover,
+      authors,
+      tags,
+      createdAt: createdBook.createdAt
+    }
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
     });
-
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newBook, tags),
-        authors: Utils.post.creatAuthors(newBook, authors),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const authorsId = result.authors.map(author => ({
-        _id: author.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      newBook.tags = tagsId;
-      newBook.authors = authorsId;
-      newBook.cover = cover;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
-    try {
-      const isOk = await Promise.props({
-        pushBookIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newBook },
-          },
-          { new: true },
-        ),
-        createNewBook: newBook.save(),
-      });
-
-      const book = await Post.findById(isOk.createNewBook._id)
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name' },
-        ])
-        .select('-__v -media -url');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new book blog review successfully',
-        data: book,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Create book blog review failed');
-    }
   } catch (error) {
     return next(error);
   }

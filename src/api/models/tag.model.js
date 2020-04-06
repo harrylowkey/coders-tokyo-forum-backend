@@ -7,14 +7,10 @@ const tagSchema = new Schema({
     maxlength: 30,
     required: true,
     trim: true,
-  },
-  posts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Post',
-    },
-  ],
+  }
 });
+
+tagSchema.index({ tagName: 1 });
 
 const tagModel = mongoose.model('Tag', tagSchema);
 

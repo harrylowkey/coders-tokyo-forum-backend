@@ -13,58 +13,41 @@ exports.createBlog = async (req, res, next, type) => {
     user,
   } = req;
   try {
-    const newBlog = new Post({
-      userId: user,
+    const newBlog = {
+      userId: user._id,
       ...req.body,
       type,
+    }
+
+    let promises = [cloudinary.uploader.upload(coverImage, coverImageConfig)]
+    if (tags) {
+      promises.push(Utils.post.createTags(tags))
+    }
+
+    const [coverImageUploaded, tagNames] = await Promise.all(promises)
+    const cover = {
+      public_id: coverImageUploaded.public_id,
+      url: coverImageUploaded.url,
+      secure_url: coverImageUploaded.secure_url,
+    };
+    newBlog.cover = cover;
+    if (tagNames) newBlog.tags = tagNames
+
+    let createdBlog = await new Post(newBlog).save()
+    let dataRes = {
+      _id: createdBlog._id,
+      topic: createdBlog.topic,
+      description: createdBlog.description,
+      content: createdBlog.content,
+      type: createdBlog.type,
+      tags,
+      cover,
+      createdAt: createdBlog.createdAt,
+    }
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
     });
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newBlog, tags),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      newBlog.tags = tagsId;
-      newBlog.cover = cover;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
-
-    try {
-      const isOk = await Promise.props({
-        pushBlogIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newBlog },
-          },
-          { new: true },
-        ),
-        createNewBlog: newBlog.save(),
-      });
-
-      const blog = await Post.findById(isOk.createNewBlog._id)
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -url -authors');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new blog successfully',
-        data: blog,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Create new blog failed');
-    }
   } catch (error) {
     return next(error);
   }

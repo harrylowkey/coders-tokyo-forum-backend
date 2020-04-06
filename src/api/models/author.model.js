@@ -13,13 +13,7 @@ const authorSchema = new Schema({
     type: String,
     enum: types,
     default: 'author',
-  },
-  posts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Post',
-    },
-  ],
+  }
 });
 
 authorSchema.index({ name: 1, type: 1 });

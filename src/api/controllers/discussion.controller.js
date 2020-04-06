@@ -11,49 +11,29 @@ exports.createDiscussion = async (req, res, next, type) => {
   } = req;
 
   try {
-    const newDiscusstion = new Post({
-      userId: user,
+    let discussion = {
+      userId: user._id,
       topic,
       content,
       type,
+    };
+
+    if (tags) {
+      discussion.tags = await Utils.post.createTags(tags);
+    }
+    let createdDissucsion = await new Post(discussion).save()
+    let resData = {
+      _id: createdDissucsion._id,
+      tags,
+      topic,
+      content,
+      type,
+      createdAt: createdDissucsion.createdAt
+    }
+    return res.status(200).json({
+      staus: 200,
+      data: resData,
     });
-
-    const newTags = await Utils.post.createTags(newDiscusstion, tags);
-    if (!newTags) {
-      throw Boom.serverUnavailable('Create tag failed');
-    }
-    const tagsId = newTags.map(tag => ({
-      _id: tag.id,
-    }));
-    newDiscusstion.tags = tagsId;
-
-    try {
-      const isOk = await Promise.props({
-        pushDiscussionIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newDiscusstion },
-          },
-          { new: true },
-        ),
-        createNewDiscusstion: newDiscusstion.save(),
-      });
-
-      const discussionCreated = await Post.findById(
-        isOk.createNewDiscusstion._id,
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName ' })
-        .select(' -__v -url -media -authors');
-
-      return res.status(200).json({
-        staus: 200,
-        message: 'Create new discussion successfully',
-        data: discussionCreated,
-      });
-    } catch (error) {
-      throw Boom.badRequest("Create new discusstion failed");
-    }
   } catch (error) {
     return next(error);
   }
