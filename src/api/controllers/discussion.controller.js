@@ -18,13 +18,15 @@ exports.createDiscussion = async (req, res, next, type) => {
       type,
     };
 
+    let discussionTags
     if (tags) {
-      discussion.tags = await Utils.post.createTags(tags);
+      discussionTags = await Utils.post.createTags(tags)
+      discussion.tags = discussionTags.map(tag => tag._id)
     }
     let createdDissucsion = await new Post(discussion).save()
     let resData = {
       _id: createdDissucsion._id,
-      tags,
+      tags: discussionTags,
       topic,
       content,
       type,

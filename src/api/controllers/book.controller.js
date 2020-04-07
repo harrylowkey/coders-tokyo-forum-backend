@@ -36,8 +36,8 @@ exports.createBookReview = async (req, res, next, type) => {
     };
 
     newBook.cover = cover;
-    if (data.tagsCreated) newBook.tags = data.tagsCreated
-    if (data.authorsCreated) newBook.authors = data.authorsCreated
+    if (data.tagsCreated) newBook.tags = data.tagsCreated.map(tag => tag._id)
+    if (data.authorsCreated) newBook.authors = data.authorsCreated.map(author => author._id)
 
     const createdBook = await new Post(newBook).save()
     const dataRes = {
@@ -47,8 +47,8 @@ exports.createBookReview = async (req, res, next, type) => {
       content: createdBook.content,
       type: createdBook.type,
       cover: createdBook.cover,
-      authors,
-      tags,
+      authors: data.authorsCreated,
+      tags: data.tagsCreated,
       createdAt: createdBook.createdAt
     }
     return res.status(200).json({

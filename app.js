@@ -33,20 +33,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 //setup bull-arena
-const arenaRoutes = Arena(
-  {
-    queues: queues.map(q => ({
-      name: q.name,
-      prefix: q.options.prefix,
-      hostId: q.name,
-      redis: redis,
-      type: 'bull',
-    })),
-  },
-  arena,
-);
+// const arenaRoutes = Arena(
+//   {
+//     queues: queues.map(q => ({
+//       name: q.name,
+//       prefix: q.options.prefix,
+//       hostId: q.name,
+//       redis: redis,
+//       type: 'bull',
+//     })),
+//   },
+//   arena,
+// );
 
-app.use('/arena', arenaRoutes);
+// app.use('/arena', arenaRoutes);
 
 //setup routes
 app.use('/api/v1', apiRoutes);

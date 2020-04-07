@@ -24,14 +24,14 @@ exports.createBlog = async (req, res, next, type) => {
       promises.push(Utils.post.createTags(tags))
     }
 
-    const [coverImageUploaded, tagNames] = await Promise.all(promises)
+    const [coverImageUploaded, blogTags] = await Promise.all(promises)
     const cover = {
       public_id: coverImageUploaded.public_id,
       url: coverImageUploaded.url,
       secure_url: coverImageUploaded.secure_url,
     };
     newBlog.cover = cover;
-    if (tagNames) newBlog.tags = tagNames
+    if (blogTags) newBlog.tags = blogTags.map(tag => tag._id)
 
     let createdBlog = await new Post(newBlog).save()
     let dataRes = {
@@ -40,7 +40,7 @@ exports.createBlog = async (req, res, next, type) => {
       description: createdBlog.description,
       content: createdBlog.content,
       type: createdBlog.type,
-      tags,
+      tags: blogTags,
       cover,
       createdAt: createdBlog.createdAt,
     }

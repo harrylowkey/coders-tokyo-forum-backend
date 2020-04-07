@@ -84,7 +84,10 @@ exports.createTags = async (tags) => {
     const tagNames = await Promise.props(tagPromises)
     Object.keys(tagNames).map(key => {
       if (!tagNames[key]) newTags.push(key)
-      else existedTags.push(tagNames[key]._id)
+      else existedTags.push({
+        _id: tagNames[key]._id,
+        tagName: tagNames[key].tagName
+      })
     })
 
     let createdTags = []
@@ -95,7 +98,10 @@ exports.createTags = async (tags) => {
       })
 
       let tags = await Promise.props(newTagPromises)
-      createdTags = Object.keys(tags).map(key => tags[key]._id)
+      createdTags = Object.keys(tags).map(key => ({
+        _id: tags[key]._id,
+        tagName: tags[key]._id.tagName
+      }))
     }
 
     return [...existedTags, ...createdTags]
@@ -164,7 +170,11 @@ exports.creatAuthors = async (_authors) => {
         let type = key.split('_')[1]
         newAuthors.push({ name: authorName, type })
       }
-      else existedAuthors.push(authors[key]._id)
+      else existedAuthors.push({
+        _id: authors[key]._id,
+        name: authors[key].name,
+        type: authors[key].type
+      })
     })
     
     let createdAuthors = []
@@ -175,7 +185,11 @@ exports.creatAuthors = async (_authors) => {
       })
 
       let authors = await Promise.props(newAuthorPromises)
-      createdAuthors = Object.keys(authors).map(key => authors[key]._id)
+      createdAuthors = Object.keys(authors).map(key => ({
+        _id: authors[key]._id,
+        name: authors[key].name,
+        type: authors[key].type
+      }))
     }
 
     return [...existedAuthors, ...createdAuthors]
