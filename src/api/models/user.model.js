@@ -84,18 +84,6 @@ const userSchema = new Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Rank',
     },
-    likedPosts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
-    savedPosts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
     verifyCode: {
       code: Number,
       expiresIn: Number,

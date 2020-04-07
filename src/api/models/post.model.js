@@ -143,7 +143,13 @@ const postSchema = new Schema(
           },
         },
       ],
-    },
+    }, 
+    savedBy: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+      }
+    ]
   },
   { timestamps: true },
 );

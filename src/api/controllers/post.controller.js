@@ -396,35 +396,23 @@ exports.likePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to like');
+      throw Boom.notFound('Not found post');
     }
 
-    try {
-      await Promise.props({
-        pushUserIdToPost: Post.findByIdAndUpdate(
-          postId,
-          {
-            $push: { likes: user._id },
-          },
-          { new: true },
-        ),
-        pushLikedPostToUser: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { likedPosts: postId },
-          },
-          { new: true },
-        ),
-      });
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $push: { likes: user._id },
+      },
+      { new: true, upsert: true },
+    )
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Like post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Like post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Like post succesfully',
+    });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
@@ -438,34 +426,21 @@ exports.unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to unlike');
+      throw Boom.notFound('Not found post')
     }
 
-    try {
-      await Promise.props({
-        pushUserIdToPost: Post.findByIdAndUpdate(
-          postId,
-          {
-            $pull: { likes: user._id },
-          },
-          { new: true },
-        ),
-        pullLikedPostToUser: User.findByIdAndUpdate(
-          user._id,
-          {
-            $pull: { likedPosts: postId },
-          },
-          { new: true },
-        ),
-      });
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $pull: { likes: user._id },
+      },
+      { new: true },
+    )
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Unlike post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Unlike post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Unlike post succesfully',
+    });
   } catch (error) {
     return next(error);
   }
@@ -483,23 +458,21 @@ exports.savePost = async (req, res, next) => {
       throw Boom.notFound('Not found post to save');
     }
 
-    try {
-      await User.findByIdAndUpdate(
-        user._id,
-        {
-          $push: { savedPosts: postId },
-        },
-        { new: true },
-      );
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $push: { savedBy: user._id },
+      },
+      { new: true, upsert: true },
+    );
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Save post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Save post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Save post succesfully',
+    });
+
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
@@ -516,22 +489,19 @@ exports.unsavePost = async (req, res, next) => {
       throw Boom.notFound('Not found post to unsave');
     }
 
-    try {
-      await User.findByIdAndUpdate(
-        user._id,
-        {
-          $pull: { savedPosts: postId },
-        },
-        { new: true },
-      );
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $pull: { savedBy: user._id },
+      },
+      { new: true },
+    );
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Unsave post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Unsave post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Unsave post succesfully',
+    });
+
   } catch (error) {
     return next(error);
   }
@@ -540,46 +510,30 @@ exports.unsavePost = async (req, res, next) => {
 exports.getSavedPosts = async (req, res, next) => {
   try {
     const {
-      skip,
+      page,
       limit,
       params: { userId },
     } = req;
 
-    const [allPosts, posts] = await Promise.all([
-      User.findById(userId).lean().select('savedPosts -_id'),
-      User.findById(userId, { savedPosts: { $slice: [skip, limit] } })
+    const [counter, posts] = await Promise.all([
+      Post.count({ savedBy: { $in: [userId] } }).lean(),
+      Post.find({ savedBy: { $in: [userId] } })
         .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
         .populate({
-          path: 'savedPosts',
-          select: '-__v',
-          populate: [
-            {
-              path: 'tags',
-              select: 'tagName type',
-              populate: {
-                path: 'likes', select: 'username'
-              }
-            },
-          ],
+          path: 'savedBy',
+          select: '_id username',
         })
+        .populate({ path: 'authors', select: '_id name type' })
+        .populate({ path: 'tags', select: '_id tagName' })
+        .populate({ path: 'likes', select: '_id username' }),
     ])
-    if (!posts) {
-      throw Boom.notFound('Get saved posts failed');
-    }
 
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = allPosts.savedPosts.length
-      ? allPosts.savedPosts.length / limit | 1
-      : 0;
-    metaData.totalPage = totalPage;
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
-      data: posts.savedPosts,
+      metaData: Utils.post.getMetadata(page, limit, counter),
+      data: posts,
     });
   } catch (error) {
     return next(error);
