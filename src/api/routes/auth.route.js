@@ -15,9 +15,6 @@ const router = express.Router();
 router.route('/register').post(validate(register), authController.register);
 router.route('/login').post(validate(login), authController.login);
 router
-  .route('/logout')
-  .get(authorization.checkAccessToken, authController.logout);
-router
   .route('/forgot-password')
   .put(validate(forgotPassword), authController.forgotPassword);
 router
