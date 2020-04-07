@@ -18,82 +18,72 @@ exports.createFoodReview = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
   const foodPhotos = req.files['foodPhotos'].map(photo => photo.path);
   try {
-    const newFoodBlog = new Post({
+    const newFoodBlog = {
       userId: user._id,
       ...req.body,
       type,
+    };
+
+    let promises = {
+      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
+      foodPhotos: Utils.cloudinary.uploadManyImages(
+        foodPhotos,
+        foodPhotosConfig,
+      )
+    }
+
+    if (tags) {
+      promises.tagsCreated = Utils.post.createTags(tags)
+    }
+    const result = await Promise.props(promises);
+    const cover = {
+      public_id: result.coverImage.public_id,
+      url: result.coverImage.url,
+      secure_url: result.coverImage.secure_url,
+    };
+
+    const photos = result.foodPhotos.map(photo => ({
+      public_id: photo.public_id,
+      url: photo.url,
+      secure_url: photo.secure_url,
+    }));
+
+    const food = {
+      foodName,
+      price,
+      location,
+      star,
+      photos,
+    };
+
+    if (result.tagsCreated) {
+      newFoodBlog.tags = result.tagsCreated.map(tag => tag._id);
+    }
+
+    newFoodBlog.cover = cover;
+    newFoodBlog.food = food;
+
+    const createdFoodBlog = await new Post(newFoodBlog).save()
+    const dataRes = {
+      _id: createdFoodBlog._id,
+      tags: result.tagsCreated || [],
+      food: createdFoodBlog.food,
+      topic: createdFoodBlog.topic,
+      description: createdFoodBlog.description,
+      content: createdFoodBlog.content,
+      type: createdFoodBlog.type,
+      cover: createdFoodBlog.cover,
+      createdAt: createdFoodBlog.createdAt
+    }
+    return res.status(200).json({
+      status: 200,
+      data: dataRes
     });
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newFoodBlog, tags),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-        foodPhotos: Utils.cloudinary.uploadManyImages(
-          foodPhotos,
-          foodPhotosConfig,
-        ),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      const photos = result.foodPhotos.map(photo => ({
-        public_id: photo.public_id,
-        url: photo.url,
-        secure_url: photo.secure_url,
-      }));
-
-      const food = {
-        foodName,
-        price,
-        location,
-        star,
-        photos,
-      };
-
-      newFoodBlog.tags = tagsId;
-      newFoodBlog.cover = cover;
-      newFoodBlog.food = food;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
-
-    try {
-      const isOk = await Promise.props({
-        pushBlogIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newFoodBlog },
-          },
-          { new: true },
-        ),
-        createNewBlog: newFoodBlog.save(),
-      });
-
-      const foodBlog = await Post.findById(isOk.createNewBlog._id)
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -authors');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new food blog review successfully',
-        data: foodBlog,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Create new food blog review failed');
-    }
   } catch (error) {
     console.log(error);
-    return next(error);
+    throw Boom.badRequest('Create new food blog review failed');
   }
+
 };
 
 exports.editFoodReview = async (req, res, next, type) => {
