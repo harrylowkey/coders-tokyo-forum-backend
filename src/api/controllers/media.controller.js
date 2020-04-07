@@ -245,80 +245,60 @@ exports.createAudio = async (req, res, next, type) => {
     user,
   } = req;
   try {
-    const newAudio = new Post({
+    const newAudio = {
       userId: user._id,
       ...req.body,
       type,
-    });
+    };
 
     const audio = req.files['audio'][0].path;
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newAudio, tags),
-        authors: Utils.post.creatAuthors(newAudio, authors),
-        uploadedVideo: cloudinary.uploader.upload(audio, audioConfig),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const authorsId = result.authors.map(author => ({
-        _id: author.id,
-      }));
-
-      const media = {
-        public_id: result.uploadedVideo.public_id,
-        url: result.uploadedVideo.url,
-        secure_url: result.uploadedVideo.secure_url,
-        type: result.uploadedVideo.type,
-        signature: result.uploadedVideo.signature,
-        width: result.uploadedVideo.width,
-        height: result.uploadedVideo.height,
-        format: result.uploadedVideo.format,
-        resource_type: result.uploadedVideo.resource_type,
-        frame_rate: result.uploadedVideo.frame_rate,
-        bit_rate: result.uploadedVideo.bit_rate,
-        duration: result.uploadedVideo.duration,
-      };
-
-      newAudio.tags = tagsId;
-      newAudio.authors = authorsId;
-      newAudio.media = media;
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest(error.message);
+    let promises = {
+      uploadedVideo: cloudinary.uploader.upload(audio, audioConfig),
     }
 
-    try {
-      const isOk = await Promise.props({
-        pushAudioIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newAudio },
-          },
-          { new: true },
-        ),
-        createNewAudio: newAudio.save(),
-      });
-
-      const audioCreated = await Post.findById(isOk.createNewAudio._id)
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -url');
-
-      return res.status(200).json({
-        status: 200,
-        message: `Create new ${type} successfully`,
-        data: audioCreated,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest(`Create new ${type} failed`);
+    if (tags) {
+      promises.tagsCreated = Utils.post.createTags(tags)
     }
+    if (authors) {
+      promises.authorsCreated = Utils.post.creatAuthors(authors)
+    }
+    const data = await Promise.props(promises);
+
+    const media = {
+      public_id: data.uploadedVideo.public_id,
+      url: data.uploadedVideo.url,
+      secure_url: data.uploadedVideo.secure_url,
+      type: data.uploadedVideo.type,
+      signature: data.uploadedVideo.signature,
+      width: data.uploadedVideo.width,
+      height: data.uploadedVideo.height,
+      format: data.uploadedVideo.format,
+      resource_type: data.uploadedVideo.resource_type,
+      frame_rate: data.uploadedVideo.frame_rate,
+      bit_rate: data.uploadedVideo.bit_rate,
+      duration: data.uploadedVideo.duration,
+    };
+
+    if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
+    if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
+    newAudio.media = media;
+
+    const createdNewAudio = await new Post(newAudio).save()
+    let dataRes = {
+      _id: createdNewAudio._id,
+      topic: createdNewAudio._topic,
+      description: createdNewAudio.description,
+      content: createdNewAudio.content,
+      type: createdNewAudio.type,
+      updatedAt: createdNewAudio.updatedAt,
+      tags: data.tagsCreated || [],
+      media: createdNewAudio.media
+    }
+
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
