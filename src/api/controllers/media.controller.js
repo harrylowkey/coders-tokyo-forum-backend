@@ -13,86 +13,71 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
   } = req;
 
   try {
-    const newVideo = new Post({
+    const newVideo = {
       userId: user._id,
       ...req.body,
       type,
-    });
+    };
 
     // case: gán link video bên ngoài
+    let videoTags
     if (isUpload == 'false') {
-      const newTags = await Utils.post.createTags(newVideo, tags);
-      if (!newTags) {
-        throw Boom.serverUnavailable('Create tag failed');
+      if (tags) {
+        videoTags = await Utils.post.createTags(tags);
+        newVideo.tags = videoTags.map(tag => tag._id);
       }
-      const tagsId = newTags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      newVideo.tags = tagsId;
     }
 
     // case: user upload video
     if (isUpload == 'true') {
       const video = req.files['video'][0].path;
-      try {
-        const result = await Promise.props({
-          tags: Utils.post.createTags(newVideo, tags),
-          uploadedVideo: cloudinary.uploader.upload(video, videoConfig),
-        });
-
-        const tagsId = result.tags.map(tag => ({
-          _id: tag.id,
-        }));
-
-        const media = {
-          public_id: result.uploadedVideo.public_id,
-          url: result.uploadedVideo.url,
-          secure_url: result.uploadedVideo.secure_url,
-          type: result.uploadedVideo.type,
-          signature: result.uploadedVideo.signature,
-          width: result.uploadedVideo.width,
-          height: result.uploadedVideo.height,
-          format: result.uploadedVideo.format,
-          resource_type: result.uploadedVideo.resource_type,
-          frame_rate: result.uploadedVideo.frame_rate,
-          bit_rate: result.uploadedVideo.bit_rate,
-          duration: result.uploadedVideo.duration,
-        };
-
-        newVideo.tags = tagsId;
-        newVideo.media = media;
-      } catch (error) {
-        throw Boom.badRequest(error.message);
+      let promises = {
+        uploadedVideo: cloudinary.uploader.upload(video, videoConfig),
       }
+
+      if (tags) {
+        promises.tagsCreated = Utils.post.createTags(tags)
+      }
+      const result = await Promise.props(promises);
+
+      const media = {
+        public_id: result.uploadedVideo.public_id,
+        url: result.uploadedVideo.url,
+        secure_url: result.uploadedVideo.secure_url,
+        type: result.uploadedVideo.type,
+        signature: result.uploadedVideo.signature,
+        width: result.uploadedVideo.width,
+        height: result.uploadedVideo.height,
+        format: result.uploadedVideo.format,
+        resource_type: result.uploadedVideo.resource_type,
+        frame_rate: result.uploadedVideo.frame_rate,
+        bit_rate: result.uploadedVideo.bit_rate,
+        duration: result.uploadedVideo.duration,
+      };
+
+      if (result.tagsCreated) {
+        videoTags = result.tagsCreated
+        newVideo.tags = videoTags.map(tag => tag._id);
+      }
+      newVideo.media = media;
     }
 
-    try {
-      const isOk = await Promise.props({
-        pushVideoIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newVideo },
-          },
-          { new: true },
-        ),
-        createNewVideo: newVideo.save(),
-      });
-
-      const videoCreated = await Post.findById(isOk.createNewVideo._id)
-        .lean()
-        .populate([{ path: 'tags', select: 'tagName' }])
-        .select('-__v -authors');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new video successfully',
-        data: videoCreated,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Create video failed');
+    let createdNewVideo = await new Post(newVideo).save()
+    let dataRes = {
+      _id: createdNewVideo._id,
+      url: createdNewVideo.url || null,
+      topic: createdNewVideo._topic,
+      description: createdNewVideo.description,
+      content: createdNewVideo.content,
+      type: createdNewVideo.type,
+      updatedAt: createdNewVideo.updatedAt,
+      tags: videoTags || [],
+      media: createdNewVideo.media || null
     }
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
+    });
   } catch (error) {
     console.log(error);
     return next(error);

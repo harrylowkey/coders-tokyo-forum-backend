@@ -40,7 +40,7 @@ exports.createBlog = async (req, res, next, type) => {
       description: createdBlog.description,
       content: createdBlog.content,
       type: createdBlog.type,
-      tags: blogTags,
+      tags: blogTags || [],
       cover,
       createdAt: createdBlog.createdAt,
     }

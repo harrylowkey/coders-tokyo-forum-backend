@@ -47,8 +47,8 @@ exports.createBookReview = async (req, res, next, type) => {
       content: createdBook.content,
       type: createdBook.type,
       cover: createdBook.cover,
-      authors: data.authorsCreated,
-      tags: data.tagsCreated,
+      authors: data.authorsCreated || [],
+      tags: data.tagsCreated || [],
       createdAt: createdBook.createdAt
     }
     return res.status(200).json({

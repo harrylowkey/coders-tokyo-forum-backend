@@ -14,68 +14,53 @@ exports.createMovieReview = async (req, res, next, type) => {
   } = req;
 
   try {
-    const newMovieReview = new Post({
-      userId: user,
+    const newMovieReview = {
+      userId: user.id,
       ...req.body,
       type,
+    };
+
+    let promises = {
+      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig)
+    }
+    if (tags) {
+      promises.tagsCreated = Utils.post.createTags(tags)
+    }
+    if (authors) {
+      promises.authorsCreated = Utils.post.creatAuthors(authors)
+    }
+
+    const data = await Promise.props(promises);
+   
+    const cover = {
+      public_id: data.coverImage.public_id,
+      url: data.coverImage.url,
+      secure_url: data.coverImage.secure_url,
+    };
+
+    newMovieReview.cover = cover;
+    if (data.tagsCreated) newMovieReview.tags = data.tagsCreated.map(tag => tag._id)
+    if (data.authorsCreated) newMovieReview.authors = data.authorsCreated.map(author => author._id)
+    
+
+    const createdMovieReview = await new Post(newMovieReview).save()
+    let dataRes = {
+      _id: createdMovieReview.id,
+      tags: data.tagsCreated || [],
+      authors: data.authorsCreated || [],
+      url: createdMovieReview.url,
+      topic: createdMovieReview.topic,
+      description: createdMovieReview.description,
+      content: createdMovieReview.content,
+      type: createdMovieReview.type,
+      cover: createdMovieReview.cover,
+      createdAt: createdMovieReview.createdAt
+    }
+
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
     });
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newMovieReview, tags),
-        authors: Utils.post.creatAuthors(newMovieReview, authors),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const authorsId = result.authors.map(author => ({
-        _id: author.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      newMovieReview.tags = tagsId;
-      newMovieReview.authors = authorsId;
-      newMovieReview.cover = cover;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
-
-    try {
-      const isOk = await Promise.props({
-        pushBlogIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newMovieReview },
-          },
-          { new: true },
-        ),
-        createNewBlog: newMovieReview.save(),
-      });
-
-      const movieBlog = await Post.findById(isOk.createNewBlog._id)
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -media');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new movie blog review successfully',
-        data: movieBlog,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Create new movie blog review failed');
-    }
   } catch (error) {
     console.log(error);
     return next(error);

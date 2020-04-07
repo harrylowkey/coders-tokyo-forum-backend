@@ -26,7 +26,7 @@ exports.createDiscussion = async (req, res, next, type) => {
     let createdDissucsion = await new Post(discussion).save()
     let resData = {
       _id: createdDissucsion._id,
-      tags: discussionTags,
+      tags: discussionTags || [],
       topic,
       content,
       type,
