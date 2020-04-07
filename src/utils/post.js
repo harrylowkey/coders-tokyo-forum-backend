@@ -242,6 +242,7 @@ exports.getMetadata = (page, limit, count) => {
 }
 
 exports.standardizePageLimit20 = (page = 0, limit = 20) => {
+  console.log('limit', limit)
   page = Math.round(page)
   limit = Math.round(limit)
   page = Math.max(0, page || 1)

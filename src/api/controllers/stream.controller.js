@@ -1,11 +1,10 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
 const Post = require('../models').Post;
+const Utils = require('../../utils')
 
 exports.index = async (req, res, next) => {
-  const { skip, limit } = req;
-
-  try {
+  const { page, limit } = req;
     try {
       const result = await Promise.props({
         newestBlogs: Post.find({
@@ -15,7 +14,7 @@ exports.index = async (req, res, next) => {
           .sort({ createdAt: -1 })
           .populate({ path: 'tags', select: 'tagName' })
           .select('-__v -media -url -authors')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit), 
         newestBookReviews: Post.find({
           type: 'book',
@@ -27,7 +26,7 @@ exports.index = async (req, res, next) => {
             { path: 'authors', select: 'name' },
           ])
           .select('-__v -media -url')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestFoodReviews: Post.find({
@@ -37,7 +36,7 @@ exports.index = async (req, res, next) => {
           .sort({ createdAt: -1 })
           .populate({ path: 'tags', select: 'tagName' })
           .select('-__v -media -authors')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestMovieReviews: Post.find({
@@ -50,7 +49,7 @@ exports.index = async (req, res, next) => {
             { path: 'authors', select: 'name type' },
           ])
           .select('-__v -media')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestVideos: Post.find({
@@ -60,7 +59,7 @@ exports.index = async (req, res, next) => {
           .sort({ createdAt: -1 })
           .populate([{ path: 'tags', select: 'tagName' }])
           .select('-__v -authors')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestSongs: Post.find({
@@ -73,7 +72,7 @@ exports.index = async (req, res, next) => {
             { path: 'authors', select: 'name type' },
           ])
           .select('-__v -url')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestPodcasts: Post.find({
@@ -86,7 +85,7 @@ exports.index = async (req, res, next) => {
             { path: 'authors', select: 'name type' },
           ])
           .select('-__v -url')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
 
         newestDiscussions: Post.find({
@@ -96,16 +95,10 @@ exports.index = async (req, res, next) => {
           .sort({ createdAt: -1 })
           .populate({ path: 'tags', select: 'tagName ' })
           .select(' -__v -url -media -authors')
-          .skip(skip)
+          .skip((page - 1) * limit)
           .limit(limit),
-        total: Post.find({}).lean(),
+        counter: Post.count({}).lean(),
       });
-      let totalPage = Math.ceil(result.total.length / limit);
-      let metaData = {
-        totalPage,
-        pageSize: limit,
-        currentPage: req.query.page ? Number(req.query.page) : 1,
-      };
 
       let posts = [];
       posts = Object.keys(result).reduce((postsArr, key) => {
@@ -116,12 +109,9 @@ exports.index = async (req, res, next) => {
       return res.status(200).json({
         status: 200,
         message: 'Get newest posts successfully',
-        metaData,
+        metaData: Utils.post.getMetadata(page, limit, result.counter),
         data: posts,
       });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
   } catch (error) {
     return next(error);
   }
