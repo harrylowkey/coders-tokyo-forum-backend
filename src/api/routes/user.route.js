@@ -17,7 +17,7 @@ const upload = multer({ storage: storage });
 
 router
   .route('/:userId')
-  .get(authorization.checkAccessToken, userController.getOneUser);
+  .get(authorization.checkAccessToken, userController.getOne);
 router
   .route('/:userId')
   .put(authorization.checkAccessToken, userController.updateProfile);
@@ -31,5 +31,9 @@ router
 router
   .route('/:userId/avatar')
   .delete(authorization.checkAccessToken, userController.deleteAvatar);
+
+  router
+  .route('/:username')
+  .get(userController.getByUsername);
 
 module.exports = router;

@@ -6,21 +6,22 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { avatarConfig } = require('../../config/vars');
 
-exports.getOneUser = async (req, res) => {
-  const user = await User.findById(req.params.userId)
-    .lean()
-    .select('-verifyCode -__v -password');
-  if (!user) {
-    return res.status(httpStatus.NOT_FOUND).json({
-      status: httpStatus.NOT_FOUND,
-      message: 'Not found user profile',
+exports.getOne = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .lean()
+      .select('-verifyCode -__v -password');
+
+    if (!user) throw Boom.badRequest('Not found user')
+    return res.status(200).json({
+      status: 200,
+      message: 'success',
+      data: user,
     });
+  } catch (error) {
+    console.log(error)
+    return next(error)
   }
-  return res.status(200).json({
-    status: 200,
-    message: 'success',
-    data: user,
-  });
 };
 
 exports.updateProfile = async (req, res, next) => {
@@ -28,7 +29,7 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
-      throw Boom.notFound('Not found user to update');
+      throw Boom.badRequest('Not found user');
     }
     const query = {};
     if (username) query.username = username;
@@ -47,10 +48,7 @@ exports.updateProfile = async (req, res, next) => {
       .select('-__v -password -verifyCode');
 
     if (!result) {
-      return res.status(httpStatus.BAD_REQUEST).json({
-        status: httpStatus.BAD_REQUEST,
-        message: 'Update profile failed',
-      });
+      throw Boom.badRequest('Update profile failed')
     }
 
     return res.status(200).json({
@@ -59,7 +57,7 @@ exports.updateProfile = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    return next(error)   
+    return next(error)
   }
 };
 
@@ -67,7 +65,7 @@ exports.uploadAvatar = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
-      throw Boom.badRequest('Not found user to upload avatar')
+      throw Boom.badRequest('Not found user')
     }
     const newAvatar = req.file.path;
     const avatar = req.user.avatar || {};
@@ -102,7 +100,7 @@ exports.uploadAvatar = async (req, res, next) => {
 
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
-      message: 'success',
+      message: 'Success',
       data: updatedAvatar.avatar,
     });
   } catch (error) {
@@ -114,7 +112,7 @@ exports.deleteAvatar = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
-      throw Boom.notFound('Not found user to delete avatar')
+      throw Boom.notFound('Not found user')
     }
     const avatarId = user.avatar.public_id;
     if (!avatarId) {
@@ -143,3 +141,17 @@ exports.deleteAvatar = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.getByUsername = async(req, res, next) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }).lean()
+    if (!user) throw Boom.badRequest('Not found user')
+    return res.status(200).json({
+      status: 200,
+      data: user
+    })
+  } catch (error) {
+    console.log(error)
+    return next(error)
+  }
+}
