@@ -231,3 +231,21 @@ exports.deletePostInAuthors = async (postId, authorsId) => {
   );
   return Promise.all(deletePostPromises);
 };
+
+exports.getMetadata = (page, limit, count) => {
+  return {
+    page,
+    pageSize: limit,
+    totalPage: Math.ceil(count / limit),
+    totalRecords: count
+  }
+}
+
+exports.standardizePageLimit20 = (page = 0, limit = 20) => {
+  page = Math.round(page)
+  limit = Math.round(limit)
+  page = Math.max(0, page || 1)
+  limit = limit < 0 ? 20 : Math.min(limit || 20, 100)
+
+  return [page, limit]
+}

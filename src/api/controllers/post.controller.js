@@ -9,6 +9,7 @@ const DiscussionController = require('./discussion.controller');
 const Post = require('../models').Post;
 const User = require('../models').User;
 const Tag = require('../models').Tag;
+const Utils = require('../../utils')
 const types = [
   'discussion',
   'blog',
@@ -91,9 +92,9 @@ exports.getOnePost = async (req, res, next) => {
     if (!post) {
       throw Boom.notFound(
         `Not found ${
-          type == 'blog'
-            ? type
-            : type === 'song' || type === 'podcast' || type === 'video'
+        type == 'blog'
+          ? type
+          : type === 'song' || type === 'podcast' || type === 'video'
             ? type
             : type + ' blog reivew'
         }`,
@@ -115,7 +116,7 @@ exports.getPosts = async (req, res, next) => {
     const {
       query: { type },
       limit,
-      skip,
+      page,
     } = req;
     if (!type) {
       throw Boom.badRequest('Type query is required');
@@ -181,35 +182,19 @@ exports.getPosts = async (req, res, next) => {
       query.userId = req.params.userId;
     }
 
-    const posts = await Post.find(query)
-      .lean()
-      .skip(skip)
-      .limit(limit)
-      .populate(populateQuery)
-      .select(negativeQuery);
+    const [posts, counter] = await Promise.all([
+      Post.find(query)
+        .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate(populateQuery)
+        .select(negativeQuery),
+      Post.count(query).lean()
+    ])
 
-    if (!posts) {
-      throw Boom.notFound(
-        `Not found ${
-          type == 'blogs'
-            ? type
-            : type === 'songs' || type === 'podcasts' || type === 'videos'
-            ? type
-            : type + ' blog reivews'
-        }`,
-      );
-    }
-
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = Math.ceil(posts.length / limit);
-    metaData.totalPage = totalPage;
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
+      metaData: Utils.post.getMetadata(page, limit, counter),
       data: posts,
     });
   } catch (error) {
@@ -222,39 +207,58 @@ exports.getPostsByTagsName = async (req, res, next) => {
     const {
       query: { tag },
       limit,
-      skip,
+      page,
     } = req;
 
-    let query = { tagName: tag };
-    const tagsMatched = await Tag.find(query)
-      .lean()
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: 'posts',
-        select: '-__v',
-        populate: { path: 'authors', select: 'name type' },
-        populate: { path: 'tags', select: 'tagName' },
-        populate: { path: 'likes', select: 'username' },
-      })
-      .select('-__v');
-    if (!tagsMatched) {
-      throw Boom.badRequest('Get posts by tag failed');
+
+    const tagIds = [];
+    //case 1 tag
+    if (typeof tag === 'string') {
+      const existedTag = await Tag.findOne({ tagName: tag })
+      if (!existedTag) {
+        return res.status(200).json({
+          status: 200,
+          metaData: Utils.post.getMetadata(1, 1, 0),
+          data: [],
+        });
+      }
+      tagIds.push(existedTag._id)
     }
 
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = tagsMatched[0]
-      ? Math.ceil(tagsMatched[0].posts.length / limit)
-      : 0;
-    metaData.totalPage = totalPage;
+    // case >= 2 tags
+    if (typeof tag === 'object') {
+      const promises = []
+      tag.map(tag => {
+        promises.push(Tag.findOne({ tagName: tag }))
+      })
+      const tags = await Promise.all(promises)
+      tags.map(tag => {
+        if (tag && tag.tagName) {
+          tagIds.push(tag._id)
+        }
+      })
+    }
+
+    const [posts, counter] = await Promise.all([
+      Post.find({
+        tags: { $in: tagIds }
+      })
+        .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({ path: 'authors', select: '_id name type' })
+        .populate({ path: 'tags', select: '_id tagName' })
+        .populate({ path: 'likes', select: '_id username' }),
+      Post.count({
+        tags: { $in: tagIds }
+      })
+        .lean()
+    ])
+
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
-      data: tagsMatched,
+      metaData: Utils.post.getMetadata(page, limit, counter),
+      data: posts,
     });
   } catch (error) {
     console.log(error);
@@ -536,27 +540,28 @@ exports.unsavePost = async (req, res, next) => {
 exports.getSavedPosts = async (req, res, next) => {
   try {
     const {
-      skip ,
-      limit ,
+      skip,
+      limit,
       params: { userId },
     } = req;
 
-    const [allPosts, posts] = await Promise.all([ 
+    const [allPosts, posts] = await Promise.all([
       User.findById(userId).lean().select('savedPosts -_id'),
-      User.findById(userId, { savedPosts: { $slice: [ skip, limit ]}})
-          .lean()
-          .populate({
-            path: 'savedPosts',
-            select: '-__v',
-            populate: [
-              { 
-                path: 'tags', 
-                select: 'tagName type', 
-                populate: {
-                  path: 'likes', select: 'username' 
-              }},
-            ],
-          })
+      User.findById(userId, { savedPosts: { $slice: [skip, limit] } })
+        .lean()
+        .populate({
+          path: 'savedPosts',
+          select: '-__v',
+          populate: [
+            {
+              path: 'tags',
+              select: 'tagName type',
+              populate: {
+                path: 'likes', select: 'username'
+              }
+            },
+          ],
+        })
     ])
     if (!posts) {
       throw Boom.notFound('Get saved posts failed');

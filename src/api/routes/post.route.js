@@ -14,10 +14,12 @@ var storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-router.route('/').get(paginate({ limit: 15 }), postController.getPosts);
+router.route('/').get(paginate(), postController.getPosts);
+
 router
-  .route('/by-tag')
-  .get(paginate({ limit: 15 }), postController.getPostsByTagsName);
+  .route('/tags')
+  .get(paginate(), postController.getPostsByTagsName);
+
 router.route('/:postId').get(postController.getOnePost);
 
 router
@@ -51,7 +53,7 @@ router
   .get(paginate({ limit: 15 }), postController.getPosts);
 
   router
-  .route('/saved-posts/users/:userId/')
+  .route('/saved-posts/users/:userId')
   .get(paginate({ limit: 15 }), postController.getSavedPosts);
 
 router

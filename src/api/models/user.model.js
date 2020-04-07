@@ -108,8 +108,7 @@ userSchema.index({ username: 1 }, { email: 1 }, { job: 1 });
 
 userSchema.pre('save', async function save(next) {
   try {
-    if (!this.isModifiedType a message...
-      ('password')) return next();
+    if (!this.isModified('password')) return next();
     const hash = brcrypt.hashSync(this.password, 10);
     this.password = hash;
     return next();
