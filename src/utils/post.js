@@ -4,58 +4,6 @@ const Author = require('../api/models').Author;
 const Promise = require('bluebird');
 const Boom = require('@hapi/boom');
 
-function getTagPromise(tagName) {
-  return new Promise(async (resolve, reject) => {
-    const isExistedTag = await Tag.findOne({ tagName }).lean();
-    try {
-      if (isExistedTag) {
-        return resolve(isExistedTag);
-      } else {
-        const newTag = Tag.create({ tagName });
-        return resolve(newTag);
-      }
-    } catch (error) {
-      return reject(error);
-    }
-  });
-}
-
-function getAuthorPromise(name, type) {
-  return new Promise(async (resolve, reject) => {
-    const isExistedAuthor = await Author.findOne({ name, type }).lean();
-    try {
-      if (isExistedAuthor) {
-        return resolve(isExistedAuthor);
-      } else {
-        const newAuthor = Author.create({
-          name,
-          type,
-        });
-        return resolve(newAuthor);
-      }
-    } catch (error) {
-      return reject(error);
-    }
-  });
-}
-
-function deletePostInAuthorsPromise(postId, authorId) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const deletedPost = Author.findByIdAndUpdate(
-        authorId,
-        {
-          $pull: { posts: postId },
-        },
-        { new: true },
-      );
-      return resolve(deletedPost);
-    } catch (error) {
-      return reject(error);
-    }
-  });
-}
-
 exports.createTags = async (tags) => {
   try {
     const tagPromises = {}
@@ -110,7 +58,7 @@ exports.removeOldTagsAndCreatNewTags = async (post, newTags) => {
         remainTags.push(sameTag._id)
       }
     })
-    
+
 
     let promises = {}
     newTagsToCreate.map(tagName => promises[tagName] = Tag.findOne({ tagName }))
@@ -137,13 +85,6 @@ exports.removeOldTagsAndCreatNewTags = async (post, newTags) => {
     console.log(error)
     throw Boom.badRequest('Hanlde tags failed')
   }
-};
-
-exports.deletePostInTags = async (postId, tagsId) => {
-  const deletePostPromises = tagsId.map(tagId =>
-    deletePostPromise(postId, tagId),
-  );
-  return Promise.all(deletePostPromises);
 };
 
 exports.creatAuthors = async (_authors) => {
@@ -187,42 +128,68 @@ exports.creatAuthors = async (_authors) => {
     return [...existedAuthors, ...createdAuthors]
   } catch (error) {
     console.log(error)
+    if (error._message === 'Author validation failed') {
+      throw Boom.badRequest('Invalid author type')
+    }
     throw Boom.badRequest('Create tags failed')
   }
 };
 
-exports.removeOldAuthorsAndCreateNewAuthors = async (postId, newAuthors) => {
-  const post = await Post.findById(postId)
-    .lean()
-    .populate({ path: 'tags', select: 'tagName' })
-    .populate({ path: 'authors', select: 'name type' });
+exports.removeOldAuthorsAndCreateNewAuthors = async (post, newAuthors) => {
+  try {
+    let postAuthors = post.authors
+    const mapperAuthorNameType = postAuthors.map(author => {
+      let key = `${author.name}_${author.type}`
+      return key
+    })
+    const newAuthorsToCreate = [];
+    const remainAuthors = []
+    newAuthors.forEach(author => {
+      let key = `${author.name}_${author.type}`
+      if (!mapperAuthorNameType.includes(key)) {
+        newAuthorsToCreate.push({ name: author.name, type: author.type, key })
+      }
 
-  // remove posts in old authors
-  const oldAuthorsId = post.authors.map(author => author._id);
-  // get old author id
-  const deletePostsPromises = oldAuthorsId.map(oldAuthorId =>
-    deletePostInAuthorsPromise(postId, oldAuthorId),
-  );
-  const getNewAuthorsPromises = newAuthors.map(author =>
-    getAuthorPromise(author.name, author.type, postId),
-  );
+      if (mapperAuthorNameType.includes(key)) {
+        let sameAuthor = postAuthors.find(_author => {
+          let _key = `${_author.name}_${_author.type}`
+          return _key === key
+        })
+        remainAuthors.push(sameAuthor._id)
+      }
+    })
 
-  const result = await Promise.props({
-    deletePosts: Promise.all(deletePostsPromises),
-    getNewAuthors: Promise.all(getNewAuthorsPromises),
-  });
 
-  if (!result) return false;
-  const newAuthorsId = result.getNewAuthors.map(author => author._id);
-  return newAuthorsId
-};
+    let promises = {}
+    newAuthorsToCreate.map(author => promises[author.key] = Author.findOne({ name: author.name, type: author.type }))
+    let existedAuthors = await Promise.props(promises)
+    let createdAuthors = []
+    if (newAuthorsToCreate.length) {
+      let newAuthorPromises = {}
+      newAuthorsToCreate.map(author => {
+        newAuthorPromises[author.key] = existedAuthors[author.key] || Author.create({ name: author.name, type: author.type })
+      })
 
-exports.deletePostInAuthors = async (postId, authorsId) => {
-  const deletePostPromises = authorsId.map(authorId =>
-    deletePostInAuthorsPromise(postId, authorId),
-  );
-  return Promise.all(deletePostPromises);
-};
+      let authors = await Promise.props(newAuthorPromises)
+      createdAuthors = Object.keys(authors).map(key => ({
+        _id: authors[key]._id,
+        name: authors[key].name,
+        type: authors[key].type
+      }))
+    }
+
+    let newPostAuthors = [...remainAuthors, ...createdAuthors]
+    let newAuthorIds = newPostAuthors.map(author => author._id)
+
+    return newAuthorIds
+  } catch (error) {
+    console.log(error)
+    if (error._message === 'Author validation failed') {
+      throw Boom.badRequest('Invalid author type')
+    }
+    throw Boom.badRequest('Hanlde authors failed')
+  };
+}
 
 exports.getMetadata = (page, limit, count) => {
   return {

@@ -66,7 +66,11 @@ exports.editBookReview = async (req, res, next, type) => {
     const book = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' })
+      .populate({ path: 'authors', select: '_id name type' });
+
     if (!book) {
       throw Boom.notFound('Not found book blog reivew, edit failed');
     }
@@ -77,26 +81,17 @@ exports.editBookReview = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        book._id,
+        book,
         tags,
       );
-
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        book._id,
+        book,
         authors,
       );
-
-      if (!authors) {
-        throw Boom.serverUnavailable('Get new authors failed');
-      }
-
       query.authors = newAuthors;
     }
 
@@ -124,29 +119,24 @@ exports.editBookReview = async (req, res, next, type) => {
       }
     }
 
-    try {
-      const upadatedBlog = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name' },
-        ])
-        .select('-__v -media -url');
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name' },
+      ])
+      .select('-__v -media -url');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit book blog review successfully',
-        data: upadatedBlog,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Update book blog review failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedBlog,
+    });
   } catch (error) {
     return next(error);
   }
