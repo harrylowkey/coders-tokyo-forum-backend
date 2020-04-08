@@ -167,7 +167,7 @@ exports.deleteMovieReview = async (req, res, next, type) => {
         { path: 'authors', select: 'name type' },
       ]);
     if (!movieReview) {
-      throw Boom.notFound('Not found movie blog review');
+      throw Boom.badRequest('Not found movie blog review');
     }
 
     const authorsId = movieReview.authors.map(author => author._id);

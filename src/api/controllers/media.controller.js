@@ -90,9 +90,11 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     const video = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' })
     if (!video) {
-      throw Boom.notFound('Not found video, edit video failed');
+      throw Boom.badRequest('Not found video, edit video failed');
     }
 
     let query = {};
@@ -101,13 +103,9 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        video._id,
+        video,
         tags,
       );
-
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
@@ -156,27 +154,21 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
       }
     }
 
-    try {
-      const updatedVideo = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate([{ path: 'tags', select: 'tagName' }])
-        .select('-__v -authors');
+    const updatedVideo = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate([{ path: 'tags', select: 'tagName' }])
+      .select('-__v -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit video successfully',
-        data: updatedVideo,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Edit video failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: updatedVideo,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
@@ -192,7 +184,7 @@ exports.deleteVideo = async (req, res, next, type) => {
       .lean()
       .populate([{ path: 'tags', select: 'tagName' }]);
     if (!video) {
-      throw Boom.notFound('Not found video');
+      throw Boom.badRequest('Not found video');
     }
 
     const tagsId = video.tags.map(tag => tag._id);
@@ -312,9 +304,12 @@ exports.editAudio = async (req, res, next, type) => {
     const audio = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' })
+      .populate({ path: 'authors', select: '_id name type' });
     if (!audio) {
-      throw Boom.notFound(`Not found ${type}, edit ${type} failed`);
+      throw Boom.badRequest(`Not found ${type}, edit ${type} failed`);
     }
 
     let query = {};
@@ -323,25 +318,19 @@ exports.editAudio = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        audio._id,
+        audio,
         tags,
       );
 
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        audio._id,
+        audio,
         authors,
       );
 
-      if (!authors) {
-        throw Boom.serverUnavailable('Get new authors failed');
-      }
       query.authors = newAuthors;
     }
 
@@ -380,30 +369,24 @@ exports.editAudio = async (req, res, next, type) => {
       }
     }
 
-    try {
-      const updatedAudio = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -url');
+    const updatedAudio = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name type' },
+      ])
+      .select('-__v -url');
 
-      return res.status(200).json({
-        status: 200,
-        message: `Edit ${type} successfully`,
-        data: updatedAudio,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest(`Edit ${type} failed`);
-    }
+    return res.status(200).json({
+      status: 200,
+      data: updatedAudio,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
@@ -422,7 +405,7 @@ exports.deleteAudio = async (req, res, next, type) => {
         { path: 'authors', select: 'name type' },
       ]);
     if (!audio) {
-      throw Boom.notFound('Not found audio');
+      throw Boom.badRequest('Not found audio');
     }
 
     const authorsId = audio.authors.map(author => author._id);

@@ -90,7 +90,7 @@ exports.getOnePost = async (req, res, next) => {
       .select(negativeQuery);
 
     if (!post) {
-      throw Boom.notFound(
+      throw Boom.badRequest(
         `Not found ${
         type == 'blog'
           ? type
@@ -177,7 +177,7 @@ exports.getPosts = async (req, res, next) => {
     if (req.params.userId) {
       user = await User.findById(req.params.userId).lean();
       if (!user) {
-        throw Boom.notFound(`Not found user to get ${type}s`);
+        throw Boom.badRequest(`Not found user to get ${type}s`);
       }
       query.userId = req.params.userId;
     }
@@ -396,7 +396,7 @@ exports.likePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post');
+      throw Boom.badRequest('Not found post');
     }
 
     await Post.findByIdAndUpdate(
@@ -426,7 +426,7 @@ exports.unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post')
+      throw Boom.badRequest('Not found post')
     }
 
     await Post.findByIdAndUpdate(
@@ -455,7 +455,7 @@ exports.savePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to save');
+      throw Boom.badRequest('Not found post to save');
     }
 
     await Post.findByIdAndUpdate(
@@ -486,7 +486,7 @@ exports.unsavePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to unsave');
+      throw Boom.badRequest('Not found post to unsave');
     }
 
     await Post.findByIdAndUpdate(

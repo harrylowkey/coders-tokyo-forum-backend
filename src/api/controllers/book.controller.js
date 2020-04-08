@@ -72,7 +72,7 @@ exports.editBookReview = async (req, res, next, type) => {
       .populate({ path: 'authors', select: '_id name type' });
 
     if (!book) {
-      throw Boom.notFound('Not found book blog reivew, edit failed');
+      throw Boom.badRequest('Not found book blog reivew, edit failed');
     }
 
     let query = {};
@@ -154,7 +154,7 @@ exports.deleteBookReview = async (req, res, next, type) => {
         { path: 'authors', select: 'name' },
       ]);
     if (!book) {
-      throw Boom.notFound('Not found book blog review');
+      throw Boom.badRequest('Not found book blog review');
     }
 
     const authorsId = book.authors.map(author => author._id);

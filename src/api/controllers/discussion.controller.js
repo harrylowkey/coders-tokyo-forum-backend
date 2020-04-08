@@ -53,7 +53,7 @@ exports.editDiscussion = async (req, res, next, type) => {
       .populate({ path: 'tags', select: 'tagName ' });
 
     if (!discussion) {
-      throw Boom.notFound('Not found discussion, edit discussion failed');
+      throw Boom.badRequest('Not found discussion, edit discussion failed');
     }
 
     let query = {};
@@ -105,7 +105,7 @@ exports.deleteDiscussion = async (req, res, next, type) => {
       .lean()
       .populate([{ path: 'tags', select: 'tagName' }]);
     if (!discussion) {
-      throw Boom.notFound('Not found discussion');
+      throw Boom.badRequest('Not found discussion');
     }
 
     const tagsId = discussion.tags.map(tag => tag._id);

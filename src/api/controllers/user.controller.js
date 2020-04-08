@@ -112,7 +112,7 @@ exports.deleteAvatar = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId).lean();
     if (!user) {
-      throw Boom.notFound('Not found user')
+      throw Boom.badRequest('Not found user')
     }
     const avatarId = user.avatar.public_id;
     if (!avatarId) {

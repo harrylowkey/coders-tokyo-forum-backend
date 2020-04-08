@@ -100,7 +100,7 @@ exports.editFoodReview = async (req, res, next, type) => {
       })
       .select('-__v -authors');
     if (!foodReview) {
-      throw Boom.notFound('Not found foodReview, edit foodReview failed');
+      throw Boom.badRequest('Not found foodReview, edit foodReview failed');
     }
 
     const {
@@ -226,7 +226,7 @@ exports.deleteFoodReview = async (req, res, next, type) => {
       .populate({ path: 'tags', select: 'tagName' })
       .select('-__v -authors');
     if (!foodReview) {
-      throw Boom.notFound('Not found food blog review');
+      throw Boom.badRequest('Not found food blog review');
     }
     const tagsId = foodReview.tags.map(tag => tag._id);
     const photos = foodReview.food.photos.map(photo => photo.public_id);

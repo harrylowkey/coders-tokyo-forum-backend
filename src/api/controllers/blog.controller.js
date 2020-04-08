@@ -62,7 +62,7 @@ exports.editBlog = async (req, res, next, type) => {
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' });
-      
+
     if (!blog) {
       throw Boom.badRequest('Not found blog');
     }
@@ -132,7 +132,7 @@ exports.deleteBlog = async (req, res, next, type) => {
       .populate({ path: 'tags', select: 'tagName' })
       .lean();
     if (!blog) {
-      throw Boom.notFound('Not found blog');
+      throw Boom.badRequest('Not found blog');
     }
 
     const tagsId = blog.tags.map(tag => tag._id);
