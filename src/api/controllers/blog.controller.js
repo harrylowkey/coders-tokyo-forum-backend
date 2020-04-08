@@ -59,9 +59,12 @@ exports.editBlog = async (req, res, next, type) => {
     const blog = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' });
+      
     if (!blog) {
-      throw Boom.notFound('Not found blog, edit blog failed');
+      throw Boom.badRequest('Not found blog');
     }
 
     let query = {};
@@ -70,13 +73,9 @@ exports.editBlog = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        blog._id,
+        blog,
         tags,
       );
-
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
@@ -104,26 +103,21 @@ exports.editBlog = async (req, res, next, type) => {
       }
     }
 
-    try {
-      const upadatedBlog = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -url -authors');
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .select('-__v -media -url -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit blog successfully',
-        data: upadatedBlog,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Update blog failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedBlog,
+    });
   } catch (error) {
     return next(error);
   }

@@ -56,23 +56,6 @@ function deletePostInAuthorsPromise(postId, authorId) {
   });
 }
 
-function deletePostPromise(postId, tagId) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const deletedPost = Tag.findByIdAndUpdate(
-        tagId,
-        {
-          $pull: { posts: postId },
-        },
-        { new: true },
-      );
-      return resolve(deletedPost);
-    } catch (error) {
-      return reject(error);
-    }
-  });
-}
-
 exports.createTags = async (tags) => {
   try {
     const tagPromises = {}
@@ -100,7 +83,7 @@ exports.createTags = async (tags) => {
       let tags = await Promise.props(newTagPromises)
       createdTags = Object.keys(tags).map(key => ({
         _id: tags[key]._id,
-        tagName: tags[key]._id.tagName
+        tagName: tags[key].tagName
       }))
     }
 
@@ -111,40 +94,49 @@ exports.createTags = async (tags) => {
   }
 };
 
-exports.removeOldTagsAndCreatNewTags = async (postId, newTags) => {
-  const tagsOfPost = await Tag.find({ posts: { $in: postId } }).lean(); //all old tags
-  const oldTag = tagsOfPost.map(tag => tag.tagName);
+exports.removeOldTagsAndCreatNewTags = async (post, newTags) => {
+  try {
+    let postTags = post.tags
+    const postTagNames = postTags.map(tag => tag.tagName)
+    const newTagsToCreate = [];
+    const remainTags = []
+    newTags.forEach(tag => {
+      if (!postTagNames.includes(tag)) {
+        newTagsToCreate.push(tag)
+      }
 
-  // only delete post in old tag
-  const oldTagNames = tagsOfPost.reduce(
-    (oldTagNamesArr, oldTag) =>
-      newTags.includes(oldTag.tagName)
-        ? oldTagNamesArr
-        : [...oldTagNamesArr, oldTag],
-    [],
-  );
-  const removePostsPromises = oldTagNames.map(oldTagId =>
-    deletePostPromise(postId, oldTagId),
-  );
+      if (postTagNames.includes(tag)) {
+        let sameTag = postTags.find(_tag => _tag.tagName === tag)
+        remainTags.push(sameTag._id)
+      }
+    })
+    
 
-  // only create new tag
-  const newTagsName = newTags.reduce(
-    (newTagsArr, newTag) =>
-      oldTag.includes(newTag) ? newTagsArr : [...newTagsArr, newTag],
-    [],
-  );
-  const getNewTagsPromises = newTagsName.map(tag => getTagPromise(tag, postId));
+    let promises = {}
+    newTagsToCreate.map(tagName => promises[tagName] = Tag.findOne({ tagName }))
+    let existedTagNames = await Promise.props(promises)
+    let createdTags = []
+    if (newTagsToCreate.length) {
+      let newTagPromises = {}
+      newTagsToCreate.map(tagName => {
+        newTagPromises[tagName] = existedTagNames[tagName] || Tag.create({ tagName })
+      })
 
-  const result = await Promise.props({
-    removePosts: Promise.all(removePostsPromises),
-    getNewTags: Promise.all(getNewTagsPromises),
-  });
+      let tags = await Promise.props(newTagPromises)
+      createdTags = Object.keys(tags).map(key => ({
+        _id: tags[key]._id,
+        tagName: tags[key].tagName
+      }))
+    }
 
-  if (!result) return false;
+    let newPostTags = [...remainTags, ...createdTags]
+    let newPostTagIds = newPostTags.map(tag => tag._id)
 
-  const updatedTag = await Tag.find({ posts: { $in: postId } }).lean();
-  let tags = updatedTag.map(tag => tag._id);
-  return tags;
+    return newPostTagIds
+  } catch (error) {
+    console.log(error)
+    throw Boom.badRequest('Hanlde tags failed')
+  }
 };
 
 exports.deletePostInTags = async (postId, tagsId) => {
@@ -176,7 +168,7 @@ exports.creatAuthors = async (_authors) => {
         type: authors[key].type
       })
     })
-    
+
     let createdAuthors = []
     if (newAuthors.length) {
       let newAuthorPromises = {}
