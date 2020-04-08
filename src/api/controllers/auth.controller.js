@@ -1,10 +1,10 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
-const Utils = require('../../utils');
-const User = require('../models/').User;
+const Utils = require('@utils');
+const User = require('@models').User;
 const Promise = require('bluebird');
-const { emailQueue } = require('../../bull');
+const { emailQueue } = require('@bull');
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;

@@ -6,10 +6,10 @@ const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
-const Post = require('../models').Post;
-const User = require('../models').User;
-const Tag = require('../models').Tag;
-const Utils = require('../../utils')
+const Post = require('@models').Post;
+const User = require('@models').User;
+const Tag = require('@models').Tag;
+const Utils = require('@utils')
 const types = [
   'discussion',
   'blog',

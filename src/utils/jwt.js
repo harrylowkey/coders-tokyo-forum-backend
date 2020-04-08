@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { jwt_secret, expired_time_token } = require('../config/vars');
+const { jwt_secret, expired_time_token } = require('@configVar');
 
 const generateToken = (user, option) => {
   option = option || {};

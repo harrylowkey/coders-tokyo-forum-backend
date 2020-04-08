@@ -1,7 +1,6 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const Post = require('@models').Post;
 const Promise = require('bluebird');
 
 exports.createDiscussion = async (req, res, next, type) => {

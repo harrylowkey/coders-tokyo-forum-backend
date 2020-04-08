@@ -1,10 +1,9 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const Post = require('@models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { videoConfig, audioConfig } = require('../../config/vars');
+const { videoConfig, audioConfig } = require('@configVar');
 
 exports.createVideo = async (req, res, next, type, isUpload) => {
   const {

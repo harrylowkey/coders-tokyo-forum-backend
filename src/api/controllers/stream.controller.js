@@ -1,7 +1,7 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
-const Post = require('../models').Post;
-const Utils = require('../../utils')
+const Post = require('@models').Post;
+const Utils = require('@utils')
 
 exports.index = async (req, res, next) => {
   const { page, limit } = req;

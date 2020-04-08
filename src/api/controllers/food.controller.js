@@ -1,10 +1,9 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const Post = require('@models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig, foodPhotosConfig } = require('../../config/vars');
+const { coverImageConfig, foodPhotosConfig } = require('@configVar');
 
 exports.createFoodReview = async (req, res, next, type) => {
   //TODO: validate reqBody

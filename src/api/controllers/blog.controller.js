@@ -1,10 +1,9 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const Post = require('@models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../../config/vars');
+const { coverImageConfig } = require('@configVar');
 
 exports.createBlog = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;

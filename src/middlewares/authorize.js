@@ -1,6 +1,6 @@
-const Utils = require('../utils/jwt');
+const JWTUtils = require('@utils').jwt;
 const Boom = require('@hapi/boom');
-const User = require('../api/models/user.model').model;
+const User = require('@models').User;
 
 exports.checkAccessToken = async (req, res, next) => {
   try {
@@ -10,7 +10,7 @@ exports.checkAccessToken = async (req, res, next) => {
 		}
 
     access_token = access_token.replace('Bearer ', '')
-    const decodedToken = Utils.verifyToken(access_token);
+    const decodedToken = JWTUtils.verifyToken(access_token);
     if (!decodedToken)
       throw Boom.unauthorized('Invalid token or token expired time');
 

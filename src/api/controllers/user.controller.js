@@ -1,10 +1,10 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
-const Utils = require('../../utils');
-const User = require('../models/').User;
+const Utils = require('@utils');
+const User = require('@models').User;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { avatarConfig } = require('../../config/vars');
+const { avatarConfig } = require('@configVar');
 
 exports.getOne = async (req, res, next) => {
   try {

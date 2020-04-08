@@ -1,6 +1,5 @@
-const Tag = require('../api/models').Tag;
-const Post = require('../api/models').Post;
-const Author = require('../api/models').Author;
+const Tag = require('@models').Tag;
+const Author = require('@models').Author;
 const Promise = require('bluebird');
 const Boom = require('@hapi/boom');
 
