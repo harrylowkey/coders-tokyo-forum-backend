@@ -160,46 +160,27 @@ exports.deleteMovieReview = async (req, res, next, type) => {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
       type,
-    })
-      .lean()
-      .populate([
-        { path: 'tags', select: 'tagName' },
-        { path: 'authors', select: 'name type' },
-      ]);
+    }).lean()
+
     if (!movieReview) {
       throw Boom.badRequest('Not found movie blog review');
     }
 
-    const authorsId = movieReview.authors.map(author => author._id);
-    const tagsId = movieReview.tags.map(tag => tag._id);
+    let result = await Promise.props({
+      isDeletedMovie: Post.findByIdAndDelete(req.params.postId),
+      isDeletedCoverImage: cloudinary.uploader.destroy(
+        movieReview.cover.public_id,
+      )
+    });
 
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedCoverImage: cloudinary.uploader.destroy(
-          movieReview.cover.public_id,
-        ),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInAuthors: Utils.post.deletePostInAuthors(
-          movieReview._id,
-          authorsId,
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(movieReview._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete movie blog review successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Delete movie blog review failed');
+    if (!resul.isDeletedMovie) {
+      throw Boom.badRequest('Delete movie failed')
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete movie blog review successfully`,
+    });
   } catch (error) {
     return next(error);
   }

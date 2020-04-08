@@ -147,41 +147,25 @@ exports.deleteBookReview = async (req, res, next, type) => {
     const book = await Post.findOne({
       _id: req.params.postId,
       type,
-    })
-      .lean()
-      .populate([
-        { path: 'tags', select: 'tagName' },
-        { path: 'authors', select: 'name' },
-      ]);
+    }).lean()
+
     if (!book) {
       throw Boom.badRequest('Not found book blog review');
     }
 
-    const authorsId = book.authors.map(author => author._id);
-    const tagsId = book.tags.map(tag => tag._id);
+    let result = await Promise.props({
+      isDeletedBookBlog: Post.findByIdAndDelete(req.params.postId),
+      isDeletedCoverImage: cloudinary.uploader.destroy(book.cover.public_id),
+    });
 
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedCoverImage: cloudinary.uploader.destroy(book.cover.public_id),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInAuthors: Utils.post.deletePostInAuthors(book._id, authorsId),
-        isDeletedInTags: Utils.post.deletePostInTags(book._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete book successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Delete book blog review failed');
+    if  (!result.isDeletedBookBlog) {
+      throw Boom.badRequest('Delete book blog failed')
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete book blog successfully`,
+    });
   } catch (error) {
     return next(error);
   }

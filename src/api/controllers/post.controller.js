@@ -128,11 +128,11 @@ exports.getPosts = async (req, res, next) => {
     let populateQuery = [
       {
         path: 'tags',
-        select: 'tagName',
+        select: 'tagName _id',
       },
       {
         path: 'likes',
-        select: 'username',
+        select: 'username _id',
       },
     ];
 

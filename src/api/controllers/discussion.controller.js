@@ -90,37 +90,13 @@ exports.editDiscussion = async (req, res, next, type) => {
 
 exports.deleteDiscussion = async (req, res, next, type) => {
   try {
-    const discussion = await Post.findOne({
-      _id: req.params.postId,
-      type,
-    })
-      .lean()
-      .populate([{ path: 'tags', select: 'tagName' }]);
-    if (!discussion) {
-      throw Boom.badRequest('Not found discussion');
-    }
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
+    if (!isDeleted) throw Boom.badRequest('Delete post failed')
 
-    const tagsId = discussion.tags.map(tag => tag._id);
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(discussion._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete discussion successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
+    return res.status(200).json({
+      status: 200,
+      message: `Delete discussion successfully`,
+    });
   } catch (error) {
     return next(error);
   }

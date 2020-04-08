@@ -221,40 +221,30 @@ exports.deleteFoodReview = async (req, res, next, type) => {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
       type,
-    })
-      .lean()
-      .populate({ path: 'tags', select: 'tagName' })
-      .select('-__v -authors');
+    }).lean()
+
     if (!foodReview) {
       throw Boom.badRequest('Not found food blog review');
     }
-    const tagsId = foodReview.tags.map(tag => tag._id);
     const photos = foodReview.food.photos.map(photo => photo.public_id);
 
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedCoverImage: cloudinary.uploader.destroy(
-          foodReview.cover.public_id,
-        ),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(foodReview._id, tagsId),
-        isDeletedFoodPhotos: Utils.cloudinary.deteteManyImages(photos),
-      });
+    let result = await Promise.props({
+      idDeletedFoodBlog: Post.findByIdAndDelete(req.params.postId),
+      isDeletedCoverImage: cloudinary.uploader.destroy(
+        foodReview.cover.public_id,
+      ),
+      isDeletedFoodPhotos: Utils.cloudinary.deteteManyImages(photos),
+    });
 
-      return res.status(200).json({
-        status: 200,
-        message: `Delete food blog review successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Delete food blog review failed');
+    if (!result.idDeletedFoodBlog) {
+      throw Boom.badRequest('Delete food blog fail')
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete food blog review successfully`,
+    });
+
   } catch (error) {
     return next(error);
   }
