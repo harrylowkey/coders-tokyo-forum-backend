@@ -61,36 +61,28 @@ exports.editDiscussion = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        discussion._id,
+        discussion,
         tags,
       );
 
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
-    try {
-      const updatedDiscussion = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName ' })
-        .select(' -__v -url -media -authors');
+    const updatedDiscussion = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate({ path: 'tags', select: 'tagName ' })
+      .select(' -__v -url -media -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit discussion failed',
-        data: updatedDiscussion,
-      });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
+    return res.status(200).json({
+      status: 200,
+      data: updatedDiscussion,
+    });
   } catch (error) {
     return next(error);
   }
