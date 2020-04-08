@@ -7,6 +7,7 @@ const cloudinary = require('cloudinary').v2;
 const { coverImageConfig, foodPhotosConfig } = require('../../config/vars');
 
 exports.createFoodReview = async (req, res, next, type) => {
+  //TODO: validate reqBody
   const {
     body: {
       tags,
@@ -118,13 +119,9 @@ exports.editFoodReview = async (req, res, next, type) => {
     if (url) query.url = url;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        foodReview._id,
+        foodReview,
         tags,
       );
-
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
@@ -152,7 +149,13 @@ exports.editFoodReview = async (req, res, next, type) => {
       }
     }
 
-    query.food = {};
+    let oldFoodData = foodReview.food
+    query.food = {
+      foodName: oldFoodData.foodName,
+      price: oldFoodData.price,
+      location: oldFoodData.location,
+      status: oldFoodData.status
+    };
     if (foodName) query.food.foodName = foodName;
     if (price) query.food.price = price;
     if (location) query.food.location = location;
@@ -191,28 +194,23 @@ exports.editFoodReview = async (req, res, next, type) => {
       }
     }
 
-    try {
-      await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      );
+    await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    );
 
-      const upadatedFoodReview = await Post.findById(req.params.postId)
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -authors');
+    const upadatedFoodReview = await Post.findById(req.params.postId)
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .select('-__v -media -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit food blog review successfully',
-        data: upadatedFoodReview,
-      });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedFoodReview,
+    });
   } catch (error) {
     return next(error);
   }
