@@ -8,9 +8,15 @@ const commentSchema = new Schema(
       ref: 'Post',
       required: true,
     },
+    childComments: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Comment'
+      }
+    ],
     parentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Comment',
+      ref: 'Comment'
     },
     content: {
       type: String,
@@ -18,14 +24,14 @@ const commentSchema = new Schema(
     },
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'user',
+      ref: 'User',
       required: true,
     }
   },
   { timestamps: true },
 );
 
-postSchema.index(
+commentSchema.index(
   { postId: 1 },
   { parentId: 1 },
   { createdAt: -1 },

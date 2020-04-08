@@ -43,6 +43,14 @@ exports.getOnePost = async (req, res, next) => {
         path: 'likes',
         select: 'username',
       },
+      {
+        path: 'comments',
+        select: '-__v',
+        populate: {
+          path: 'userId',
+          select: '_id username'
+        }
+      }
     ];
 
     let negativeQuery = '-__v ';
@@ -134,6 +142,14 @@ exports.getPosts = async (req, res, next) => {
         path: 'likes',
         select: 'username _id',
       },
+      {
+        path: 'comments',
+        select: '-__v',
+        populate: {
+          path: 'userId',
+          select: '_id username'
+        }
+      }
     ];
 
     let negativeQuery = '-__v ';
@@ -248,7 +264,15 @@ exports.getPostsByTagsName = async (req, res, next) => {
         .limit(limit)
         .populate({ path: 'authors', select: '_id name type' })
         .populate({ path: 'tags', select: '_id tagName' })
-        .populate({ path: 'likes', select: '_id username' }),
+        .populate({ path: 'likes', select: '_id username' })
+        .populate({
+          path: 'comments',
+          select: '-__v',
+          populate: {
+            path: 'userId',
+            select: '_id username'
+          }
+        }),
       Post.count({
         tags: { $in: tagIds }
       })
@@ -527,7 +551,15 @@ exports.getSavedPosts = async (req, res, next) => {
         })
         .populate({ path: 'authors', select: '_id name type' })
         .populate({ path: 'tags', select: '_id tagName' })
-        .populate({ path: 'likes', select: '_id username' }),
+        .populate({ path: 'likes', select: '_id username' })
+        .populate({
+          path: 'comments',
+          select: '-__v',
+          populate: {
+            path: 'userId',
+            select: '_id username'
+          }
+        })
     ])
 
     return res.status(200).json({
