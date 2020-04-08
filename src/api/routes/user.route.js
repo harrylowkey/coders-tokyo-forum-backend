@@ -3,7 +3,7 @@ const validate = require('express-validation');
 const multer = require('multer');
 
 const userController = require('../controllers/user.controller');
-const authorization = require('../../middlewares/authorize');
+const authorization = require('@middlewares/authorize');
 const multerCloudinary = require('../../config/multer-cloudinary');
 
 const router = express.Router();

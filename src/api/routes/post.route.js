@@ -3,12 +3,12 @@ const validate = require('express-validation');
 const multer = require('multer');
 
 const postController = require('../controllers/post.controller');
-const authorization = require('../../middlewares/authorize');
-const paginate = require('../../middlewares/pagination');
+const authorization = require('@middlewares/authorize');
+const paginate = require('@middlewares/pagination');
 
 const router = express.Router();
 var storage = multer.diskStorage({
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     cb(null, file.originalname);
   },
 });
@@ -52,7 +52,7 @@ router
   .route('/users/:userId')
   .get(paginate({ limit: 15 }), postController.getPosts);
 
-  router
+router
   .route('/saved-posts/users/:userId')
   .get(paginate({ limit: 15 }), postController.getSavedPosts);
 

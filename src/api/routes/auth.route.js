@@ -2,7 +2,7 @@ const express = require('express');
 const validate = require('express-validation');
 
 const authController = require('../controllers/auth.controller');
-const authorization = require('../../middlewares/authorize');
+const authorization = require('@middlewares/authorize');
 const {
   login,
   register,

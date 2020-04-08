@@ -13,7 +13,8 @@
     "@models": "src/api/models",
     "@configVar": "src/config/vars",
     "@utils": "src/utils",
-    "@bull": "src/bull.js"
+    "@bull": "src/bull.js",
+    "@middlewares": "src/middlewares"
   },
   "author": "",
   "license": "ISC",
