@@ -31,7 +31,7 @@ exports.createMovieReview = async (req, res, next, type) => {
     }
 
     const data = await Promise.props(promises);
-   
+
     const cover = {
       public_id: data.coverImage.public_id,
       url: data.coverImage.url,
@@ -41,7 +41,7 @@ exports.createMovieReview = async (req, res, next, type) => {
     newMovieReview.cover = cover;
     if (data.tagsCreated) newMovieReview.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newMovieReview.authors = data.authorsCreated.map(author => author._id)
-    
+
 
     const createdMovieReview = await new Post(newMovieReview).save()
     let dataRes = {
@@ -73,7 +73,10 @@ exports.editMovieReview = async (req, res, next, type) => {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' })
+      .populate({ path: 'authors', select: '_id name type' });
     if (!movieReview) {
       throw Boom.badRequest('Not found food blog reivew, edit failed');
     }
@@ -85,25 +88,18 @@ exports.editMovieReview = async (req, res, next, type) => {
     if (url) query.url = url;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        movieReview._id,
+        movieReview,
         tags,
       );
 
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        movieReview._id,
+        movieReview,
         authors,
       );
-
-      if (!authors) {
-        throw Boom.serverUnavailable('Get new authors failed');
-      }
 
       query.authors = newAuthors;
     }
@@ -135,30 +131,24 @@ exports.editMovieReview = async (req, res, next, type) => {
       }
     }
 
-    try {
-      const upadatedBlog = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -media');
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name type' },
+      ])
+      .select('-__v -media');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit movie blog review successfully',
-        data: upadatedBlog,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Update movie blog review failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedBlog,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
