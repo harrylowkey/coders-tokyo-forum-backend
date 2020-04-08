@@ -190,7 +190,7 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (post, newAuthors) => {
   };
 }
 
-exports.getMetadata = (page, limit, count) => {
+exports.getmetadata = (page, limit, count) => {
   return {
     page,
     pageSize: limit,
@@ -204,6 +204,13 @@ exports.standardizePageLimit20 = (page = 0, limit = 20) => {
   limit = Math.round(limit)
   page = Math.max(0, page || 1)
   limit = limit < 0 ? 20 : Math.min(limit || 20, 100)
+  return [page, limit]
+}
 
+exports.standardizePageLimitComment5 = (page = 0, limit = 5) => {
+  page = Math.round(page)
+  limit = Math.round(limit)
+  page = Math.max(0, page || 1)
+  limit = limit < 0 ? 5 : Math.min(limit || 5, 100)
   return [page, limit]
 }

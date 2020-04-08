@@ -109,7 +109,7 @@ exports.index = async (req, res, next) => {
       return res.status(200).json({
         status: 200,
         message: 'Get newest posts successfully',
-        metaData: Utils.post.getMetadata(page, limit, result.counter),
+        metadata: Utils.post.getmetadata(page, limit, result.counter),
         data: posts,
       });
   } catch (error) {

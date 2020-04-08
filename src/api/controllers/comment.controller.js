@@ -142,16 +142,3 @@ exports.deleteComment = async (req, res, next) => {
   }
 }
 
-exports.getComments = async (req, res, next) => {
-  try {
-    const {
-      query: { type },
-      limit,
-      page,
-    } = req;
-
-
-  } catch (error) {
-    return next(error)
-  }
-}

@@ -3,7 +3,6 @@ const validate = require('express-validation');
 const multer = require('multer');
 
 const postController = require('../controllers/post.controller');
-const commentController = require('../controllers/comment.controller');
 const authorization = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
 
@@ -76,10 +75,5 @@ router
 router
   .route('/:postId/unsave')
   .post(authorization.checkAccessToken, postController.unsavePost);
-
-router
-  .route('/')
-  .get(paginate({ limit: 5 }), commentController.getComments);
-
 
 module.exports = router;

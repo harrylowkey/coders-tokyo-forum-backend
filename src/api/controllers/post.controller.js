@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
+const mongoose = require('mongoose')
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
@@ -21,12 +22,14 @@ const types = [
   'podcast',
 ];
 
+//TODO: Validate req body
 exports.getOnePost = async (req, res, next) => {
   try {
     const {
       params: { postId },
-      query: { type },
+      query: { type, limitComment, pageComment },
     } = req;
+    const [_pageComment, _limitComment] = Utils.post.standardizePageLimitComment5(pageComment, limitComment)
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -44,11 +47,27 @@ exports.getOnePost = async (req, res, next) => {
         select: 'username',
       },
       {
+        path: 'savedBy',
+        select: 'username',
+      },
+      {
         path: 'comments',
         select: '-__v',
+        options: {
+          sort: { createdAt: -1 },
+          limit: _limitComment,
+          skip: (_pageComment - 1) * _limitComment 
+        },
         populate: {
           path: 'userId',
           select: '_id username'
+        },
+        populate: {
+          path: 'childComments',
+          select: '-__v',
+          options: {
+            sort: { createdAt: -1 },
+          }
         }
       }
     ];
@@ -89,13 +108,31 @@ exports.getOnePost = async (req, res, next) => {
         break;
     }
 
-    const post = await Post.findOne({
-      _id: postId,
-      type: `${type}`,
-    })
-      .lean()
-      .populate(populateQuery)
-      .select(negativeQuery);
+    const [post, counter] = await Promise.all([
+      Post.findOne({
+        _id: postId,
+        type,
+      })
+        .lean()
+        .populate(populateQuery)
+        .select(negativeQuery),
+        Post.aggregate([
+          {
+            $match: {
+              _id: mongoose.Types.ObjectId(postId),
+              type,
+            },
+          },
+          {
+            $project: {
+              comments: { $size: '$comments'},
+              likes: { $size: '$likes'},
+              saves: { $size: '$savedBy'}
+            }
+          }
+        ]
+        )
+    ])
 
     if (!post) {
       throw Boom.badRequest(
@@ -108,11 +145,16 @@ exports.getOnePost = async (req, res, next) => {
         }`,
       );
     }
-
+    let metadata = {
+      totalLikes: counter[0].likes,
+      totalComments: counter[0].comments,
+      totalSaves: counter[0].saves,
+      comment: Utils.post.getmetadata( _pageComment, _limitComment, counter[0].comments)
+    }
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      data: post,
+      metadata,
+      data: post
     });
   } catch (error) {
     return next(error);
@@ -210,7 +252,7 @@ exports.getPosts = async (req, res, next) => {
 
     return res.status(200).json({
       status: 200,
-      metaData: Utils.post.getMetadata(page, limit, counter),
+      metadata: Utils.post.getmetadata(page, limit, counter),
       data: posts,
     });
   } catch (error) {
@@ -234,7 +276,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
       if (!existedTag) {
         return res.status(200).json({
           status: 200,
-          metaData: Utils.post.getMetadata(1, 1, 0),
+          metadata: Utils.post.getmetadata(1, 1, 0),
           data: [],
         });
       }
@@ -281,7 +323,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
 
     return res.status(200).json({
       status: 200,
-      metaData: Utils.post.getMetadata(page, limit, counter),
+      metadata: Utils.post.getmetadata(page, limit, counter),
       data: posts,
     });
   } catch (error) {
@@ -426,7 +468,7 @@ exports.likePost = async (req, res, next) => {
     await Post.findByIdAndUpdate(
       postId,
       {
-        $push: { likes: user._id },
+        $addToSet: { likes: user._id },
       },
       { new: true, upsert: true },
     )
@@ -485,7 +527,7 @@ exports.savePost = async (req, res, next) => {
     await Post.findByIdAndUpdate(
       postId,
       {
-        $push: { savedBy: user._id },
+        $addToSet: { savedBy: user._id },
       },
       { new: true, upsert: true },
     );
@@ -564,7 +606,7 @@ exports.getSavedPosts = async (req, res, next) => {
 
     return res.status(200).json({
       status: 200,
-      metaData: Utils.post.getMetadata(page, limit, counter),
+      metadata: Utils.post.getmetadata(page, limit, counter),
       data: posts,
     });
   } catch (error) {
