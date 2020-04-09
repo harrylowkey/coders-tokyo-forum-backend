@@ -7,9 +7,9 @@ const authorization = require('@middlewares/authorize');
 
 const router = express.Router();
 
-// router
-//   .route('/:postId')
-//   .get(paginate({ limit: 5 }), commentController.getComments);
+router
+  .route('/:commentId')
+  .get(paginate({ limit: 5 }), commentController.getComments);
 
 router
   .route('/:postId')

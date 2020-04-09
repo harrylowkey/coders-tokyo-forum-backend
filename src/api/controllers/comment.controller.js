@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
-const Comment = require('@models').Comment;
-const Post = require('@models').Post;
+const { Comment, Post } = require('@models')
+const Utils = require('@utils')
+const mongoose = require('mongoose')
 
 exports.createComment = async (req, res, next) => {
   try {
@@ -37,6 +38,15 @@ exports.createComment = async (req, res, next) => {
     ]
 
     if (parentId) {
+      const parentComment = await Comment.findById(parentId).lean()
+      if (!parentComment) {
+        throw Boom.badRequest('Not found parent comment')
+      }
+
+      if (parentComment.parentId) {
+        throw Boom.badRequest('Cannot reply to this comment')
+      }
+      
       promises.push(
         Comment.findByIdAndUpdate(
           parentId,
@@ -105,7 +115,7 @@ exports.deleteComment = async (req, res, next) => {
     if (!comment) {
       throw Boom.badRequest('Not found comment')
     }
-    console.log(comment)
+
     let promises = [
       Post.findByIdAndUpdate(
         comment.postId._id,
@@ -137,6 +147,58 @@ exports.deleteComment = async (req, res, next) => {
     return res
       .status(200)
       .json({ status: 200, message: 'Delete comment success' });
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.getComments = async (req, res, next) => {
+  try {
+    const {
+      query: { page, limit },
+      params: { commentId}
+    } = req
+
+    const [_page, _limit] = Utils.post.standardizePageLimitComment5(page, limit)
+    console.log(_page, _limit)
+
+    const [comment, counter] = await Promise.all([
+      Comment.findById(commentId)
+        .lean()
+        .populate({
+          path: 'childComments',
+          options: {
+            sort: { createdAt: -1 },
+            limit: _limit,
+            skip: (_page - 1) * _limit
+          }
+        }),
+        Comment.aggregate([
+          {
+            $match: {
+              _id: mongoose.Types.ObjectId(commentId),
+            },
+          },
+          {
+            $project: {
+              childComments: { $size: '$childComments' },
+            }
+          }
+        ])
+    ])
+
+    if (!comment) {
+      throw Boom.badRequest('Not found comment')
+    }
+
+    return res
+      .status(200)
+      .json({ 
+        status: 200, 
+        metadata: Utils.post.getmetadata(_page, _limit, counter[0].childComments),
+        data: comment.childComments
+      })
+
   } catch (error) {
     return next(error)
   }

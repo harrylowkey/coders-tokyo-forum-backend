@@ -1,15 +1,15 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
 const mongoose = require('mongoose')
-const BlogController = require('./blog.controller');
-const BookController = require('./book.controller');
-const FoodController = require('./food.controller');
-const MovieController = require('./movie.controller');
-const MediaController = require('./media.controller');
-const DiscussionController = require('./discussion.controller');
-const Post = require('@models').Post;
-const User = require('@models').User;
-const Tag = require('@models').Tag;
+const { 
+  DiscussionController, 
+  MediaController, 
+  BlogController, 
+  BookController, 
+  FoodController, 
+  MovieController 
+} = require('./index')
+const { Post, User, Tag } = require('@models')
 const Utils = require('@utils')
 const types = [
   'discussion',
@@ -29,6 +29,7 @@ exports.getOnePost = async (req, res, next) => {
       params: { postId },
       query: { type, limitComment, pageComment },
     } = req;
+
     const [_pageComment, _limitComment] = Utils.post.standardizePageLimitComment5(pageComment, limitComment)
     if (!type) {
       throw Boom.badRequest('Type query is required');
@@ -56,7 +57,7 @@ exports.getOnePost = async (req, res, next) => {
         options: {
           sort: { createdAt: -1 },
           limit: _limitComment,
-          skip: (_pageComment - 1) * _limitComment 
+          skip: (_pageComment - 1) * _limitComment
         },
         populate: {
           path: 'userId',
@@ -66,7 +67,7 @@ exports.getOnePost = async (req, res, next) => {
           path: 'childComments',
           select: '-__v',
           options: {
-            sort: { createdAt: -1 },
+            sort: { createdAt: -1 }
           }
         }
       }
@@ -116,40 +117,32 @@ exports.getOnePost = async (req, res, next) => {
         .lean()
         .populate(populateQuery)
         .select(negativeQuery),
-        Post.aggregate([
-          {
-            $match: {
-              _id: mongoose.Types.ObjectId(postId),
-              type,
-            },
+      Post.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(postId),
+            type,
           },
-          {
-            $project: {
-              comments: { $size: '$comments'},
-              likes: { $size: '$likes'},
-              saves: { $size: '$savedBy'}
-            }
+        },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
           }
-        ]
-        )
+        }
+      ])
     ])
 
     if (!post) {
-      throw Boom.badRequest(
-        `Not found ${
-        type == 'blog'
-          ? type
-          : type === 'song' || type === 'podcast' || type === 'video'
-            ? type
-            : type + ' blog reivew'
-        }`,
-      );
+      throw Boom.badRequest('Not found post');
     }
+
     let metadata = {
       totalLikes: counter[0].likes,
       totalComments: counter[0].comments,
       totalSaves: counter[0].saves,
-      comment: Utils.post.getmetadata( _pageComment, _limitComment, counter[0].comments)
+      comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
     }
     return res.status(200).json({
       status: 200,
@@ -168,6 +161,7 @@ exports.getPosts = async (req, res, next) => {
       limit,
       page,
     } = req;
+
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -240,20 +234,42 @@ exports.getPosts = async (req, res, next) => {
       query.userId = req.params.userId;
     }
 
-    const [posts, counter] = await Promise.all([
+    const [posts, postCounter, counter] = await Promise.all([
       Post.find(query)
         .lean()
         .skip((page - 1) * limit)
         .limit(limit)
         .populate(populateQuery)
         .select(negativeQuery),
-      Post.count(query).lean()
+      Post.countDocuments(query).lean(),
+      Post.aggregate([
+        {
+          $match: {
+            type,
+          },
+        },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
     ])
+
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
 
     return res.status(200).json({
       status: 200,
-      metadata: Utils.post.getmetadata(page, limit, counter),
-      data: posts,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     return next(error);

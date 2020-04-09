@@ -14,7 +14,8 @@
     "@configVar": "src/config/vars",
     "@utils": "src/utils",
     "@bull": "src/bull.js",
-    "@middlewares": "src/middlewares"
+    "@middlewares": "src/middlewares",
+    "@controllers": "src/controllers"
   },
   "author": "",
   "license": "ISC",
