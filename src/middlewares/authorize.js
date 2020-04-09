@@ -18,7 +18,10 @@ exports.checkAccessToken = async (req, res, next) => {
     if (!user) {
       throw Boom.unauthorized(`User haven't registed account yet`);
     }
-    req.user = user;
+    req.user = {
+      _id: user._id,
+      username: user.username
+    };
     return next();
   } catch (error) {
     return next(error);

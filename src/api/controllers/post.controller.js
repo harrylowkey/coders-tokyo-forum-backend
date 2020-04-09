@@ -1,14 +1,12 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
 const mongoose = require('mongoose')
-const { 
-  DiscussionController, 
-  MediaController, 
-  BlogController, 
-  BookController, 
-  FoodController, 
-  MovieController 
-} = require('./index')
+const BlogController = require('./blog.controller');
+const BookController = require('./book.controller');
+const FoodController = require('./food.controller');
+const MovieController = require('./movie.controller');
+const MediaController = require('./media.controller');
+const DiscussionController = require('./discussion.controller');
 const { Post, User, Tag } = require('@models')
 const Utils = require('@utils')
 const types = [

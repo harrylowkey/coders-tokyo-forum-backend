@@ -12,7 +12,9 @@ let signUpValidate = (req, res, next) => {
         };
       }),
     password: Joi.string()
-      .regex(/[a-zA-Z0-9]{8,30}/)
+      .min(8)
+      .max(30)
+      .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => {
         return {
@@ -20,7 +22,7 @@ let signUpValidate = (req, res, next) => {
         };
       }),
   })
-
+  
   const { error } = schema.validate(req.body)
   if (error) {
     throw Boom.badRequest(error.message)
@@ -39,13 +41,7 @@ let loginValidate = (req, res, next) => {
         };
       }),
     password: Joi.string()
-      .regex(/[a-zA-Z0-9]{8,30}/)
       .required()
-      .error(() => {
-        return {
-          message: 'Password must include lower, uppper characters and number',
-        };
-      }),
   })
 
   const { error } = schema.validate(req.body)
@@ -58,7 +54,9 @@ let loginValidate = (req, res, next) => {
 let forgotPasswordValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     newPassword: Joi.string()
-      .regex(/[a-zA-Z0-9]{8,30}/)
+      .min(8)
+      .max(30)
+      .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => {
         return {
@@ -84,7 +82,9 @@ let forgotPasswordValidate = (req, res, next) => {
 let changePasswordValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     newPassword: Joi.string()
-      .regex(/[a-zA-Z0-9]{8,30}/)
+      .min(8)
+      .max(30)
+      .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => {
         return {
@@ -92,17 +92,16 @@ let changePasswordValidate = (req, res, next) => {
         };
       }),
     confirmPassword: Joi.string()
+      .min(8)
+      .max(30)
+      .regex(/[a-zA-Z0-9]/)
+      .required()
       .error(() => {
         return {
           message: 'Password must include lower, uppper characters and number',
         };
       }),
-    oldPassword: Joi.string()
-      .error(() => {
-        return {
-          message: 'Password must include lower, uppper characters and number',
-        };
-      }),
+    oldPassword: Joi.string().required()
   })
 
   const { error } = schema.validate(req.body)

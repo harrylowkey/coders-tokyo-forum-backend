@@ -1,35 +1,38 @@
 const express = require('express');
-const validate = require('express-validation');
-
 const paginate = require('@middlewares/pagination');
-const commentController = require('../controllers/comment.controller');
-const authorization = require('@middlewares/authorize');
+const { CommentController } = require('@controllers');
+const { checkAccessToken } = require('@middlewares/authorize');
+const {
+  commentValidate,
+} = require('../validations/comment');
 
 const router = express.Router();
 
 router
   .route('/:commentId')
-  .get(paginate({ limit: 5 }), commentController.getComments);
+  .get(paginate({ limit: 5 }), CommentController.getComments);
 
 router
   .route('/:postId')
   .post(
-    authorization.checkAccessToken,
-    commentController.createComment,
+    checkAccessToken,
+    commentValidate,
+    CommentController.createComment,
   );
 
   router
   .route('/:commentId')
   .put(
-    authorization.checkAccessToken,
-    commentController.editComment,
+    checkAccessToken,
+    commentValidate,
+    CommentController.editComment,
   );
 
   router
   .route('/:commentId')
   .delete(
-    authorization.checkAccessToken,
-    commentController.deleteComment,
+    checkAccessToken,
+    CommentController.deleteComment,
   );
 
 module.exports = router;

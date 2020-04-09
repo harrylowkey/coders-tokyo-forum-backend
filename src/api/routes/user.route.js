@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { UserController } = require('@controllers')
-const authorization = require('@middlewares/authorize');
+const { checkAccessToken } = require('@middlewares/authorize');
 const {
   updateProfileValidate,
   uploadAvatarValidate,
@@ -18,24 +18,24 @@ const upload = multer({ storage: storage });
 
 router
   .route('/:userId')
-  .get(authorization.checkAccessToken, UserController.getOne);
+  .get(checkAccessToken, UserController.getOne);
 router
   .route('/:userId')
-  .put(authorization.checkAccessToken,
-    (req, res, next) => updateProfileValidate(req, res, next),
+  .put(checkAccessToken,
+    updateProfileValidate,
     UserController.updateProfile
   );
 router
   .route('/:userId/avatars')
   .post(
-    authorization.checkAccessToken,
-    (req, res, next) => uploadAvatarValidate(req, res, next),
+    checkAccessToken,
+    uploadAvatarValidate,
     upload.single('path'),
     UserController.uploadAvatar,
   );
 router
   .route('/:userId/avatars')
-  .delete(authorization.checkAccessToken, UserController.deleteAvatar);
+  .delete(checkAccessToken, UserController.deleteAvatar);
 
 router
   .route('/:username')
