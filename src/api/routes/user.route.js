@@ -1,14 +1,15 @@
 const express = require('express');
-const validate = require('express-validation');
 const multer = require('multer');
-
-const userController = require('../controllers/user.controller');
+const { UserController } = require('@controllers')
 const authorization = require('@middlewares/authorize');
-const multerCloudinary = require('../../config/multer-cloudinary');
+const {
+  updateProfileValidate,
+  uploadAvatarValidate,
+} = require('../validations/user');
 
 const router = express.Router();
 var storage = multer.diskStorage({
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     cb(null, file.originalname);
   },
 });
@@ -17,23 +18,27 @@ const upload = multer({ storage: storage });
 
 router
   .route('/:userId')
-  .get(authorization.checkAccessToken, userController.getOne);
+  .get(authorization.checkAccessToken, UserController.getOne);
 router
   .route('/:userId')
-  .put(authorization.checkAccessToken, userController.updateProfile);
+  .put(authorization.checkAccessToken,
+    (req, res, next) => updateProfileValidate(req, res, next),
+    UserController.updateProfile
+  );
 router
   .route('/:userId/avatars')
   .post(
     authorization.checkAccessToken,
+    (req, res, next) => uploadAvatarValidate(req, res, next),
     upload.single('path'),
-    userController.uploadAvatar,
+    UserController.uploadAvatar,
   );
 router
-  .route('/:userId/avatar')
-  .delete(authorization.checkAccessToken, userController.deleteAvatar);
+  .route('/:userId/avatars')
+  .delete(authorization.checkAccessToken, UserController.deleteAvatar);
 
-  router
+router
   .route('/:username')
-  .get(userController.getByUsername);
+  .get(UserController.getByUsername);
 
 module.exports = router;
