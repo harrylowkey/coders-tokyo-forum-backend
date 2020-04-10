@@ -20,7 +20,12 @@ exports.createBookReview = async (req, res, next, type) => {
       ...req.body,
       type,
     };
-
+    Joi.string().when('a', 
+    { is: 'avalue', 
+    then: Joi.string().required() 
+  }).concat(Joi.string().when('b', 
+  { is: 'bvalue', then: Joi.string().required() 
+}))
     let promises = {
       coverImageUploaded: cloudinary.uploader.upload(coverImage, coverImageConfig),
       authorsCreated: Utils.post.creatAuthors(authors),

@@ -26,13 +26,14 @@ router.route('/:postId').get(PostController.getOnePost);
 router
   .route('/')
   .post(
-    checkAccessToken,
     upload.fields([
       { name: 'coverImage', maxCount: 1 },
       { name: 'video', maxCount: 1 },
       { name: 'audio', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
+    checkAccessToken,
+    createPostValidate,
     PostController.createPost,
   );
 
