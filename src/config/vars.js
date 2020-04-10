@@ -49,6 +49,7 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
     // async: true,
     transformation: [

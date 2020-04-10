@@ -1,20 +1,16 @@
 const express = require('express');
-const multer = require('multer');
 const { UserController } = require('@controllers')
 const { checkAccessToken } = require('@middlewares/authorize');
 const {
   updateProfileValidate,
   uploadAvatarValidate,
 } = require('../validations/user');
-
 const router = express.Router();
-var storage = multer.diskStorage({
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
 
-const upload = multer({ storage: storage });
+
+const { avatarConfig } = require('@configVar')
+const { configStorage } = require('../../config/cloudinary')
+const upload = configStorage(avatarConfig)
 
 router
   .route('/:userId')
@@ -26,7 +22,7 @@ router
     UserController.updateProfile
   );
 router
-  .route('/:userId/avatars')
+  .route('/avatars')
   .post(
     checkAccessToken,
     uploadAvatarValidate,
@@ -34,7 +30,7 @@ router
     UserController.uploadAvatar,
   );
 router
-  .route('/:userId/avatars')
+  .route('/avatars')
   .delete(checkAccessToken, UserController.deleteAvatar);
 
 router

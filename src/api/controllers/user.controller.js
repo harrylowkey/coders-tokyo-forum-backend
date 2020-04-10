@@ -61,47 +61,59 @@ exports.updateProfile = async (req, res, next) => {
   }
 };
 
+/**
+ * fileUploaded: {
+    fieldname: 'path',
+    originalname: '91427262_222687395745934_4371644556861505536_n.jpg',
+    encoding: '7bit',
+    mimetype: 'image/jpeg',
+    public_id: 'Coders-Tokyo-Forum/avatars/91427262_222687395745934_4371644556861505536_n.jpg',
+    version: 1586543868,
+    signature: 'ffe465d9b65cfa529181d151f993ef7da252a35e',
+    width: 200,
+    height: 200,
+    format: 'jpg',
+    resource_type: 'image',
+    created_at: '2020-04-10T16:34:56Z',
+    tags: [],
+    bytes: 13393,
+    type: 'upload',
+    etag: 'af01f94be1071e1ee1a54bccc48cd84e',
+    placeholder: false,
+    url: 'http://res.cloudinary.com/hongquangraem/image/upload/v1586543868/Coders-Tokyo-Forum/avatars/91427262_222687395745934_4371644556861505536_n.jpg.jpg',
+    secure_url: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586543868/Coders-Tokyo-Forum/avatars/91427262_222687395745934_4371644556861505536_n.jpg.jpg',
+    overwritten: true,
+    original_filename: 'file'
+  }
+}
+ */
 exports.uploadAvatar = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.userId).lean();
+    const user = await User.findById(req.user._id)
+      .lean()
+      .populate({
+        path: 'avatar'
+      })
     if (!user) {
       throw Boom.badRequest('Not found user')
     }
-    const newAvatar = req.file.path;
-    const avatar = req.user.avatar || {};
-    const oldAvatarId = avatar.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
-
-    const data = { oldImageId: oldAvatarId, newImage: newAvatar };
-    const uploadedAvatar = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
-      data,
-      avatarConfig,
-    );
-
-    if (!uploadedAvatar) {
-      throw Boom.badRequest('Upload avatar failed');
-    }
+    const newAvatar = req.file;
+    const avatar = await Utils.cloudinary.updateAvatarProcess(user, newAvatar);
 
     const updatedAvatar = await User.findByIdAndUpdate(
       req.params.userId,
       {
-        $set: {
-          'avatar.public_id': uploadedAvatar.public_id,
-          'avatar.url': uploadedAvatar.url,
-          'avatar.secure_url': uploadedAvatar.secure_url
-        },
+        $set: { avatar },
       },
       { new: true },
     )
-      .lean()
-      .select('-_id avatar');
     if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }
 
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
-      message: 'Success',
-      data: updatedAvatar.avatar,
+      message: 'Update avatar success',
     });
   } catch (error) {
     return next(error);

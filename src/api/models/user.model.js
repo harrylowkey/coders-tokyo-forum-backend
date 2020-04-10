@@ -26,22 +26,8 @@ const userSchema = new Schema(
       required: true,
     },
     avatar: {
-      type: Object,
-      pubic_id: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      secure_url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'File',
     },
     socialLinks: [
       {
