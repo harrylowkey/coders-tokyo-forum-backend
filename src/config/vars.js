@@ -1,13 +1,10 @@
-// config .env variables
-const path = require('path');
+const path = require('path')
+let mode = process.env.NODE_ENV || 'local'
+let _path = `${path.join(__dirname, '../../.env')}.${mode}`
 
-// import .env variables
-require('dotenv-safe').load({
-  path: path.join(__dirname, '../../.env'),
-});
-
+require('dotenv').config({ path: _path })
 module.exports = {
-  mongo_uri: process.env.MONGO_URI,
+  mongo_uri: process.env.MONGO_URL,
   port: process.env.PORT,
   admin_port: process.env.ADMIN_PORT,
   jwt_secret: process.env.JWT_SECRET,
@@ -79,30 +76,31 @@ module.exports = {
   },
   queues: {
     EMAIL_QUEUE: {
-      name: 'emailQueue',
+      name: 'email',
       prefix: '@@email_'
     },
     USER_QUEUE: {
-      name: 'userQueue',
+      name: 'user',
       prefix: '@@user_'
     } ,
     CLOUDINARY_QUEUE: {
-      name: 'cloudinaryQueue',
-      prefix: '@@cloudinaryPrefix_'
+      name: 'cloudinary',
+      prefix: '@@cloudinary_'
     },
     FILE_REFERENCE_QUEUE: {
-      name: 'fileReferenceQueue',
+      name: 'fileReference',
       prefix: '@@fileReference_'
     } 
   },
-  redis: {
-    isCacheEnabled: true,
-    host: '127.0.0.1',
-    port: 6379
+  redisConfig: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+    redisPrefix: process.env.REDIS_PREFIX
   },
-  arena: {
-    port: 3001,
-    host: '127.0.0.1',
+  arenaConfig: {
+    host: process.env.ARENA_HOST,
+    port: process.env.ARENA_PORT,
     basePath: '/arena',
     disableListen: false,
   }
