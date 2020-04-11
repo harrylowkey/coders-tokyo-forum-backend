@@ -14,6 +14,10 @@ exports.login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email })
       .lean()
+      .populate({
+        path: 'avatar',
+        select: 'publicId secureURL'
+      })
       .select('-__v -verifyCode -posts -likedPosts -savedPosts');
     if (!user) throw Boom.badRequest('Not found user');
 

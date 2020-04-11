@@ -1,48 +1,42 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const fileSchema = new Schema(
-  {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    postId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Post',
-    },
-    publicId: {
-      type: String,
-      trim: true
-    },
-    secureURL: {
-      type: String,
-      trim: true
-    },
-    media: {
-      type: Object,
-      signature: String,
-      width: Number,
-      height: Number,
-      format: String,
-      resource_type: String,
-      frame_rate: Number,
-      bit_rate: Number,
-      duration: Number,
-    },
-    fileName: String,
-    sizeBytes: Number,
+const fileSchema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
   },
-  { timestamps: true },
-);
+  postId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Post',
+  },
+  publicId: {
+    type: String,
+    trim: true
+  },
+  secureURL: {
+    type: String,
+    trim: true
+  },
+  media: {
+    type: Object,
+    signature: String,
+    width: Number,
+    height: Number,
+    format: String,
+    resource_type: String,
+    frame_rate: Number,
+    bit_rate: Number,
+    duration: Number,
+  },
+  fileName: String,
+  sizeBytes: Number,
+}, { timestamps: true });
 
 fileSchema.index(
   { userId: 1 },
   { postId: 1 },
-  { type: 1 },
-  { topic: 1 },
-  { authors: 1 },
-  { createdAt: -1 },
+  { publicId: 1 }
 );
 
 const fileModel = mongoose.model('File', fileSchema);

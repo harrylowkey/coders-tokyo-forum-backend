@@ -39,7 +39,6 @@ let uploadAvatarValidate = (req, res, next) => {
     throw Boom.badRequest(error.message)
   }
 
-  console.log('here')
   return next()
 }
 

@@ -13,7 +13,7 @@
     "@models": "src/api/models",
     "@configVar": "src/config/vars",
     "@utils": "src/utils",
-    "@bull": "src/bull.js",
+    "@bull": "src/config/bull.js",
     "@middlewares": "src/middlewares",
     "@controllers": "src/api/controllers",
     "@redis": "src/config/redis",

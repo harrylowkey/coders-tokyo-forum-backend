@@ -5,6 +5,7 @@ const User = require('@models').User;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { avatarConfig } = require('@configVar');
+const { CloudinaryService } = require('@services')
 
 exports.getOne = async (req, res, next) => {
   try {
@@ -101,12 +102,13 @@ exports.uploadAvatar = async (req, res, next) => {
     const avatar = await CloudinaryService.updateAvatarProcess(user, newAvatar);
 
     const updatedAvatar = await User.findByIdAndUpdate(
-      req.params.userId,
+      req.user._id,
       {
-        $set: { avatar },
+        $set: { avatar: avatar._id },
       },
       { new: true },
     )
+
     if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
     }

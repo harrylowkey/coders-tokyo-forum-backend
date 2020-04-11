@@ -4,9 +4,9 @@ const multer = require('multer');
 
 exports.config = () => {
   cloudinary.config({
-    cloud_name: require('./vars').cloudinary_name,
-    api_key: require('./vars').cloudinary_api_key,
-    api_secret: require('./vars').cloudinary_api_secret,
+    cloud_name: require('../config/vars').cloudinary_name,
+    api_key: require('../config/vars').cloudinary_api_key,
+    api_secret: require('../config/vars').cloudinary_api_secret,
   });
 };
 

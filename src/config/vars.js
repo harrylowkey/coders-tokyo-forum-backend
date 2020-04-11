@@ -43,7 +43,7 @@ module.exports = {
   },
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
@@ -74,22 +74,46 @@ module.exports = {
       },
     ],
   },
-  queues: {
+  QUEUES: {
     EMAIL_QUEUE: {
       name: 'email',
-      prefix: '@@email_'
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@email_',
+      }
     },
     USER_QUEUE: {
       name: 'user',
-      prefix: '@@user_'
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@user_',
+      },
     } ,
     CLOUDINARY_QUEUE: {
       name: 'cloudinary',
-      prefix: '@@cloudinary_'
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@cloudinary_',
+      },
     },
     FILE_REFERENCE_QUEUE: {
       name: 'fileReference',
-      prefix: '@@fileReference_'
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@fileReference_',
+      },
     } 
   },
   redisConfig: {

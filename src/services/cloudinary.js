@@ -2,55 +2,35 @@ const cloudinary = require('cloudinary').v2;
 const Promise = require('bluebird');
 const Boom = require('@hapi/boom')
 const { avatarConfig } = require('@configVar')
-const { File } = require('@models')
+const File = require('@models').File
 
-exports.updateAvatarProcess = async (userAvatar, newAvatar) => {
-  const newPath = avatarConfig.folder + '/' + newAvatar.public_id.split('/').pop();
+exports.updateAvatarProcess = async (user, newAvatar) => {
+  const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
+  const newPath = avatarConfig.folder + '/' + `${user.username}_avatar_` + Math.floor(Date.now() / 1000);
   const newSecureURL = newAvatar.secure_url.replace(newAvatar.public_id, newPath);
 
   if (user.avatar) {
-    const avatar = await File.findById(user.avatar._id);
-    //TODO: Bull Queue task
-    // await this.fileReferenceQueue.add(
-    //   fileReferenceQueueJob.deleteAvatarReference,
-    //   avatar,
-    // );
-    // if (
-    //   result.isDeleted.result !== (oldAvatarId ? 'not found' : 'ok') ||
-    //   !result.isUploaded
-    // ) {
-    //   return false;
-    // }
+    const avatar = await File.findById(user.avatar._id).lean();
+    FILE_REFERENCE_QUEUE.deleteAvatar.add({ avatar });
   }
 
-  const newFile = new File({
+
+
+  const newFile = await new File({
     secureURL: newSecureURL,
     publicId: newPath,
     fileName: newAvatar.originalname,
-    sizeBytes: file.bytes,
+    sizeBytes: newAvatar.bytes,
     userId: user._id,
-  });
+  }).save();
 
-  try {
-    const [fileReference, _] = await Promise.all([
-      newFile.save(),
-      // this.cloudinaryQueue.add(cloudinaryQueueJob.moveAvatar, {
-      //   currentPath: file.public_id,
-      //   newPath,
-      // }),
-    ]);
+  CLOUDINARY_QUEUE.moveAvatarFile.add({
+    currentPath: newAvatar.public_id,
+    newPath,
+    fileId: newFile.id
+  })
 
-    return fileReference;
-  } catch (e) {
-    // await this.fileReferenceQueue.add(
-    //   fileReferenceQueueJob.deleteAvatarReference,
-    //   { ...newFile, publicId: file.public_id },
-    // );
-    throw Boom.badRequest('Error uploading avatar')
-  }
-
-
-  return result.isUploaded;
+  return newFile;
 };
 
 exports.uploadManyImages = async (images, config = {}) => {
