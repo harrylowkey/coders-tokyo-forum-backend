@@ -42,9 +42,9 @@ const NodeMailerSend = async ({ to, subject, dataTemplate, templateId, html, tex
 let sendEmail = (mail, type) => {
   if (mail.dataTemplate) {
     switch (type) {
-      case 'SIGN_UP':
-        mail.subject = 'Register Success',
-          mail.templateId = emailConstants.MAIL_TEMPLATE_REGISTER
+      case 'REWARD':
+        mail.subject = 'REWARD',
+        mail.templateId = ''
         break
       default:
         throw Boom.badRequest('Invalid type to send mail')
@@ -58,7 +58,7 @@ let sendEmail = (mail, type) => {
         mail.subject = 'Verify Code'
         mail.html = pug.renderFile(
           path.join(__dirname, `../../views/verifyCode.pug`),
-          { verifyCode: mail.verifyCode} 
+          { verifyCode: mail.verifyCode }
         )
         break;
       case 'SIGN_UP':
