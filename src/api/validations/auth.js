@@ -69,7 +69,15 @@ let forgotPasswordValidate = (req, res, next) => {
           message: 'Password must include lower, uppper characters and number',
         };
       }),
-    code: Joi.number().required()
+    emailCode: Joi.number().required(),
+    email: Joi.string()
+      .regex(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
+      .required()
+      .error(() => {
+        return {
+          message: 'Invalid email',
+        };
+      }),
   })
 
   const { error } = schema.validate(req.body)
@@ -101,7 +109,8 @@ let changePasswordValidate = (req, res, next) => {
           message: 'Password must include lower, uppper characters and number',
         };
       }),
-    oldPassword: Joi.string().required()
+    oldPassword: Joi.string().required(),
+    emailCode: Joi.number().required()
   })
 
   const { error } = schema.validate(req.body)

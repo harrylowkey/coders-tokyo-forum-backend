@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 const path = require('path');
+const Redis = require('@redis')
+const Boom = require('@hapi/boom')
 
 let emailConfig = async (subject, template, email) => {
   var transporter = nodemailer.createTransport({
@@ -10,15 +12,15 @@ let emailConfig = async (subject, template, email) => {
     secure: false,
     requireTLS: true,
     auth: {
-      user: 'quangmitdepzai@gmail.com',
-      pass: 'Quangdepzai',
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_EMAIL_PASS,
     },
   });
 
   let mailOptions = {
     from: 'noreply@gmail.com',
     to: email,
-    subject: subject,
+    subject,
     text: '',
     html: template,
   };
@@ -27,7 +29,8 @@ let emailConfig = async (subject, template, email) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    throw new Error;
+    console.log(error.message)
+    throw Boom.badRequest('Send email code failed')
   }
 };
 
@@ -58,7 +61,19 @@ let sendEmailWelcome = async (email, name) => {
   
 };
 
+let checkCodeByEmail = async (email, code) => {
+  const redisKey = Redis.makeKey(['EMAIL_VERIFY_CODE', email])
+  let verifyCode = await Redis.getCache({
+    key: redisKey
+  })
+  return !(
+    !verifyCode ||
+    verifyCode !== code
+  );
+};
+
 module.exports = {
-  sendEmailVerifyCode,
   sendEmailWelcome,
+  checkCodeByEmail,
+  sendEmailVerifyCode
 };

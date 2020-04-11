@@ -4,4 +4,5 @@ module.exports = {
   email: require('./email'),
   cloudinary: require('./cloudinary'),
   post: require('./post'),
+  validator: require('./validator')
 };

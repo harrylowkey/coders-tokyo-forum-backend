@@ -103,5 +103,6 @@ module.exports = {
     port: process.env.ARENA_PORT,
     basePath: '/arena',
     disableListen: false,
-  }
+  },
+  REDIS_EXPIRE_TOKEN_KEY: 'BLACKLIST_TOKEN'
 };

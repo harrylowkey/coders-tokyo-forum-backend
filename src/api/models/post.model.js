@@ -43,7 +43,6 @@ const postSchema = new Schema(
     description: {
       type: String,
       maxlength: 400,
-      required: true,
     },
     content: {
       type: String,

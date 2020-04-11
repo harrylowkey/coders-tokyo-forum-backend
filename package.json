@@ -15,7 +15,8 @@
     "@utils": "src/utils",
     "@bull": "src/bull.js",
     "@middlewares": "src/middlewares",
-    "@controllers": "src/api/controllers"
+    "@controllers": "src/api/controllers",
+    "@redis": "src/config/redis"
   },
   "author": "",
   "license": "ISC",

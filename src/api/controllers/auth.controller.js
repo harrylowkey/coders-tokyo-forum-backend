@@ -3,7 +3,9 @@ const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
 const Utils = require('@utils');
 const User = require('@models').User;
+const Redis = require('@redis')
 const Promise = require('bluebird');
+const { REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 const { emailQueue } = require('@bull');
 
 exports.login = async (req, res, next) => {
@@ -63,21 +65,25 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
     const user = await User.findOne({ email }).lean();
     if (!user) throw Boom.badRequest('Not found user');
 
-    const verifyCode = {
-      code: Math.floor(Math.random() * (99999 - 10000)) + 100000, // 5 characters
-      expiresIn: new Date().getTime() + 120000,
-    };
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email])
+    let emailCode = await Redis.getCache({
+      key: redisKey
+    })
 
-    await Promise.all([
-      emailQueue.send_verify_code.add({ email, verifyCode: verifyCode.code }),
-      User.findOneAndUpdate(
-        { email },
-        {
-          $set: { verifyCode },
-        },
-        { upsert: true },
-      ),
-    ]);
+    if (emailCode) throw Boom.badRequest('Please wait 5 minutes!')
+
+    const verifyCode = Math.floor(Math.random() * (99999 - 10000)) + 100000;
+    await Redis.setCache({
+      key: redisKey,
+      value: verifyCode,
+      isJSON: false,
+      isZip: false,
+      ttl: 5 * 60
+    })
+
+    // emailQueue.send_verify_code.add({ email, verifyCode: emailCode })
+    await Utils.email.sendEmailVerifyCode(email, verifyCode);
+
     return res.status(200).json({
       status: 200,
       message: 'Send email verify code successfully',
@@ -88,29 +94,29 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
-  const { newPassword, confirmPassword, code } = req.body;
+  let { newPassword, confirmPassword, emailCode, email } = req.body;
   try {
+    email = email.trim().toLowerCase()
+    let user = await User.findOne({ email }).lean()
+    if (!user) {
+      throw Boom.badRequest('Not found user')
+    }
+
+    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
+    if (!checkVerifyCode)
+      throw Boom.badRequest('The email code is invalid or expired')
+
     if (newPassword !== confirmPassword) {
       throw Boom.badRequest(`Confirm password isn't matched`);
     }
 
-    const user = await User.findOne({ 'verifyCode.code': code }).lean();
-    if (!user) throw Boom.badRequest('Inivalid email code');
-    const isExpired = Date.now() > user.verifyCode.expiresIn;
-    if (isExpired) throw Boom.badRequest('Email code was expired time');
+    Utils.validator.validatePassword(newPassword)
 
-    if (user.verifyCode.code != code) throw Boom.badRequest('Email code does not match');
     const hashPassword = bcrypt.hashSync(newPassword, 10);
-    await User.findOneAndUpdate(
-      { 'verifyCode.code': code },
+    await User.findByIdAndUpdate( 
+      user._id,
       {
-        $set: {
-          password: hashPassword,
-          verifyCode: {
-            code: null,
-            expiresIn: null,
-          },
-        },
+        $set: { password: hashPassword }
       },
       { new: true },
     );
@@ -125,8 +131,14 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
   try {
-    const { oldPassword, newPassword, confirmPassword } = req.body;
-    const user = req.user;
+    const { oldPassword, newPassword, confirmPassword, emailCode } = req.body;
+    const userId = req.user._id;
+    const user = await User.findById(userId).lean()
+
+    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
+    if (!checkVerifyCode)
+      throw Boom.badRequest('The email code is invalid or expired')
+    
     const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
     if (!isMatchedOldPass) {
       throw Boom.badRequest('Wrong old password, change password failed');
@@ -135,6 +147,9 @@ exports.changePassword = async (req, res, next) => {
     if (newPassword !== confirmPassword) {
       throw Boom.badRequest('Confirm password is wrong');
     }
+
+    Utils.validator.validatePassword(newPassword)
+
     const hashPassword = bcrypt.hashSync(newPassword, 10);
     await User.findByIdAndUpdate(
       user._id,
@@ -145,6 +160,15 @@ exports.changePassword = async (req, res, next) => {
       },
       { new: true },
     );
+
+    const expireTokenKey = await Redis.makeKey([REDIS_EXPIRE_TOKEN_KEY, user._id])
+    await Redis.setCache({
+      key: expireTokenKey,
+      value: Math.floor(Date.now() / 1000),
+      isJSON: false,
+      isZip: false,
+    })
+
     return res
       .status(200)
       .json({ status: 200, message: 'Change password successfully' });

@@ -69,11 +69,7 @@ const userSchema = new Schema(
     rankId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Rank',
-    },
-    verifyCode: {
-      code: Number,
-      expiresIn: Number,
-    },
+    }
   },
   { timestamps: true },
 );

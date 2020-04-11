@@ -2,6 +2,7 @@ const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom')
 
 let createPostValidate = (req, res, next) => {
+  console.log(req.body)
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().required(),
