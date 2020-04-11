@@ -4,6 +4,7 @@ const Post = require('@models').Post;
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
+const { CloudinaryService} = require('@services')
 
 exports.createBlog = async (req, res, next, type) => {
   const coverImage = req.files['coverImage'][0].path;
@@ -87,7 +88,7 @@ exports.editBlog = async (req, res, next, type) => {
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
       try {
-        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
           data,
           coverImageConfig,
         );

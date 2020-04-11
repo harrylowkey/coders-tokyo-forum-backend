@@ -26,7 +26,7 @@ exports.createFoodReview = async (req, res, next, type) => {
 
     let promises = {
       coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      foodPhotos: Utils.cloudinary.uploadManyImages(
+      foodPhotos: CloudinaryService.uploadManyImages(
         foodPhotos,
         foodPhotosConfig,
       )
@@ -133,7 +133,7 @@ exports.editFoodReview = async (req, res, next, type) => {
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
       try {
-        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
           data,
           coverImageConfig,
         );
@@ -171,10 +171,10 @@ exports.editFoodReview = async (req, res, next, type) => {
       }
       try {
         const result = await Promise.props({
-          isDeletedoldFoodPhotosNotUsed: Utils.cloudinary.deteteManyImages(
+          isDeletedoldFoodPhotosNotUsed: CloudinaryService.deteteManyImages(
             oldFoodPhotosId,
           ),
-          isUploadedNewFoodPhotos: Utils.cloudinary.uploadManyImages(
+          isUploadedNewFoodPhotos: CloudinaryService.uploadManyImages(
             foodPhotos,
             foodPhotosConfig,
           ),
@@ -232,7 +232,7 @@ exports.deleteFoodReview = async (req, res, next, type) => {
       isDeletedCoverImage: cloudinary.uploader.destroy(
         foodReview.cover.public_id,
       ),
-      isDeletedFoodPhotos: Utils.cloudinary.deteteManyImages(photos),
+      isDeletedFoodPhotos: CloudinaryService.deteteManyImages(photos),
     });
 
     if (!result.idDeletedFoodBlog) {

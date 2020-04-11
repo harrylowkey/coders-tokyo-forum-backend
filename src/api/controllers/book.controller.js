@@ -109,7 +109,7 @@ exports.editBookReview = async (req, res, next, type) => {
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
       try {
-        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
           data,
           coverImageConfig,
         );

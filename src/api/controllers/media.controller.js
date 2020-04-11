@@ -125,7 +125,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
 
         const data = { oldVideoId, newVideo };
         try {
-          const uploadedVideo = await Utils.cloudinary.deleteOldVideoAndUploadNewVideo(
+          const uploadedVideo = await CloudinaryService.deleteOldVideoAndUploadNewVideo(
             data,
             videoConfig,
           );
@@ -322,7 +322,7 @@ exports.editAudio = async (req, res, next, type) => {
 
       const data = { oldAudioId, newAudio };
       try {
-        const uploadedAudio = await Utils.cloudinary.deleteOldVideoAndUploadNewVideo(
+        const uploadedAudio = await CloudinaryService.deleteOldVideoAndUploadNewVideo(
           data,
           audioConfig,
         );

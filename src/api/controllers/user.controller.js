@@ -98,7 +98,7 @@ exports.uploadAvatar = async (req, res, next) => {
       throw Boom.badRequest('Not found user')
     }
     const newAvatar = req.file;
-    const avatar = await Utils.cloudinary.updateAvatarProcess(user, newAvatar);
+    const avatar = await CloudinaryService.updateAvatarProcess(user, newAvatar);
 
     const updatedAvatar = await User.findByIdAndUpdate(
       req.params.userId,

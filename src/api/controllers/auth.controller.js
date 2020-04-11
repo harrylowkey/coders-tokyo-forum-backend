@@ -7,6 +7,7 @@ const Redis = require('@redis')
 const Promise = require('bluebird');
 const { REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 const { emailQueue } = require('@bull');
+const { MailerService } = require('@services')
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -41,15 +42,23 @@ exports.register = async (req, res, next) => {
   const isExistingEmail = await User.findOne({ email: req.body.email });
   try {
     if (isExistingEmail) throw Boom.conflict('Email already existed');
-    const [newUser] = await Promise.all([
+
+    let mailData = {
+      to: req.body.email,
+      name: req.body.username,
+    }
+
+    await Utils.validator.validatePassword(req.body.password)
+
+    const [newUser, _] = await Promise.all([
       User.create(req.body),
-      emailQueue.send_welcome_email.add({ email: req.body.email, username: req.body.username })
+      MailerService.sendEmail(mailData, 'SIGN_UP')
     ]);
 
     if (!newUser) throw Boom.badRequest('Sign up failed')
     newUser.password = undefined;
     newUser.__v = undefined;
-
+    
     return res.status(httpStatus.OK).json({
       status: 200,
       message: 'Register successfully',
@@ -81,8 +90,13 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
       ttl: 5 * 60
     })
 
+    let mailData = {
+      to: email,
+      verifyCode,
+    }
+
     // emailQueue.send_verify_code.add({ email, verifyCode: emailCode })
-    await Utils.email.sendEmailVerifyCode(email, verifyCode);
+    await MailerService.sendEmail(mailData, 'VERIFY_CODE');
 
     return res.status(200).json({
       status: 200,
