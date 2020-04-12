@@ -1,48 +1,48 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const Post = require('@models').Post;
+const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
 
-exports.createMovieReview = async (req, res, next, type) => {
-  const coverImage = req.files['coverImage'][0].path;
+exports.createMovieReview = async (req, res, next) => {
+  const type = 'movie'
+  const blogCover = req.file
   const {
     body: { tags, authors },
     user,
   } = req;
 
   try {
-    const newMovieReview = {
+    const newMovieReview = new Post({
       userId: user.id,
       ...req.body,
       type,
-    };
+    });
 
     let promises = {
-      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig)
+      blogCover: new File({
+        secureURL: blogCover.secure_url,
+        publicId: blogCover.public_id,
+        fileName: blogCover.originalname,
+        sizeBytes: blogCover.bytes,
+        userId: req.user._id,
+        postId: newMovieReview._id
+      }).save(),
+      authorsCreated: Utils.post.creatAuthors(authors)
     }
     if (tags) {
       promises.tagsCreated = Utils.post.createTags(tags)
     }
-    if (authors) {
-      promises.authorsCreated = Utils.post.creatAuthors(authors)
-    }
 
     const data = await Promise.props(promises);
 
-    const cover = {
-      public_id: data.coverImage.public_id,
-      url: data.coverImage.url,
-      secure_url: data.coverImage.secure_url,
-    };
-
-    newMovieReview.cover = cover;
+    newMovieReview.cover = data.blogCover._id;
     if (data.tagsCreated) newMovieReview.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newMovieReview.authors = data.authorsCreated.map(author => author._id)
 
 
-    const createdMovieReview = await new Post(newMovieReview).save()
+    const createdMovieReview = await newMovieReview.save()
     let dataRes = {
       _id: createdMovieReview.id,
       tags: data.tagsCreated || [],
@@ -52,7 +52,13 @@ exports.createMovieReview = async (req, res, next, type) => {
       description: createdMovieReview.description,
       content: createdMovieReview.content,
       type: createdMovieReview.type,
-      cover: createdMovieReview.cover,
+      cover: { 
+        secureURL: data.blogCover.secureURL,
+        publicId: data.blogCover.publicId,
+        fileName: data.blogCover.fileName,
+        createdAt: data.blogCover.createdAt,
+        sizeBytes: data.blogCover.sizeBytes
+      },
       createdAt: createdMovieReview.createdAt
     }
 

@@ -1,6 +1,6 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const Post = require('@models').Post;
+const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { videoConfig, audioConfig } = require('@configVar');
@@ -12,11 +12,11 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
   } = req;
 
   try {
-    const newVideo = {
+    const newVideo = new Post({
       userId: user._id,
       ...req.body,
       type,
-    };
+    });
 
     // case: gán link video bên ngoài
     let videoTags
@@ -28,40 +28,45 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     }
 
     // case: user upload video
+    let newMedia
     if (isUpload == 'true') {
-      const video = req.files['video'][0].path;
+      const video = req.file
       let promises = {
-        uploadedVideo: cloudinary.uploader.upload(video, videoConfig),
+        uploadedVideo: cloudinary.uploader.upload(video.path, videoConfig),
       }
 
       if (tags) {
         promises.tagsCreated = Utils.post.createTags(tags)
       }
       const result = await Promise.props(promises);
-
-      const media = {
-        public_id: result.uploadedVideo.public_id,
-        url: result.uploadedVideo.url,
-        secure_url: result.uploadedVideo.secure_url,
-        type: result.uploadedVideo.type,
-        signature: result.uploadedVideo.signature,
-        width: result.uploadedVideo.width,
-        height: result.uploadedVideo.height,
-        format: result.uploadedVideo.format,
-        resource_type: result.uploadedVideo.resource_type,
-        frame_rate: result.uploadedVideo.frame_rate,
-        bit_rate: result.uploadedVideo.bit_rate,
-        duration: result.uploadedVideo.duration,
-      };
-
+      const media = await new File({
+        secureURL: result.uploadedVideo.secure_url,
+        publicId: result.uploadedVideo.public_id,
+        fileName: result.uploadedVideo.originalname,
+        sizeBytes: result.uploadedVideo.bytes,
+        userId: req.user._id,
+        postId: newVideo._id,
+        media: {
+          type: result.uploadedVideo.type,
+          signature: result.uploadedVideo.signature,
+          width: result.uploadedVideo.width,
+          height: result.uploadedVideo.height,
+          format: result.uploadedVideo.format,
+          resource_type: result.uploadedVideo.resource_type,
+          frame_rate: result.uploadedVideo.frame_rate,
+          bit_rate: result.uploadedVideo.bit_rate,
+          duration: result.uploadedVideo.duration,
+        }
+      })
       if (result.tagsCreated) {
         videoTags = result.tagsCreated
         newVideo.tags = videoTags.map(tag => tag._id);
       }
+      newMedia = media
       newVideo.media = media;
     }
 
-    let createdNewVideo = await new Post(newVideo).save()
+    let createdNewVideo = await newVideo.save()
     let dataRes = {
       _id: createdNewVideo._id,
       url: createdNewVideo.url || null,
@@ -71,7 +76,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
       type: createdNewVideo.type,
       updatedAt: createdNewVideo.updatedAt,
       tags: videoTags || [],
-      media: createdNewVideo.media || null
+      media: newMedia || null
     }
     return res.status(200).json({
       status: 200,
@@ -216,45 +221,48 @@ exports.createAudio = async (req, res, next, type) => {
     user,
   } = req;
   try {
-    const newAudio = {
+    const newAudio = new Post({
       userId: user._id,
       ...req.body,
       type,
-    };
+    });
 
-    const audio = req.files['audio'][0].path;
+    const audio = req.file
     let promises = {
-      uploadedVideo: cloudinary.uploader.upload(audio, audioConfig),
+      uploadedVideo: cloudinary.uploader.upload_stream(audio.path, audioConfig),
+      authorsCreated: Utils.post.creatAuthors(authors)
     }
-
     if (tags) {
       promises.tagsCreated = Utils.post.createTags(tags)
     }
-    if (authors) {
-      promises.authorsCreated = Utils.post.creatAuthors(authors)
-    }
+
     const data = await Promise.props(promises);
 
-    const media = {
-      public_id: data.uploadedVideo.public_id,
-      url: data.uploadedVideo.url,
-      secure_url: data.uploadedVideo.secure_url,
-      type: data.uploadedVideo.type,
-      signature: data.uploadedVideo.signature,
-      width: data.uploadedVideo.width,
-      height: data.uploadedVideo.height,
-      format: data.uploadedVideo.format,
-      resource_type: data.uploadedVideo.resource_type,
-      frame_rate: data.uploadedVideo.frame_rate,
-      bit_rate: data.uploadedVideo.bit_rate,
-      duration: data.uploadedVideo.duration,
-    };
+    const media = await new File({
+      secureURL: data.uploadedVideo.secure_url,
+      publicId: data.uploadedVideo.public_id,
+      fileName: data.uploadedVideo.originalname,
+      sizeBytes: data.uploadedVideo.bytes,
+      userId: req.user._id,
+      postId: newAudio._id,
+      media: {
+        type: data.uploadedVideo.type,
+        signature: data.uploadedVideo.signature,
+        width: data.uploadedVideo.width,
+        height: data.uploadedVideo.height,
+        format: data.uploadedVideo.format,
+        resource_type: data.uploadedVideo.resource_type,
+        frame_rate: data.uploadedVideo.frame_rate,
+        bit_rate: data.uploadedVideo.bit_rate,
+        duration: data.uploadedVideo.duration,
+      }
+    })
 
     if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
     newAudio.media = media;
 
-    const createdNewAudio = await new Post(newAudio).save()
+    const createdNewAudio = await newAudio.save()
     let dataRes = {
       _id: createdNewAudio._id,
       topic: createdNewAudio._topic,
@@ -263,7 +271,7 @@ exports.createAudio = async (req, res, next, type) => {
       type: createdNewAudio.type,
       updatedAt: createdNewAudio.updatedAt,
       tags: data.tagsCreated || [],
-      media: createdNewAudio.media
+      media,
     }
 
     return res.status(200).json({

@@ -6,8 +6,9 @@ const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
 const { CloudinaryService} = require('@services')
 
-exports.createBlog = async (req, res, next, type) => {
-  const blogCover = req.files['coverImage'][0]
+exports.createBlog = async (req, res, next) => {
+  const type = 'blog'
+  const blogCover = req.file
   const {
     body: { tags },
   } = req;
@@ -18,22 +19,24 @@ exports.createBlog = async (req, res, next, type) => {
       type,
     })
 
-    const newFile = await new File({
-      secureURL: blogCover.secure_url,
-      publicId: blogCover.public_id,
-      fileName: blogCover.originalname,
-      sizeBytes: blogCover.bytes,
-      userId: req.user._id,
-      postId: newBlog._id
-    }).save();
-
-    let blogTags
+    const promises = {
+      blogCover: new File({
+        secureURL: blogCover.secure_url,
+        publicId: blogCover.public_id,
+        fileName: blogCover.originalname,
+        sizeBytes: blogCover.bytes,
+        userId: req.user._id,
+        postId: newBlog._id
+      }).save()
+    }
     if (tags) {
-      blogTags = await Utils.post.createTags(tags)
+      promises.blogTags = Utils.post.createTags(tags)
     }
 
-    newBlog.cover = newFile._id;
-    if (blogTags) newBlog.tags = blogTags.map(tag => tag._id)
+    let result = await Promise.props(promises)
+
+    newBlog.cover = result.blogCover._id;
+    if (result.blogTags) newBlog.tags = result.blogTags.map(tag => tag._id)
 
     let createdBlog = await newBlog.save()
     let dataRes = {
@@ -42,13 +45,13 @@ exports.createBlog = async (req, res, next, type) => {
       description: createdBlog.description,
       content: createdBlog.content,
       type: createdBlog.type,
-      tags: blogTags || [],
+      tags: result.blogTags || [],
       cover: { 
-        secureURL: newFile.secureURL,
-        publicId: newFile.publicId,
-        fileName: newFile.fileName,
-        createdAt: newFile.createdAt,
-        sizeBytes: newFile.sizeBytes
+        secureURL: result.blogCover.secureURL,
+        publicId: result.blogCover.publicId,
+        fileName: result.blogCover.fileName,
+        createdAt: result.blogCover.createdAt,
+        sizeBytes: result.blogCover.sizeBytes
       },
       createdAt: createdBlog.createdAt,
     }

@@ -25,8 +25,8 @@ router
   .route('/avatars')
   .post(
     checkAccessToken,
-    uploadAvatarValidate,
     upload.single('path'),
+    uploadAvatarValidate,
     UserController.uploadAvatar,
   );
 router

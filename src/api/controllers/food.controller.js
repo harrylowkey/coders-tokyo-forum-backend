@@ -1,12 +1,12 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const Post = require('@models').Post;
+const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig, foodPhotosConfig } = require('@configVar');
 
-exports.createFoodReview = async (req, res, next, type) => {
-  //TODO: validate reqBody
+exports.createFoodReview = async (req, res, next) => {
+  const type = 'food'
   const {
     body: {
       tags,
@@ -15,64 +15,78 @@ exports.createFoodReview = async (req, res, next, type) => {
     user,
   } = req;
 
-  const coverImage = req.files['coverImage'][0].path;
-  const foodPhotos = req.files['foodPhotos'].map(photo => photo.path);
+
   try {
-    const newFoodBlog = {
+    const newFoodBlog = new Post({
       userId: user._id,
       ...req.body,
       type,
-    };
+    });
 
+    const foodCover = req.files['coverImage'][0];
+    const foodPhotos = req.files['foodPhotos'].map(photo => ({
+      secureURL: photo.secure_url,
+        publicId: photo.public_id,
+        fileName: photo.originalname,
+        sizeBytes: photo.bytes,
+        userId: req.user._id,
+        postId: newFoodBlog._id
+    }))
     let promises = {
-      coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      foodPhotos: CloudinaryService.uploadManyImages(
-        foodPhotos,
-        foodPhotosConfig,
-      )
+      foodCover: new File({
+        secureURL: foodCover.secure_url,
+        publicId: foodCover.public_id,
+        fileName: foodCover.originalname,
+        sizeBytes: foodCover.bytes,
+        userId: req.user._id,
+        postId: newFoodBlog._id
+      }),
+      foodPhotos: File.insertMany(foodPhotos)
     }
-
     if (tags) {
       promises.tagsCreated = Utils.post.createTags(tags)
     }
+
     const result = await Promise.props(promises);
-    const cover = {
-      public_id: result.coverImage.public_id,
-      url: result.coverImage.url,
-      secure_url: result.coverImage.secure_url,
-    };
-
-    const photos = result.foodPhotos.map(photo => ({
-      public_id: photo.public_id,
-      url: photo.url,
-      secure_url: photo.secure_url,
-    }));
-
     const food = {
       foodName,
       price,
       location,
       star,
-      photos,
+      photos: result.foodPhotos.map(photo => photo._id)
     };
 
     if (result.tagsCreated) {
       newFoodBlog.tags = result.tagsCreated.map(tag => tag._id);
     }
 
-    newFoodBlog.cover = cover;
+    newFoodBlog.cover = result.foodCover._id
     newFoodBlog.food = food;
 
     const createdFoodBlog = await new Post(newFoodBlog).save()
     const dataRes = {
       _id: createdFoodBlog._id,
       tags: result.tagsCreated || [],
-      food: createdFoodBlog.food,
+      food: {
+        ...food,
+        photos: result.foodPhotos.map(photo => ({
+          secureURL: photo.secureURL,
+          publicId: photo.publicId,
+          fileName: photo.fileName,
+          sizeBytes: photo.sizeBytes
+        }))
+      },
       topic: createdFoodBlog.topic,
       description: createdFoodBlog.description,
       content: createdFoodBlog.content,
       type: createdFoodBlog.type,
-      cover: createdFoodBlog.cover,
+      cover: { 
+        secureURL: result.foodCover.secureURL,
+        publicId: result.foodCover.publicId,
+        fileName: result.foodCover.fileName,
+        createdAt: result.foodCover.createdAt,
+        sizeBytes: result.foodCover.sizeBytes
+      },
       createdAt: createdFoodBlog.createdAt
     }
     return res.status(200).json({
@@ -80,8 +94,7 @@ exports.createFoodReview = async (req, res, next, type) => {
       data: dataRes
     });
   } catch (error) {
-    console.log(error);
-    throw Boom.badRequest('Create new food blog review failed');
+    return next(error)
   }
 
 };

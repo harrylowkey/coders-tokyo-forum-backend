@@ -18,7 +18,8 @@
     "@controllers": "src/api/controllers",
     "@redis": "src/config/redis",
     "@services": "src/services",
-    "@views": "views"
+    "@views": "views",
+    "@validations": "src/api/validations"
   },
   "author": "",
   "license": "ISC",

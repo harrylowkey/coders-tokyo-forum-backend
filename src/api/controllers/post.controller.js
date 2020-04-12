@@ -20,7 +20,7 @@ const types = [
   'podcast',
 ];
 
-//TODO: Validate req body
+/** ------------------ GET ------------------------- */
 exports.getOnePost = async (req, res, next) => {
   try {
     const {
@@ -346,85 +346,38 @@ exports.getPostsByTagsName = async (req, res, next) => {
   }
 };
 
-exports.createPost = (req, res, next) => {
-  try {
-    const { type, isUpload } = req.query;
-    if (!type) {
-      throw Boom.badRequest('Type is required');
-    }
-    if (!types.includes(type)) {
-      throw Boom.badRequest(`This ${type} type is not supported yet`);
-    }
-    switch (type) {
-      case 'blog':
-        BlogController.createBlog(req, res, next, type);
-        break;
-      case 'book':
-        BookController.createBookReview(req, res, next, type);
-        break;
-      case 'food':
-        FoodController.createFoodReview(req, res, next, type);
-        break;
-      case 'movie':
-        MovieController.createMovieReview(req, res, next, type);
-        break;
-      case 'video':
-        MediaController.createVideo(req, res, next, type, isUpload);
-        break;
-      case 'song':
-        MediaController.createAudio(req, res, next, type);
-        break;
-      case 'podcast':
-        MediaController.createAudio(req, res, next, type);
-        break;
-      case 'discussion':
-        DiscussionController.createDiscussion(req, res, next, type);
-        break;
-    }
-  } catch (error) {
-    return next(error);
-  }
-};
 
-exports.editPost = (req, res, next) => {
-  try {
-    const { type, isUpload } = req.query;
-    if (!type) {
-      throw Boom.badRequest('Type is required');
-    }
-    if (!types.includes(type)) {
-      throw Boom.badRequest(`This ${type} type is not supported yet`);
-    }
-    switch (type) {
-      case 'blog':
-        BlogController.editBlog(req, res, next, type);
-        break;
-      case 'book':
-        BookController.editBookReview(req, res, next, type);
-        break;
-      case 'food':
-        FoodController.editFoodReview(req, res, next, type);
-        break;
-      case 'movie':
-        MovieController.editMovieReview(req, res, next, type);
-        break;
-      case 'video':
-        MediaController.editVideo(req, res, next, type, isUpload);
-        break;
-      case 'song':
-        MediaController.editAudio(req, res, next, type);
-        break;
-      case 'podcast':
-        MediaController.editAudio(req, res, next, type);
-        break;
-      case 'discussion':
-        DiscussionController.editDiscussion(req, res, next, type);
-        break;
-    }
-  } catch (error) {
-    return next();
-  }
-};
+/** ------------------- POST ---------------------------- */
+
+exports.createSong = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'song');
+}
+
+exports.createPodcast = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'podcast');
+}
+
+exports.createVideo = (req, res, next) => {
+  MediaController.createVideo(req, res, next, 'video', req.query.isUpload);
+}
+
+/** ------------------ PUT ---------------------------------- */
+
+
+
+exports.editVideo = (req, res, next) => {
+  MediaController.editVideo(req, res, next, 'video', req.query.isUpload);
+}
+
+exports.editSong = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'song');
+}
+
+exports.editPodcast = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'podcast');
+}
+
+
 
 exports.deletePost = async (req, res, next) => {
   try {

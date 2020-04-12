@@ -33,8 +33,8 @@ module.exports = {
     use_filename: false,
     unique_filename: true,
     resource_type: 'image',
-    chunk_size: 6000000, //6mb
     allowedFormats: ['jpg', 'png', 'jpeg'],
+    chunk_size: 6000000, //6mb
     transformation: [
       {
         width: 1080,
@@ -66,6 +66,7 @@ module.exports = {
     use_filename: false,
     unique_filename: true,
     resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
     // async: true,
     transformation: [

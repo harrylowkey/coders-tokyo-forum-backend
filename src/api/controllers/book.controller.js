@@ -5,8 +5,9 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
 
-exports.createBookReview = async (req, res, next, type) => {
-  const blogCover = req.files['coverImage'][0];
+exports.createBookReview = async (req, res, next) => {
+  const type = 'book'
+  const blogCover = req.file;
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
     body: { tags, authors },
@@ -22,21 +23,20 @@ exports.createBookReview = async (req, res, next, type) => {
 
     let promises = {
       authorsCreated: Utils.post.creatAuthors(authors),
-      tagsCreated: Utils.post.createTags(tags)
+      blogCover: new File({
+        secureURL: blogCover.secure_url,
+        publicId: blogCover.public_id,
+        fileName: blogCover.originalname,
+        sizeBytes: blogCover.bytes,
+        userId: req.user._id,
+        postId: newBook._id
+      }).save()
     }
+    if (tags) promises.tagsCreated = Utils.post.createTags(tags)
 
     let data = await Promise.props(promises)
 
-    const newFile = await new File({
-      secureURL: blogCover.secure_url,
-      publicId: blogCover.public_id,
-      fileName: blogCover.originalname,
-      sizeBytes: blogCover.bytes,
-      userId: req.user._id,
-      postId: newBook._id
-    }).save();
-
-    newBook.cover = newFile._id;
+    newBook.cover = data.blogCover._id;
     if (data.tagsCreated) newBook.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newBook.authors = data.authorsCreated.map(author => author._id)
 
@@ -48,11 +48,11 @@ exports.createBookReview = async (req, res, next, type) => {
       content: createdBook.content,
       type: createdBook.type,
       cover: { 
-        secureURL: newFile.secureURL,
-        publicId: newFile.publicId,
-        fileName: newFile.fileName,
-        createdAt: newFile.createdAt,
-        sizeBytes: newFile.sizeBytes
+        secureURL: data.blogCover.secureURL,
+        publicId: data.blogCover.publicId,
+        fileName: data.blogCover.fileName,
+        createdAt: data.blogCover.createdAt,
+        sizeBytes: data.blogCover.sizeBytes
       },
       authors: data.authorsCreated || [],
       tags: data.tagsCreated || [],

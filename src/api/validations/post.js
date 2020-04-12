@@ -1,7 +1,8 @@
 const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom')
-const { videoConfig, audioConfig, blogCoverConfig, avatarConfig, foodPhotosConfig } = require('@configVar')
 
+
+//TODO: Create check type extension at frontend (backend can not because of one route)
 let createPostValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
@@ -38,10 +39,17 @@ let createPostValidate = (req, res, next) => {
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    url: Joi.string().optional(),
-    video: Joi.object().keys({
-
-    }).optional(),
+    isUpload: Joi.boolean().optional(),
+    url: Joi.string().when('isUpload', {
+      is: false,
+      then: Joi.required(),
+      otherwise: Joi.optional()
+    }),
+    video: Joi.object().keys({}).when('isUpload', {
+      is: true,
+      then: Joi.required(),
+      otherwise: Joi.optional()
+    }),
     audio: Joi.object().when('type', {
       is: Joi.valid('song', 'podcast'),
       then: Joi.required(),
@@ -54,22 +62,24 @@ let createPostValidate = (req, res, next) => {
       location: Joi.string().optional(),
       star: Joi.number().optional()
     }).when('type', {
-      is: Joi.equal('food'),
+      is: 'food',
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     foodPhotos: Joi.array().when('type', {
-      is: Joi.equal('food'),
+      is: 'food',
       then: Joi.required(),
       otherwise: Joi.optional()
     })
   })
 
+  console.log(req.body, req.files)
   req.files = JSON.parse(JSON.stringify(req.files))
   req.body = JSON.parse(JSON.stringify(req.body))
 
   let reqData = req.body;
   reqData.type = req.query.type
+  reqData.isUpload = req.query.isUpload
   if (req.files.coverImage) {
     reqData.coverImage = req.files['coverImage'][0]
   }

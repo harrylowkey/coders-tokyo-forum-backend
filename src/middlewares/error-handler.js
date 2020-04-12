@@ -28,6 +28,7 @@ exports.handler = (err, req, res, next) => {
 
   if (result.status >= 500) {
     try {
+      
       let arrStack = err.stack.split('\n')
       let message = `There is an exception: ***${err.message}*** (${req.method} ${req.url})`
       if (arrStack.length >= 2) {

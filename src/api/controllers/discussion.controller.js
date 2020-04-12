@@ -3,7 +3,9 @@ const Utils = require('@utils');
 const Post = require('@models').Post;
 const Promise = require('bluebird');
 
-exports.createDiscussion = async (req, res, next, type) => {
+exports.createDiscussion = async (req, res, next) => {
+  const type = 'discussion'
+
   const {
     body: { topic, tags, content },
     user,
