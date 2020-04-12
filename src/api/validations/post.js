@@ -1,8 +1,8 @@
 const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom')
+const { videoConfig, audioConfig, blogCoverConfig, avatarConfig, foodPhotosConfig } = require('@configVar')
 
 let createPostValidate = (req, res, next) => {
-  console.log(req.body)
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().required(),
@@ -21,11 +21,11 @@ let createPostValidate = (req, res, next) => {
     authors: Joi.array().items({
       name: Joi.string().required(),
       type: Joi.string().valid(
-        'author', 
-        'singer', 
-        'composer', 
-        'actor', 
-        'actress', 
+        'author',
+        'singer',
+        'composer',
+        'actor',
+        'actress',
         'director'
       ).required()
     }).when('type', {
@@ -33,14 +33,16 @@ let createPostValidate = (req, res, next) => {
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    coverImage: Joi.string().when('type', {
+    coverImage: Joi.object().when('type', {
       is: Joi.valid('food', 'movie', 'book', 'blog'),
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     url: Joi.string().optional(),
-    video: Joi.string().optional(),
-    audio: Joi.string().when('type', {
+    video: Joi.object().keys({
+
+    }).optional(),
+    audio: Joi.object().when('type', {
       is: Joi.valid('song', 'podcast'),
       then: Joi.required(),
       otherwise: Joi.optional()
@@ -62,21 +64,21 @@ let createPostValidate = (req, res, next) => {
       otherwise: Joi.optional()
     })
   })
-  
+
   req.files = JSON.parse(JSON.stringify(req.files))
   req.body = JSON.parse(JSON.stringify(req.body))
-  
+
   let reqData = req.body;
   reqData.type = req.query.type
   if (req.files.coverImage) {
-    reqData.coverImage = req.files['coverImage'][0].path
+    reqData.coverImage = req.files['coverImage'][0]
   }
   if (req.files.audio) {
-    reqData.audio = req.files['audio'][0].path
+    reqData.audio = req.files['audio'][0]
   }
 
   if (req.files.foodPhotos) {
-    reqData.foodPhotos = req.files['foodPhotos'].map(photo => photo.path)
+    reqData.foodPhotos = req.files['foodPhotos'].map(photo => photo)
   }
 
   const { error } = schema.validate(reqData)

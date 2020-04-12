@@ -1,11 +1,11 @@
 const express = require('express');
+const router = express.Router();
 const { UserController } = require('@controllers')
 const { checkAccessToken } = require('@middlewares/authorize');
 const {
   updateProfileValidate,
   uploadAvatarValidate,
 } = require('../validations/user');
-const router = express.Router();
 
 
 const { avatarConfig } = require('@configVar')

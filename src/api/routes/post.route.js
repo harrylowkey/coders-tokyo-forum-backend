@@ -1,5 +1,5 @@
 const express = require('express');
-const multer = require('multer');
+const router = express.Router();
 const { PostController } = require('@controllers');
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
@@ -7,13 +7,9 @@ const {
   createPostValidate,
 } = require('../validations/post');
 
-const router = express.Router();
-var storage = multer.diskStorage({
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
+const { blogCoverConfig } = require('@configVar')
+const { configStorage } = require('../../config/cloudinary')
+const upload = configStorage(blogCoverConfig)
 
 router.route('/').get(paginate(), PostController.getPosts);
 
@@ -41,7 +37,7 @@ router
   .route('/:postId')
   .put(
     checkAccessToken,
-    upload.fields([
+    upload.array([
       { name: 'coverImage', maxCount: 1 },
       { name: 'video', maxCount: 1 },
       { name: 'audio', maxCount: 1 },

@@ -1,39 +1,41 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const Post = require('@models').Post;
+const { Post, File} = require('@models')
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
 const { CloudinaryService} = require('@services')
 
 exports.createBlog = async (req, res, next, type) => {
-  const coverImage = req.files['coverImage'][0].path;
+  const blogCover = req.files['coverImage'][0]
   const {
     body: { tags },
-    user,
   } = req;
   try {
-    const newBlog = {
-      userId: user._id,
+    const newBlog = new Post({
+      userId: req.user._id,
       ...req.body,
       type,
-    }
+    })
 
-    let promises = [cloudinary.uploader.upload(coverImage, coverImageConfig)]
+    const newFile = await new File({
+      secureURL: blogCover.secure_url,
+      publicId: blogCover.public_id,
+      fileName: blogCover.originalname,
+      sizeBytes: blogCover.bytes,
+      userId: req.user._id,
+      postId: newBlog._id
+    }).save();
+
+    let blogTags
     if (tags) {
-      promises.push(Utils.post.createTags(tags))
+      blogTags = await Utils.post.createTags(tags)
     }
 
-    const [coverImageUploaded, blogTags] = await Promise.all(promises)
-    const cover = {
-      public_id: coverImageUploaded.public_id,
-      url: coverImageUploaded.url,
-      secure_url: coverImageUploaded.secure_url,
-    };
-    newBlog.cover = cover;
+    newBlog.cover = newFile._id;
     if (blogTags) newBlog.tags = blogTags.map(tag => tag._id)
 
-    let createdBlog = await new Post(newBlog).save()
+    let createdBlog = await newBlog.save()
     let dataRes = {
       _id: createdBlog._id,
       topic: createdBlog.topic,
@@ -41,7 +43,13 @@ exports.createBlog = async (req, res, next, type) => {
       content: createdBlog.content,
       type: createdBlog.type,
       tags: blogTags || [],
-      cover,
+      cover: { 
+        secureURL: newFile.secureURL,
+        publicId: newFile.publicId,
+        fileName: newFile.fileName,
+        createdAt: newFile.createdAt,
+        sizeBytes: newFile.sizeBytes
+      },
       createdAt: createdBlog.createdAt,
     }
     return res.status(200).json({

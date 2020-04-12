@@ -55,7 +55,6 @@ CLOUDINARY_QUEUE.moveAvatarFile.process(async (job, done) => {
     done(null, result)
   } catch (error) {
     console.log('Exception when renaming avatar on Cloudinary', error);
-    console.log('currentPath', currentPath)
     await Promise.all([
       File.findByIdAndDelete(fileId),
       CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath }),
@@ -81,7 +80,6 @@ EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
 })
 
 CLOUDINARY_QUEUE.moveAvatarFile.on('completed', (job, result) => {
-  console.log(result)
   if (!result)
     console.log('****__QUEUE_JOB__**** Cloudinary renamed avatar FAILED')
 

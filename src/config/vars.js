@@ -28,12 +28,13 @@ module.exports = {
     chunk_size: 10000000, //10mb
     // async: true,
   },
-  coverImageConfig: {
+  blogCoverConfig: {
     folder: 'Coders-Tokyo-Forum/posts',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     transformation: [
       {
         width: 1080,

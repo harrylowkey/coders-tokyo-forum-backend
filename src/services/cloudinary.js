@@ -83,3 +83,20 @@ exports.deleteOldVideoAndUploadNewVideo = async (data, config = {}) => {
 
   return result.isUploaded;
 };
+
+exports.uploadImageProcess = async (user, image) => {
+  const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
+  const newFileName = `${user.username}_blog_image_cover_${image.originalname.split('.')[0]}_`
+  const newPath = avatarConfig.folder + '/' + newFileName + Math.floor(Date.now() / 1000);
+  const newSecureURL = image.secure_url.replace(image.public_id, newPath);
+
+  
+
+  CLOUDINARY_QUEUE.moveAvatarFile.add({
+    currentPath: image.public_id,
+    newPath,
+    fileId: newFile.id
+  })
+
+  return newFile;
+};
