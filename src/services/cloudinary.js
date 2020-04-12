@@ -6,15 +6,13 @@ const File = require('@models').File
 
 exports.updateAvatarProcess = async (user, newAvatar) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const newPath = avatarConfig.folder + '/' + `${user.username}_avatar_` + Math.floor(Date.now() / 1000);
+  const newPath = avatarConfig.folder + '/' + `${user.username}_avatar_` + newAvatar.originalname.split('.')[0] + '_' + Math.floor(Date.now() / 1000);
   const newSecureURL = newAvatar.secure_url.replace(newAvatar.public_id, newPath);
 
   if (user.avatar) {
     const avatar = await File.findById(user.avatar._id).lean();
     FILE_REFERENCE_QUEUE.deleteAvatar.add({ avatar });
   }
-
-
 
   const newFile = await new File({
     secureURL: newSecureURL,

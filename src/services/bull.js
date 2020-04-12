@@ -1,6 +1,6 @@
 const Queue = require('bull');
 const cloudinary = require('cloudinary').v2;
-const { QUEUES } = require('./vars');
+const { QUEUES } = require('@configVar');
 const { MailerService } = require('@services')
 const { File } = require('@models')
 
@@ -81,11 +81,12 @@ EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
 })
 
 CLOUDINARY_QUEUE.moveAvatarFile.on('completed', (job, result) => {
-  if (result.result === 'not found')
-    console.log('****__QUEUE_JOB__**** Cloudinary moved avatar FAILED')
+  console.log(result)
+  if (!result)
+    console.log('****__QUEUE_JOB__**** Cloudinary renamed avatar FAILED')
 
-  if (result.result === 'ok')
-    console.log('****__QUEUE_JOB__**** Cloudinary moved avatar SUCCESS')
+  if (result)
+    console.log('****__QUEUE_JOB__**** Cloudinary renamed avatar SUCCESS')
 })
 
 CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {

@@ -62,7 +62,7 @@ module.exports = {
   },
   foodPhotosConfig: {
     folder: 'Coders-Tokyo-Forum/posts/foodReview',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
     chunk_size: 6000000, //6mb

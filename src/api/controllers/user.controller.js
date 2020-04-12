@@ -99,6 +99,7 @@ exports.uploadAvatar = async (req, res, next) => {
       throw Boom.badRequest('Not found user')
     }
     const newAvatar = req.file;
+    console.log(newAvatar)
     const avatar = await CloudinaryService.updateAvatarProcess(user, newAvatar);
 
     const updatedAvatar = await User.findByIdAndUpdate(
@@ -116,6 +117,10 @@ exports.uploadAvatar = async (req, res, next) => {
     return res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       message: 'Update avatar success',
+      data: {
+        publicId: avatar.publicId,
+        secureURL: avatar.secureURL
+      }
     });
   } catch (error) {
     return next(error);
