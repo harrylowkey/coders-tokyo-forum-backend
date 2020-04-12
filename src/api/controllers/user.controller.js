@@ -1,22 +1,22 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
-const Utils = require('@utils');
 const User = require('@models').User;
-const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { avatarConfig } = require('@configVar');
 const { CloudinaryService } = require('@services')
+const { CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE } = require('@bull')
 
-exports.getOne = async (req, res, next) => {
+exports.getById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId)
       .lean()
-      .select('-verifyCode -__v -password');
+      .select('-verifyCode -__v -password')
+      .populate({
+        path: 'avatar',
+        select: '-__v -userId'
+      })
 
     if (!user) throw Boom.badRequest('Not found user')
     return res.status(200).json({
       status: 200,
-      message: 'success',
       data: user,
     });
   } catch (error) {
@@ -99,7 +99,6 @@ exports.uploadAvatar = async (req, res, next) => {
       throw Boom.badRequest('Not found user')
     }
     const newAvatar = req.file;
-    console.log(newAvatar)
     const avatar = await CloudinaryService.updateAvatarProcess(user, newAvatar);
 
     const updatedAvatar = await User.findByIdAndUpdate(
@@ -129,27 +128,32 @@ exports.uploadAvatar = async (req, res, next) => {
 
 exports.deleteAvatar = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.userId).lean();
+    const user = await User.findById(req.user._id)
+      .lean()
+      .populate({
+        path: 'avatar'
+      })
     if (!user) {
       throw Boom.badRequest('Not found user')
     }
-    const avatarId = user.avatar.public_id;
-    if (!avatarId) {
-      throw Boom.badRequest('Not exist avatar to delete')
+    const avatar = user.avatar
+    if (!avatar) {
+      throw Boom.badRequest('Deleted avatar failed, not found avatar')
     }
-    const isDeleted = await Promise.props({
-      onCloudinary: cloudinary.uploader.destroy(avatarId),
-      onDatabase: User.findByIdAndUpdate(
-        req.params.userId,
-        {
-          $set: { 'avatar.public_id': null, 'avatar.url': null },
-        },
-        { new: true },
-      ),
-    });
 
-    if (isDeleted.onCloudinary.result !== 'ok' || !isDeleted.onDatabase) {
-      throw Boom.badRequest('Delete avatar failed');
+    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: avatar.publicId })
+    FILE_REFERENCE_QUEUE.deleteAvatar.add({ avatar })
+
+    const deletedAva = await User.findByIdAndUpdate(
+      req.user._id,
+      { 
+        $set: { avatar: null }
+      },
+      { new: true }
+    )
+
+    if (!deletedAva) {
+      throw Boom.badRequest('Deleted avatar failed')
     }
 
     return res.status(200).json({
@@ -163,7 +167,12 @@ exports.deleteAvatar = async (req, res, next) => {
 
 exports.getByUsername = async(req, res, next) => {
   try {
-    const user = await User.findOne({ username: req.params.username }).lean()
+    const user = await User.findOne({ username: req.params.username })
+    .lean()
+    .populate({
+      path: 'avatar',
+      select: '-__v -userId'
+    })
     if (!user) throw Boom.badRequest('Not found user')
     return res.status(200).json({
       status: 200,

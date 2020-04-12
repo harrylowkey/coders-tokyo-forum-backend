@@ -2,7 +2,7 @@ const Queue = require('bull');
 const cloudinary = require('cloudinary').v2;
 const { QUEUES } = require('@configVar');
 const { MailerService } = require('@services')
-const { File } = require('@models')
+const { File, User } = require('@models')
 
 const UESR_QUEUE = new Queue(`${QUEUES.USER_QUEUE.name}`, QUEUES.USER_QUEUE.options);
 const CLOUDINARY_QUEUE = {

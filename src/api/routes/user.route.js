@@ -14,7 +14,7 @@ const upload = configStorage(avatarConfig)
 
 router
   .route('/:userId')
-  .get(checkAccessToken, UserController.getOne);
+  .get(checkAccessToken, UserController.getById);
 router
   .route('/:userId')
   .put(checkAccessToken,
@@ -34,7 +34,7 @@ router
   .delete(checkAccessToken, UserController.deleteAvatar);
 
 router
-  .route('/:username')
+  .route('/usernames/:username')
   .get(UserController.getByUsername);
 
 module.exports = router;
