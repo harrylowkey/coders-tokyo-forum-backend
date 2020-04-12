@@ -1,13 +1,12 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const User = require('@models').User;
-const Post = require('@models').Post;
+const { User, Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
 
 exports.createBookReview = async (req, res, next, type) => {
-  const coverImage = req.files['coverImage'][0].path;
+  const blogCover = req.files['coverImage'][0];
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
     body: { tags, authors },
@@ -15,43 +14,46 @@ exports.createBookReview = async (req, res, next, type) => {
   } = req;
 
   try {
-    const newBook = {
+    const newBook = new Post({
       userId: user._id,
       ...req.body,
       type,
-    };
-    Joi.string().when('a', 
-    { is: 'avalue', 
-    then: Joi.string().required() 
-  }).concat(Joi.string().when('b', 
-  { is: 'bvalue', then: Joi.string().required() 
-}))
+    });
+
     let promises = {
-      coverImageUploaded: cloudinary.uploader.upload(coverImage, coverImageConfig),
       authorsCreated: Utils.post.creatAuthors(authors),
       tagsCreated: Utils.post.createTags(tags)
     }
 
     let data = await Promise.props(promises)
 
-    const cover = {
-      public_id: data.coverImageUploaded.public_id,
-      url: data.coverImageUploaded.url,
-      secure_url: data.coverImageUploaded.secure_url,
-    };
+    const newFile = await new File({
+      secureURL: blogCover.secure_url,
+      publicId: blogCover.public_id,
+      fileName: blogCover.originalname,
+      sizeBytes: blogCover.bytes,
+      userId: req.user._id,
+      postId: newBook._id
+    }).save();
 
-    newBook.cover = cover;
+    newBook.cover = newFile._id;
     if (data.tagsCreated) newBook.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newBook.authors = data.authorsCreated.map(author => author._id)
 
-    const createdBook = await new Post(newBook).save()
+    const createdBook = await newBook.save()
     const dataRes = {
       _id: createdBook._id,
       topic: createdBook.topic,
       description: createdBook.description,
       content: createdBook.content,
       type: createdBook.type,
-      cover: createdBook.cover,
+      cover: { 
+        secureURL: newFile.secureURL,
+        publicId: newFile.publicId,
+        fileName: newFile.fileName,
+        createdAt: newFile.createdAt,
+        sizeBytes: newFile.sizeBytes
+      },
       authors: data.authorsCreated || [],
       tags: data.tagsCreated || [],
       createdAt: createdBook.createdAt
