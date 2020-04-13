@@ -10,4 +10,5 @@ module.exports = {
   PostController: require('./post.controller'),
   StreamController: require('./stream.controller'),
   UserController: require('./user.controller'),
+  FileController: require('./file.controller'),
 };
