@@ -99,7 +99,7 @@ exports.uploadAvatar = async (req, res, next) => {
       throw Boom.badRequest('Not found user')
     }
     const newAvatar = req.file;
-    const avatar = await CloudinaryService.updateAvatarProcess(user, newAvatar);
+    const avatar = await CloudinaryService.uploadFileProcess(req.user, user, newAvatar, '_avatar_');
 
     const updatedAvatar = await User.findByIdAndUpdate(
       req.user._id,
@@ -118,7 +118,9 @@ exports.uploadAvatar = async (req, res, next) => {
       message: 'Update avatar success',
       data: {
         publicId: avatar.publicId,
-        secureURL: avatar.secureURL
+        secureURL: avatar.secureURL,
+        fileName: avatar.fileName,
+        sizes: avatar.sizeBytes
       }
     });
   } catch (error) {
@@ -126,7 +128,7 @@ exports.uploadAvatar = async (req, res, next) => {
   }
 };
 
-exports.deleteAvatar = async (req, res, next) => {
+exports.deleteFile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id)
       .lean()
@@ -142,7 +144,7 @@ exports.deleteAvatar = async (req, res, next) => {
     }
 
     CLOUDINARY_QUEUE.deleteAsset.add({ publicId: avatar.publicId })
-    FILE_REFERENCE_QUEUE.deleteAvatar.add({ avatar })
+    FILE_REFERENCE_QUEUE.deleteFile.add({ avatar })
 
     const deletedAva = await User.findByIdAndUpdate(
       req.user._id,

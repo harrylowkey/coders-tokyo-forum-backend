@@ -73,7 +73,10 @@ exports.createComment = async (req, res, next) => {
 
 exports.editComment = async (req, res, next) => {
   try {
-    const comment = await Comment.findById(req.params.commentId)
+    const comment = await Comment.findOne({ 
+      _id: req.params.commentId,
+      userId: req.user._id,
+    })
     if (!comment) {
       throw Boom.badRequest('Not found comment')
     }

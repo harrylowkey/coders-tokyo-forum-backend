@@ -2,15 +2,15 @@ const Queue = require('bull');
 const cloudinary = require('cloudinary').v2;
 const { QUEUES } = require('@configVar');
 const { MailerService } = require('@services')
-const { File, User } = require('@models')
+const { File, Post } = require('@models')
 
 const UESR_QUEUE = new Queue(`${QUEUES.USER_QUEUE.name}`, QUEUES.USER_QUEUE.options);
 const CLOUDINARY_QUEUE = {
   deleteAsset: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:delete_assset`, QUEUES.CLOUDINARY_QUEUE.options),
-  moveAvatarFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:move-avatar-file`, QUEUES.CLOUDINARY_QUEUE.options)
+  renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename-file`, QUEUES.CLOUDINARY_QUEUE.options)
 }
 const FILE_REFERENCE_QUEUE = {
-  deleteAvatar: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_avatar`, QUEUES.FILE_REFERENCE_QUEUE.options)
+  deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete-file`, QUEUES.FILE_REFERENCE_QUEUE.options)
 }
 const EMAIL_QUEUE = {
   sendWelcomeEmail: new Queue(`${QUEUES.EMAIL_QUEUE.name}:send_welcome_email`, QUEUES.EMAIL_QUEUE.options),
@@ -43,34 +43,35 @@ CLOUDINARY_QUEUE.deleteAsset.process(async (job, done) => {
     const result = await cloudinary.uploader.destroy(publicId)
     done(null, result)
   } catch (error) {
-    console.log('Exception when deleting avatar on Cloudinary', e);
+    console.log('Exception when deleting asset on Cloudinary', error);
     done(error, null);
   }
 })
 
-CLOUDINARY_QUEUE.moveAvatarFile.process(async (job, done) => {
-  const { data: { currentPath, newPath, fileId } } = job
+CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
+  const { data: { currentPath, newPath, fileId, postId } } = job
   try {
     const result = await cloudinary.uploader.rename(currentPath, newPath);
     done(null, result)
   } catch (error) {
-    console.log('Exception when renaming avatar on Cloudinary', error);
+    console.log('Exception when renaming file on Cloudinary', error);
     await Promise.all([
       File.findByIdAndDelete(fileId),
+      Post.findByIdAndUpdate(postId, { $set: { media: null } }, { new: true }),
       CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath }),
     ]);
     done(error, null);
   }
 })
 
-FILE_REFERENCE_QUEUE.deleteAvatar.process(async (job, done) => {
+FILE_REFERENCE_QUEUE.deleteFile.process(async (job, done) => {
   try {
-    const { data: { avatar } } = job;
-    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: avatar.publicId })
-    const result = await File.findByIdAndDelete(avatar._id)
+    const { data: { file } } = job;
+    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: file.publicId })
+    const result = await File.findByIdAndDelete(file._id)
     done(null, result);
   } catch (e) {
-    console.log('Exception when deleting avatar in DATABASE', e);
+    console.log('Exception when deleting file in DATABASE', e);
     done(e, null);
   }
 })
@@ -79,12 +80,12 @@ EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
   console.log('****__QUEUE_JOB__**** Send email code success')
 })
 
-CLOUDINARY_QUEUE.moveAvatarFile.on('completed', (job, result) => {
+CLOUDINARY_QUEUE.renameFile.on('completed', (job, result) => {
   if (!result)
-    console.log('****__QUEUE_JOB__**** Cloudinary renamed avatar FAILED')
+    console.log('****__QUEUE_JOB__**** Cloudinary renamed file FAILED')
 
   if (result)
-    console.log('****__QUEUE_JOB__**** Cloudinary renamed avatar SUCCESS')
+    console.log('****__QUEUE_JOB__**** Cloudinary renamed file SUCCESS')
 })
 
 CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {
@@ -95,12 +96,12 @@ CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {
     console.log('****__QUEUE_JOB__**** Cloudinary deleted asset SUCCESS')
 })
 
-FILE_REFERENCE_QUEUE.deleteAvatar.on('completed', (job, result) => {
+FILE_REFERENCE_QUEUE.deleteFile.on('completed', (job, result) => {
   if (!result) 
-    console.log('****__QUEUE_JOB__**** FileReference deleted avatar in DATABASE FAILED')
+    console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE FAILED')
   
   if (result)
-    console.log('****__QUEUE_JOB__**** FileReference deleted avatar in DATABASE SUCCESS')
+    console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE SUCCESS')
 })
 
 

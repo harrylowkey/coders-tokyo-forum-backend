@@ -232,6 +232,7 @@ exports.getPosts = async (req, res, next) => {
       query.userId = req.params.userId;
     }
 
+    //TODO: sort post
     const [posts, postCounter, counter] = await Promise.all([
       Post.find(query)
         .lean()
@@ -374,7 +375,8 @@ exports.editSong = (req, res, next) => {
 }
 
 exports.editPodcast = (req, res, next) => {
-  MediaController.createAudio(req, res, next, 'podcast');
+  console.log('here')
+  MediaController.editAudio(req, res, next, 'podcast');
 }
 
 

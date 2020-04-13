@@ -67,11 +67,13 @@ exports.createBookReview = async (req, res, next) => {
   }
 };
 
-exports.editBookReview = async (req, res, next, type) => {
+exports.editBookReview = async (req, res, next) => {
+  const type= 'book'
   const { topic, description, content, tags, authors } = req.body;
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
@@ -102,28 +104,12 @@ exports.editBookReview = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    const files = req.files || {};
-    const coverImageInput = files['coverImage'] || null;
-    if (coverImageInput) {
-      const coverImage = coverImageInput[0].path;
-      const oldCover = book.cover || {};
-      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    let blogCover = req.file
+    if (blogCover) {
+      const uploadedCoverImage = await
+        CloudinaryService.uploadFileProcess(req.user, book, blogCover, '_book_blog_review_cover_');
 
-      const data = { oldImageId: oldCoverId, newImage: coverImage };
-      try {
-        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
-          data,
-          coverImageConfig,
-        );
-
-        query.cover = {
-          public_id: uploadedCoverImage.public_id,
-          url: uploadedCoverImage.url,
-          secure_url: uploadedCoverImage.secure_url,
-        };
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
+      query.cover = uploadedCoverImage._id
     }
 
     const upadatedBlog = await Post.findByIdAndUpdate(
@@ -138,6 +124,7 @@ exports.editBookReview = async (req, res, next, type) => {
         { path: 'tags', select: 'tagName' },
         { path: 'authors', select: 'name' },
       ])
+      .populate({ path: 'cover', select: 'publicId sercureURL fileName sizeBytes'})
       .select('-__v -media -url');
 
     return res.status(200).json({

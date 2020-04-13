@@ -40,7 +40,7 @@ exports.createFoodReview = async (req, res, next) => {
         sizeBytes: foodCover.bytes,
         userId: req.user._id,
         postId: newFoodBlog._id
-      }),
+      }).save(),
       foodPhotos: File.insertMany(foodPhotos)
     }
     if (tags) {
@@ -103,6 +103,7 @@ exports.editFoodReview = async (req, res, next, type) => {
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()

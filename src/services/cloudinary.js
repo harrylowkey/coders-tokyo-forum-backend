@@ -1,36 +1,8 @@
 const cloudinary = require('cloudinary').v2;
 const Promise = require('bluebird');
 const Boom = require('@hapi/boom')
-const { avatarConfig } = require('@configVar')
+const { avatarConfig, blogCoverConfig, videoConfig, audioConfig } = require('@configVar')
 const File = require('@models').File
-
-exports.updateAvatarProcess = async (user, newAvatar) => {
-  const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const newFileName = `${user.username}_avatar_${newAvatar.originalname.split('.')[0]}_`
-  const newPath = avatarConfig.folder + '/' + newFileName + Math.floor(Date.now() / 1000);
-  const newSecureURL = newAvatar.secure_url.replace(newAvatar.public_id, newPath);
-
-  if (user.avatar) {
-    const avatar = await File.findById(user.avatar._id).lean();
-    FILE_REFERENCE_QUEUE.deleteAvatar.add({ avatar });
-  }
-
-  const newFile = await new File({
-    secureURL: newSecureURL,
-    publicId: newPath,
-    fileName: newFileName + newAvatar.originalname,
-    sizeBytes: newAvatar.bytes,
-    userId: user._id,
-  }).save();
-
-  CLOUDINARY_QUEUE.moveAvatarFile.add({
-    currentPath: newAvatar.public_id,
-    newPath,
-    fileId: newFile.id
-  })
-
-  return newFile;
-};
 
 exports.uploadManyImages = async (images, config = {}) => {
   const uploadImagePromise = image => {
@@ -84,19 +56,84 @@ exports.deleteOldVideoAndUploadNewVideo = async (data, config = {}) => {
   return result.isUploaded;
 };
 
-exports.uploadImageProcess = async (user, image) => {
+exports.uploadFileProcess = async (user, data, newFile, fileType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const newFileName = `${user.username}_blog_image_cover_${image.originalname.split('.')[0]}_`
-  const newPath = avatarConfig.folder + '/' + newFileName + Math.floor(Date.now() / 1000);
-  const newSecureURL = image.secure_url.replace(image.public_id, newPath);
+  const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
+  const newFileName = `${user.username}${fileType}${newFile.originalname.split('.')[0]}`
+  const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
-  
+  if (fileType === '_avatar_' && data.avatar) {
+    const file = await File.findById(data.avatar._id).lean();
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file });
+  } else {
+    if (data.cover) {
+      const file = await File.findById(data.cover._id).lean();
+      FILE_REFERENCE_QUEUE.deleteFile.add({ file });
+    }
+  }
 
-  CLOUDINARY_QUEUE.moveAvatarFile.add({
-    currentPath: image.public_id,
+  const newFileCreated = await new File({
+    secureURL: newSecureURL,
+    publicId: newPath,
+    fileName: newFileName,
+    sizeBytes: newFile.bytes,
+    userId: user._id,
+    postId: data._id
+  }).save();
+
+
+  CLOUDINARY_QUEUE.renameFile.add({
+    currentPath: newFile.public_id,
     newPath,
-    fileId: newFile.id
+    fileId: newFileCreated.id,
+    postId: data._id
   })
 
-  return newFile;
+  return newFileCreated;
 };
+
+exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, config) => {
+  const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
+  const newFile = await cloudinary.uploader.upload(newFileToUpload, config)
+  console.log('newFile', newFile)
+  const newFileName = `${user.username}${fileType}${newFile.original_filename}`
+  const newPath = videoConfig.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+
+  if (data.media) {
+    console.log('$$$$$$$$$$$$$$$$$$$$$')
+    const file = await File.findById(data.media._id).lean();
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file });
+  }
+
+  const newFileCreated = await new File({
+    secureURL: newSecureURL,
+    publicId: newPath,
+    fileName: newFileName,
+    sizeBytes: newFile.bytes,
+    userId: user._id,
+    postId: data._id,
+    media: {
+      type: newFile.type,
+      signature: newFile.signature,
+      width: newFile.width,
+      height: newFile.height,
+      format: newFile.format,
+      resource_type: newFile.resource_type,
+      frame_rate: newFile.frame_rate,
+      bit_rate: newFile.bit_rate,
+      duration: newFile.duration,
+    }
+  }).save();
+
+  CLOUDINARY_QUEUE.renameFile.add({
+    currentPath: newFile.public_id,
+    newPath,
+    fileId: newFileCreated.id,
+    postId: data._id
+  })
+
+  return newFileCreated;
+};
+

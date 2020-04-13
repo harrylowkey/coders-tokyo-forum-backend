@@ -77,6 +77,7 @@ exports.editMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()

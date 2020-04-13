@@ -46,8 +46,9 @@ exports.editDiscussion = async (req, res, next, type) => {
   const { topic, content, tags } = req.body;
 
   try {
-    const discussion = await Post.findById({
+    const discussion = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()

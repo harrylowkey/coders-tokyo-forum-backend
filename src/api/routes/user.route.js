@@ -31,7 +31,7 @@ router
   );
 router
   .route('/avatars')
-  .delete(checkAccessToken, UserController.deleteAvatar);
+  .delete(checkAccessToken, UserController.deleteFile);
 
 router
   .route('/usernames/:username')

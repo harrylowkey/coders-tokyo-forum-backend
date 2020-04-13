@@ -1,10 +1,10 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const { Post, File} = require('@models')
+const { Post, File } = require('@models')
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { coverImageConfig } = require('@configVar');
-const { CloudinaryService} = require('@services')
+const { CloudinaryService } = require('@services')
 
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
@@ -46,7 +46,7 @@ exports.createBlog = async (req, res, next) => {
       content: createdBlog.content,
       type: createdBlog.type,
       tags: result.blogTags || [],
-      cover: { 
+      cover: {
         secureURL: result.blogCover.secureURL,
         publicId: result.blogCover.publicId,
         fileName: result.blogCover.fileName,
@@ -64,15 +64,20 @@ exports.createBlog = async (req, res, next) => {
   }
 };
 
-exports.editBlog = async (req, res, next, type) => {
+exports.editBlog = async (req, res, next) => {
+  const type = 'blog'
   const { topic, description, content, tags } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
-      .populate({ path: 'tags', select: '_id tagName' });
+      .populate({
+        path: 'tags',
+        select: '_id tagName'
+      })
 
     if (!blog) {
       throw Boom.badRequest('Not found blog');
@@ -90,28 +95,12 @@ exports.editBlog = async (req, res, next, type) => {
       query.tags = newTags;
     }
 
-    const files = req.files || {};
-    const coverImageInput = files['coverImage'] || null;
-    if (coverImageInput) {
-      const coverImage = coverImageInput[0].path;
-      const oldCover = blog.cover || {};
-      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    let blogCover = req.file
+    if (blogCover) {
+      const uploadedCoverImage = await
+        CloudinaryService.uploadFileProcess(req.user, blog, blogCover, '_blog_image_cover_');
 
-      const data = { oldImageId: oldCoverId, newImage: coverImage };
-      try {
-        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
-          data,
-          coverImageConfig,
-        );
-
-        query.cover = {
-          public_id: uploadedCoverImage.public_id,
-          url: uploadedCoverImage.url,
-          secure_url: uploadedCoverImage.secure_url,
-        };
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
+      query.cover = uploadedCoverImage._id
     }
 
     const upadatedBlog = await Post.findByIdAndUpdate(
@@ -123,6 +112,7 @@ exports.editBlog = async (req, res, next, type) => {
     )
       .lean()
       .populate({ path: 'tags', select: 'tagName' })
+      .populate({ path: 'cover', select: 'publicId sercureURL fileName sizeBytes'})
       .select('-__v -media -url -authors');
 
     return res.status(200).json({

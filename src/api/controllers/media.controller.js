@@ -4,6 +4,7 @@ const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { videoConfig, audioConfig } = require('@configVar');
+const { CloudinaryService } = require('@services')
 
 exports.createVideo = async (req, res, next, type, isUpload) => {
   const {
@@ -57,7 +58,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
           bit_rate: result.uploadedVideo.bit_rate,
           duration: result.uploadedVideo.duration,
         }
-      })
+      }).save()
       if (result.tagsCreated) {
         videoTags = result.tagsCreated
         newVideo.tags = videoTags.map(tag => tag._id);
@@ -93,10 +94,12 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      type,
+      userId: req.user._id,
+      type
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' })
     if (!video) {
       throw Boom.badRequest('Not found video, edit video failed');
     }
@@ -121,40 +124,13 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     }
 
     if (isUpload == 'true') {
-      const files = req.files || {};
-      const videoInput = files['video'] || null;
-      if (videoInput) {
-        const newVideo = videoInput[0].path;
-        const oldVideo = video.media || {};
-        const oldVideoId = oldVideo.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+      const newVideo = req.file
+      if (newVideo) {
+        const uploadedVideo = await
+          CloudinaryService.uploadMediaProcess(req.user, video, newVideo.path, '_video_', videoConfig);
 
-        const data = { oldVideoId, newVideo };
-        try {
-          const uploadedVideo = await CloudinaryService.deleteOldVideoAndUploadNewVideo(
-            data,
-            videoConfig,
-          );
-
-          const media = {
-            public_id: uploadedVideo.public_id,
-            url: uploadedVideo.url,
-            secure_url: uploadedVideo.secure_url,
-            type: uploadedVideo.type,
-            signature: uploadedVideo.signature,
-            width: uploadedVideo.width,
-            height: uploadedVideo.height,
-            format: uploadedVideo.format,
-            resource_type: uploadedVideo.resource_type,
-            frame_rate: uploadedVideo.frame_rate,
-            bit_rate: uploadedVideo.bit_rate,
-            duration: uploadedVideo.duration,
-          };
-
-          query.media = media;
-          query.url = null;
-        } catch (error) {
-          throw Boom.badRequest(error.message);
-        }
+        query.media = uploadedVideo._id;
+        query.url = null;
       }
     }
 
@@ -167,7 +143,11 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     )
       .lean()
       .populate([{ path: 'tags', select: 'tagName' }])
-      .select('-__v -authors');
+      .populate({
+        path: 'media',
+        select: '-__v'
+      })
+      .select('-__v -authors')
 
     return res.status(200).json({
       status: 200,
@@ -229,7 +209,7 @@ exports.createAudio = async (req, res, next, type) => {
 
     const audio = req.file
     let promises = {
-      uploadedVideo: cloudinary.uploader.upload_stream(audio.path, audioConfig),
+      uploadedVideo: cloudinary.uploader.upload(audio.path, audioConfig),
       authorsCreated: Utils.post.creatAuthors(authors)
     }
     if (tags) {
@@ -256,8 +236,8 @@ exports.createAudio = async (req, res, next, type) => {
         bit_rate: data.uploadedVideo.bit_rate,
         duration: data.uploadedVideo.duration,
       }
-    })
-
+    }).save()
+    console.log(media)
     if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
     newAudio.media = media;
@@ -286,15 +266,16 @@ exports.createAudio = async (req, res, next, type) => {
 
 exports.editAudio = async (req, res, next, type) => {
   const { topic, description, content, tags, authors } = req.body;
-
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
-      .populate({ path: 'authors', select: '_id name type' });
+      .populate({ path: 'authors', select: '_id name type' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' })
     if (!audio) {
       throw Boom.badRequest(`Not found ${type}, edit ${type} failed`);
     }
@@ -321,39 +302,12 @@ exports.editAudio = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    const files = req.files || {};
-    const audioInput = files['audio'] || null;
-    if (audioInput) {
-      const newAudio = audioInput[0].path;
-      const oldAudio = video.media || {};
-      const oldAudioId = oldAudio.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    const newAudio = req.file
+    if (newAudio) {
+      const uploadedAudio = await
+        CloudinaryService.uploadMediaProcess(req.user, audio, newAudio.path, `_${type}_`, audioConfig);
 
-      const data = { oldAudioId, newAudio };
-      try {
-        const uploadedAudio = await CloudinaryService.deleteOldVideoAndUploadNewVideo(
-          data,
-          audioConfig,
-        );
-
-        const media = {
-          public_id: uploadedAudio.public_id,
-          url: uploadedAudio.url,
-          secure_url: uploadedAudio.secure_url,
-          type: uploadedAudio.type,
-          signature: uploadedAudio.signature,
-          width: uploadedAudio.width,
-          height: uploadedAudio.height,
-          format: uploadedAudio.format,
-          resource_type: uploadedAudio.resource_type,
-          frame_rate: uploadedAudio.frame_rate,
-          bit_rate: uploadedAudio.bit_rate,
-          duration: uploadedAudio.duration,
-        };
-
-        query.media = media;
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
+      query.media = uploadedAudio._id;
     }
 
     const updatedAudio = await Post.findByIdAndUpdate(
@@ -367,6 +321,7 @@ exports.editAudio = async (req, res, next, type) => {
       .populate([
         { path: 'tags', select: 'tagName' },
         { path: 'authors', select: 'name type' },
+        { path: 'media'}
       ])
       .select('-__v -url');
 

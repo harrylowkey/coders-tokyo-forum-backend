@@ -2,24 +2,14 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const {
-  BlogController,
-  BookController,
-  FoodController,
-  MovieController,
-  PostController,
-  DiscussionController
+  BlogController, BookController, FoodController,
+  MovieController, PostController, DiscussionController
 } = require('@controllers')
 
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
-const {
-  Blog,
-  Book,
-  Food,
-  Movie,
-  Video,
-  Audio,
-  Discussion
+const { Blog, Book, Food,
+  Movie, Video, Audio, Discussion
 } = require('@validations');
 
 /** ----------- CONFIG --------------- */
@@ -52,11 +42,14 @@ router
     Blog.validatePOST,
     BlogController.createBlog,
   )
+
+router
+  .route('/blogs/:postId')
   .put(
     checkAccessToken,
     uploadBlog.single('coverImage'),
-    Blog.validatePOST,
-    BlogController.createBlog,
+    Blog.validatePUT,
+    BlogController.editBlog,
   )
 
 router
@@ -70,6 +63,7 @@ router
   .put(
     checkAccessToken,
     uploadBlog.single('coverImage'),
+    Book.validatePUT,
     BookController.editBookReview,
   )
 
@@ -86,10 +80,11 @@ router
   )
   .put(
     checkAccessToken,
-      uploadFoodPhotos.fields([
-        { name: 'coverImage', maxCount: 1 },
-        { name: 'foodPhotos', maxCount: 10 }
-      ]),
+    uploadFoodPhotos.fields([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'foodPhotos', maxCount: 10 }
+    ]),
+    Food.validatePUT,
     FoodController.editFoodReview
   )
 
@@ -104,6 +99,7 @@ router
   .put(
     checkAccessToken,
     uploadBlog.single('coverImage'),
+    Movie.validatePUT,
     MovieController.editMovieReview,
   )
 
@@ -115,9 +111,13 @@ router
     Video.validatePOST,
     PostController.createVideo,
   )
+
+router
+  .route('/videos/:postId')
   .put(
     checkAccessToken,
     uploadVideo.single('video'),
+    Video.validatePUT,
     PostController.editVideo,
   )
 
@@ -132,6 +132,7 @@ router
   .put(
     checkAccessToken,
     uploadAudio.single('audio'),
+    Audio.validatePUT,
     PostController.editSong,
   )
 
@@ -143,9 +144,13 @@ router
     Audio.validatePOST,
     PostController.createPodcast,
   )
+
+router
+  .route('/podcasts/:postId')
   .put(
     checkAccessToken,
     uploadAudio.single('audio'),
+    Audio.validatePUT,
     PostController.editPodcast,
   )
 
@@ -158,6 +163,7 @@ router
   )
   .put(
     checkAccessToken,
+    Discussion.validatePUT,
     DiscussionController.editDiscussion,
   )
 

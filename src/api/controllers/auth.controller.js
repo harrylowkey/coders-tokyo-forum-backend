@@ -16,7 +16,7 @@ exports.login = async (req, res, next) => {
       .lean()
       .populate({
         path: 'avatar',
-        select: 'publicId secureURL'
+        select: 'publicId secureURL fileName sizeBytes'
       })
       .select('-__v -verifyCode -posts -likedPosts -savedPosts');
     if (!user) throw Boom.badRequest('Not found user');
