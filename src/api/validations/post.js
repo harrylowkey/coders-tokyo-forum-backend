@@ -2,7 +2,6 @@ const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom')
 
 
-//TODO: Create check type extension at frontend (backend can not because of one route)
 let createPostValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),

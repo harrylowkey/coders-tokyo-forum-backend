@@ -232,14 +232,14 @@ exports.getPosts = async (req, res, next) => {
       query.userId = req.params.userId;
     }
 
-    //TODO: sort post
     const [posts, postCounter, counter] = await Promise.all([
       Post.find(query)
         .lean()
         .skip((page - 1) * limit)
         .limit(limit)
         .populate(populateQuery)
-        .select(negativeQuery),
+        .select(negativeQuery)
+        .sort({ createdAt: -1 }),
       Post.countDocuments(query).lean(),
       Post.aggregate([
         {
@@ -247,6 +247,9 @@ exports.getPosts = async (req, res, next) => {
             type,
           },
         },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
         {
           $project: {
             comments: { $size: '$comments' },
@@ -312,13 +315,14 @@ exports.getPostsByTagsName = async (req, res, next) => {
       })
     }
 
-    const [posts, counter] = await Promise.all([
+    const [posts, postCounter, counter] = await Promise.all([
       Post.find({
         tags: { $in: tagIds }
       })
         .lean()
         .skip((page - 1) * limit)
         .limit(limit)
+        .sort({ createdAt: -1 })
         .populate({ path: 'authors', select: '_id name type' })
         .populate({ path: 'tags', select: '_id tagName' })
         .populate({ path: 'likes', select: '_id username' })
@@ -332,14 +336,38 @@ exports.getPostsByTagsName = async (req, res, next) => {
         }),
       Post.count({
         tags: { $in: tagIds }
-      })
-        .lean()
+      }).lean(),
+      Post.aggregate([
+        {
+          $match: {
+            tags: { $in: tagIds }
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
     ])
+
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
 
     return res.status(200).json({
       status: 200,
-      metadata: Utils.post.getmetadata(page, limit, counter),
-      data: posts,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     console.log(error);
@@ -547,15 +575,15 @@ exports.getSavedPosts = async (req, res, next) => {
     const {
       page,
       limit,
-      params: { userId },
     } = req;
 
-    const [counter, posts] = await Promise.all([
-      Post.count({ savedBy: { $in: [userId] } }).lean(),
-      Post.find({ savedBy: { $in: [userId] } })
+    const [postCounter, posts, counter] = await Promise.all([
+      Post.count({ savedBy: { $in: [req.user._id] } }).lean(),
+      Post.find({ savedBy: { $in: [req.user._id] } })
         .lean()
         .skip((page - 1) * limit)
         .limit(limit)
+        .sort({ createdAt: - 1 })
         .populate({
           path: 'savedBy',
           select: '_id username',
@@ -570,13 +598,38 @@ exports.getSavedPosts = async (req, res, next) => {
             path: 'userId',
             select: '_id username'
           }
-        })
+        }),
+      Post.aggregate([
+        {
+          $match: {
+            savedBy: { $in: [mongoose.Types.ObjectId(req.user._id)] },
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
     ])
+
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
 
     return res.status(200).json({
       status: 200,
-      metadata: Utils.post.getmetadata(page, limit, counter),
-      data: posts,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     return next(error);

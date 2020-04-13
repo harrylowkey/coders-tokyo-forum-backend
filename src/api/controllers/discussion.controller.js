@@ -31,6 +31,7 @@ exports.createDiscussion = async (req, res, next) => {
       topic,
       content,
       type,
+      userId: user._id,
       createdAt: createdDissucsion.createdAt
     }
     return res.status(200).json({

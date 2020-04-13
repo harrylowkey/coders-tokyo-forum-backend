@@ -27,13 +27,6 @@ const uploadAudio = multer({ storage: audioStorage })
 /** ------------ -------------------- */
 
 
-router.route('/').get(paginate(), PostController.getPosts);
-router
-  .route('/tags')
-  .get(paginate(), PostController.getPostsByTagsName);
-
-router.route('/:postId').get(PostController.getOnePost);
-
 router
   .route('/blogs')
   .post(
@@ -168,12 +161,20 @@ router
   )
 
 router
+    .route('/tags')
+    .get(paginate(), PostController.getPostsByTagsName);
+  
+router
+  .route('/:postId')
+  .get(PostController.getOnePost);
+
+router
   .route('/users/:userId')
   .get(paginate({ limit: 15 }), PostController.getPosts);
 
 router
-  .route('/saved-posts/users/:userId')
-  .get(paginate({ limit: 15 }), PostController.getSavedPosts);
+  .route('/user/saved-posts')
+  .get(paginate({ limit: 15 }), checkAccessToken, PostController.getSavedPosts);
 
 router
   .route('/:postId')
