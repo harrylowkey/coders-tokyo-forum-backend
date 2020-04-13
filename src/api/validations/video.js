@@ -8,7 +8,7 @@ let validatePOST = (req, res, next) => {
     description: Joi.string().required(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string().required()).optional(),
-    isUpload: Joi.boolean().optional(),
+    isUpload: Joi.boolean().required(),
     url: Joi.string().when('isUpload', {
       is: false,
       then: Joi.required(),

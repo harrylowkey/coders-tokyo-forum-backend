@@ -96,13 +96,11 @@ exports.uploadFileProcess = async (user, data, newFile, fileType) => {
 exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, config) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
   const newFile = await cloudinary.uploader.upload(newFileToUpload, config)
-  console.log('newFile', newFile)
   const newFileName = `${user.username}${fileType}${newFile.original_filename}`
   const newPath = videoConfig.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
   const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
   if (data.media) {
-    console.log('$$$$$$$$$$$$$$$$$$$$$')
     const file = await File.findById(data.media._id).lean();
     FILE_REFERENCE_QUEUE.deleteFile.add({ file });
   }

@@ -5,13 +5,13 @@ const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
 const { videoConfig, audioConfig } = require('@configVar');
 const { CloudinaryService } = require('@services')
+const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createVideo = async (req, res, next, type, isUpload) => {
   const {
     body: { tags },
     user,
   } = req;
-
   try {
     const newVideo = new Post({
       userId: user._id,
@@ -32,39 +32,21 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     let newMedia
     if (isUpload == 'true') {
       const video = req.file
+      //FIXME: Still can not upload and renaming video
       let promises = {
-        uploadedVideo: cloudinary.uploader.upload(video.path, videoConfig),
+        uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video.path, '_video_', videoConfig)
       }
 
       if (tags) {
         promises.tagsCreated = Utils.post.createTags(tags)
       }
-      const result = await Promise.props(promises);
-      const media = await new File({
-        secureURL: result.uploadedVideo.secure_url,
-        publicId: result.uploadedVideo.public_id,
-        fileName: result.uploadedVideo.originalname,
-        sizeBytes: result.uploadedVideo.bytes,
-        userId: req.user._id,
-        postId: newVideo._id,
-        media: {
-          type: result.uploadedVideo.type,
-          signature: result.uploadedVideo.signature,
-          width: result.uploadedVideo.width,
-          height: result.uploadedVideo.height,
-          format: result.uploadedVideo.format,
-          resource_type: result.uploadedVideo.resource_type,
-          frame_rate: result.uploadedVideo.frame_rate,
-          bit_rate: result.uploadedVideo.bit_rate,
-          duration: result.uploadedVideo.duration,
-        }
-      }).save()
+      const result = await Promise.props(promises)
       if (result.tagsCreated) {
-        videoTags = result.tagsCreated
-        newVideo.tags = videoTags.map(tag => tag._id);
+        newVideo.tags = result.tagsCreated.map(tag => tag._id);
       }
-      newMedia = media
-      newVideo.media = media;
+
+      newMedia = result.uploadedVideo
+      newVideo.media = result.uploadedVideo._id;
     }
 
     let createdNewVideo = await newVideo.save()
@@ -163,25 +145,21 @@ exports.deleteVideo = async (req, res, next, type) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
+      .populate({ path: 'media' })
+
     if (!video) {
       throw Boom.badRequest('Not found video');
     }
 
-    let promiesProps = {
-      isDeletedVideo: Post.findByIdAndDelete(video_id),
-    };
     if (!video.url) {
-      promiesProps.isDeletedVideo = cloudinary.uploader.destroy(
-        video.media.public_id,
-        { resource_type: 'video' }
-      );
+      FILE_REFERENCE_QUEUE.deleteFile.add({ file: video.media })
     }
-
-    let result = await Promise.props(promiesProps);
-    if (result.isDeletedVideo) {
+    const isDeleted = await Post.findByIdAndDelete(video._id)
+    if (!isDeleted) {
       throw Boom.badRequest('Delete video failed')
     }
 
@@ -209,38 +187,18 @@ exports.createAudio = async (req, res, next, type) => {
 
     const audio = req.file
     let promises = {
-      uploadedVideo: cloudinary.uploader.upload(audio.path, audioConfig),
+      uploadedAudio: CloudinaryService.uploadMediaProcess(req.user, newAudio, audio.path, `_${type}_`, audioConfig),
       authorsCreated: Utils.post.creatAuthors(authors)
     }
+
     if (tags) {
       promises.tagsCreated = Utils.post.createTags(tags)
     }
 
     const data = await Promise.props(promises);
-
-    const media = await new File({
-      secureURL: data.uploadedVideo.secure_url,
-      publicId: data.uploadedVideo.public_id,
-      fileName: data.uploadedVideo.originalname,
-      sizeBytes: data.uploadedVideo.bytes,
-      userId: req.user._id,
-      postId: newAudio._id,
-      media: {
-        type: data.uploadedVideo.type,
-        signature: data.uploadedVideo.signature,
-        width: data.uploadedVideo.width,
-        height: data.uploadedVideo.height,
-        format: data.uploadedVideo.format,
-        resource_type: data.uploadedVideo.resource_type,
-        frame_rate: data.uploadedVideo.frame_rate,
-        bit_rate: data.uploadedVideo.bit_rate,
-        duration: data.uploadedVideo.duration,
-      }
-    }).save()
-    console.log(media)
     if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
     if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
-    newAudio.media = media;
+    newAudio.media = data.uploadedAudio;
 
     const createdNewAudio = await newAudio.save()
     let dataRes = {
@@ -251,7 +209,7 @@ exports.createAudio = async (req, res, next, type) => {
       type: createdNewAudio.type,
       updatedAt: createdNewAudio.updatedAt,
       tags: data.tagsCreated || [],
-      media,
+      media: data.uploadedAudio,
     }
 
     return res.status(200).json({
@@ -321,7 +279,7 @@ exports.editAudio = async (req, res, next, type) => {
       .populate([
         { path: 'tags', select: 'tagName' },
         { path: 'authors', select: 'name type' },
-        { path: 'media'}
+        { path: 'media' }
       ])
       .select('-__v -url');
 
@@ -339,21 +297,20 @@ exports.deleteAudio = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean()
+    })
+      .lean()
+      .populate({ path: 'media' })
 
     if (!audio) {
       throw Boom.badRequest('Not found audio');
     }
 
-    let result = await Promise.props({
-      isDeletedPost: Post.findByIdAndDelete(audio._id),
-      isDeletedAudio: cloudinary.uploader.destroy(audio.media.public_id, {
-        resource_type: 'video',
-      }),
-    });
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: audio.media })
+    const isDeleted = await Post.findByIdAndDelete(audio._id)
 
-    if (!result.isDeletedPost) {
+    if (!isDeleted) {
       throw Boom.badRequest(`Delete ${type} failed`)
     }
 

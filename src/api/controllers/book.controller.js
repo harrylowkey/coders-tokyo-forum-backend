@@ -1,9 +1,9 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const { User, Post, File } = require('@models');
+const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('@configVar');
+const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBookReview = async (req, res, next) => {
   const type = 'book'
@@ -47,7 +47,7 @@ exports.createBookReview = async (req, res, next) => {
       description: createdBook.description,
       content: createdBook.content,
       type: createdBook.type,
-      cover: { 
+      cover: {
         secureURL: data.blogCover.secureURL,
         publicId: data.blogCover.publicId,
         fileName: data.blogCover.fileName,
@@ -68,7 +68,7 @@ exports.createBookReview = async (req, res, next) => {
 };
 
 exports.editBookReview = async (req, res, next) => {
-  const type= 'book'
+  const type = 'book'
   const { topic, description, content, tags, authors } = req.body;
   try {
     const book = await Post.findOne({
@@ -124,7 +124,7 @@ exports.editBookReview = async (req, res, next) => {
         { path: 'tags', select: 'tagName' },
         { path: 'authors', select: 'name' },
       ])
-      .populate({ path: 'cover', select: 'publicId sercureURL fileName sizeBytes'})
+      .populate({ path: 'cover', select: 'publicId sercureURL fileName sizeBytes' })
       .select('-__v -media -url');
 
     return res.status(200).json({
@@ -140,19 +140,20 @@ exports.deleteBookReview = async (req, res, next, type) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean()
+    })
+      .lean()
+      .populate({ path: 'cover' })
 
     if (!book) {
       throw Boom.badRequest('Not found book blog review');
     }
 
-    let result = await Promise.props({
-      isDeletedBookBlog: Post.findByIdAndDelete(req.params.postId),
-      isDeletedCoverImage: cloudinary.uploader.destroy(book.cover.public_id),
-    });
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: book.cover })
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
 
-    if  (!result.isDeletedBookBlog) {
+    if (!isDeleted) {
       throw Boom.badRequest('Delete book blog failed')
     }
 

@@ -67,6 +67,7 @@ CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
 FILE_REFERENCE_QUEUE.deleteFile.process(async (job, done) => {
   try {
     const { data: { file } } = job;
+    if (!file) return done(null)
     CLOUDINARY_QUEUE.deleteAsset.add({ publicId: file.publicId })
     const result = await File.findByIdAndDelete(file._id)
     done(null, result);

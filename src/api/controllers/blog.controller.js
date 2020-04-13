@@ -2,9 +2,8 @@ const Boom = require('@hapi/boom');
 const Utils = require('@utils');
 const { Post, File } = require('@models')
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('@configVar');
 const { CloudinaryService } = require('@services')
+const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
@@ -128,18 +127,18 @@ exports.deleteBlog = async (req, res, next, type) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean();
+    }).lean()
+    .populate({ path: 'cover'})
     if (!blog) {
       throw Boom.badRequest('Not found blog');
     }
 
-    let result = await Promise.props({
-      isDeletedBlog: Post.findByIdAndDelete(req.params.postId),
-      isDeletedCoverImage: cloudinary.uploader.destroy(blog.cover.public_id),
-    });
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: blog.cover })
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
 
-    if (!result.isDeletedBlog) {
+    if (!isDeleted) {
       throw Boom.badRequest('Delete blog failed')
     }
 

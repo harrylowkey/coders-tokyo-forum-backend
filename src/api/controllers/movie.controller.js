@@ -165,21 +165,20 @@ exports.deleteMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean()
+    })
+      .lean()
+      .populate({ path: 'cover' })
 
     if (!movieReview) {
       throw Boom.badRequest('Not found movie blog review');
     }
 
-    let result = await Promise.props({
-      isDeletedMovie: Post.findByIdAndDelete(req.params.postId),
-      isDeletedCoverImage: cloudinary.uploader.destroy(
-        movieReview.cover.public_id,
-      )
-    });
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: movieReview.cover })
+    const isDeleted = await Post.findByIdAndDelete(movieReview._id)
 
-    if (!resul.isDeletedMovie) {
+    if (!isDeleted) {
       throw Boom.badRequest('Delete movie failed')
     }
 
