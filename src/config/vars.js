@@ -1,13 +1,10 @@
-// config .env variables
-const path = require('path');
+const path = require('path')
+let mode = process.env.NODE_ENV || 'local'
+let _path = `${path.join(__dirname, '../../.env')}.${mode}`
 
-// import .env variables
-require('dotenv-safe').load({
-  path: path.join(__dirname, '../../.env'),
-});
-
+require('dotenv').config({ path: _path })
 module.exports = {
-  mongo_uri: process.env.MONGO_URI,
+  mongo_uri: process.env.MONGO_URL,
   port: process.env.PORT,
   admin_port: process.env.ADMIN_PORT,
   jwt_secret: process.env.JWT_SECRET,
@@ -31,11 +28,12 @@ module.exports = {
     chunk_size: 10000000, //10mb
     // async: true,
   },
-  coverImageConfig: {
+  blogCoverConfig: {
     folder: 'Coders-Tokyo-Forum/posts',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
     transformation: [
       {
@@ -46,9 +44,10 @@ module.exports = {
   },
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
     // async: true,
     transformation: [
@@ -64,10 +63,12 @@ module.exports = {
   },
   foodPhotosConfig: {
     folder: 'Coders-Tokyo-Forum/posts/foodReview',
-    use_filename: true,
+    use_filename: false,
     unique_filename: true,
     resource_type: 'image',
-    chunk_size: 6000000, //6mb
+    allowedFormats: ['jpg', 'png', 'jpeg'],
+    chunk_size: 6000000, //6mb,
+    maxPhotos: 10,
     // async: true,
     transformation: [
       {
@@ -76,4 +77,59 @@ module.exports = {
       },
     ],
   },
+  QUEUES: {
+    EMAIL_QUEUE: {
+      name: 'email',
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@email_',
+      }
+    },
+    USER_QUEUE: {
+      name: 'user',
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@user_',
+      },
+    } ,
+    CLOUDINARY_QUEUE: {
+      name: 'cloudinary',
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@cloudinary_',
+      },
+    },
+    FILE_REFERENCE_QUEUE: {
+      name: 'fileReference',
+      options: {
+        defaultJobOptions: {
+          attempts: 5,
+          timeout: 10000,
+        },
+        prefix: '@@fileReference_',
+      },
+    } 
+  },
+  redisConfig: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+    redisPrefix: process.env.REDIS_PREFIX
+  },
+  arenaConfig: {
+    host: process.env.ARENA_HOST,
+    port: process.env.ARENA_PORT,
+    basePath: '/arena',
+    disableListen: false,
+  },
+  REDIS_EXPIRE_TOKEN_KEY: 'BLACKLIST_TOKEN'
 };

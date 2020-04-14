@@ -1,13 +1,13 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../../config/vars');
+const { coverImageConfig } = require('@configVar');
 
-exports.createMovieReview = async (req, res, next, type) => {
-  const coverImage = req.files['coverImage'][0].path;
+exports.createMovieReview = async (req, res, next) => {
+  const type = 'movie'
+  const blogCover = req.file
   const {
     body: { tags, authors },
     user,
@@ -15,67 +15,58 @@ exports.createMovieReview = async (req, res, next, type) => {
 
   try {
     const newMovieReview = new Post({
-      userId: user,
+      userId: user.id,
       ...req.body,
       type,
     });
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newMovieReview, tags),
-        authors: Utils.post.creatAuthors(newMovieReview, authors),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      });
 
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const authorsId = result.authors.map(author => ({
-        _id: author.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      newMovieReview.tags = tagsId;
-      newMovieReview.authors = authorsId;
-      newMovieReview.cover = cover;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
+    let promises = {
+      blogCover: new File({
+        secureURL: blogCover.secure_url,
+        publicId: blogCover.public_id,
+        fileName: blogCover.originalname,
+        sizeBytes: blogCover.bytes,
+        userId: req.user._id,
+        postId: newMovieReview._id,
+        resourceType: blogCover.resource_type
+      }).save(),
+      authorsCreated: Utils.post.creatAuthors(authors)
+    }
+    if (tags) {
+      promises.tagsCreated = Utils.post.createTags(tags)
     }
 
-    try {
-      const isOk = await Promise.props({
-        pushBlogIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newMovieReview },
-          },
-          { new: true },
-        ),
-        createNewBlog: newMovieReview.save(),
-      });
+    const data = await Promise.props(promises);
 
-      const movieBlog = await Post.findById(isOk.createNewBlog._id)
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -media');
+    newMovieReview.cover = data.blogCover._id;
+    if (data.tagsCreated) newMovieReview.tags = data.tagsCreated.map(tag => tag._id)
+    if (data.authorsCreated) newMovieReview.authors = data.authorsCreated.map(author => author._id)
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new movie blog review successfully',
-        data: movieBlog,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Create new movie blog review failed');
+
+    const createdMovieReview = await newMovieReview.save()
+    let dataRes = {
+      _id: createdMovieReview.id,
+      tags: data.tagsCreated || [],
+      authors: data.authorsCreated || [],
+      url: createdMovieReview.url,
+      topic: createdMovieReview.topic,
+      description: createdMovieReview.description,
+      content: createdMovieReview.content,
+      type: createdMovieReview.type,
+      cover: { 
+        secureURL: data.blogCover.secureURL,
+        publicId: data.blogCover.publicId,
+        fileName: data.blogCover.fileName,
+        createdAt: data.blogCover.createdAt,
+        sizeBytes: data.blogCover.sizeBytes
+      },
+      createdAt: createdMovieReview.createdAt
     }
+
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
@@ -87,8 +78,12 @@ exports.editMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({ path: 'tags', select: '_id tagName' })
+      .populate({ path: 'authors', select: '_id name type' });
     if (!movieReview) {
       throw Boom.badRequest('Not found food blog reivew, edit failed');
     }
@@ -100,25 +95,18 @@ exports.editMovieReview = async (req, res, next, type) => {
     if (url) query.url = url;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        movieReview._id,
+        movieReview,
         tags,
       );
 
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        movieReview._id,
+        movieReview,
         authors,
       );
-
-      if (!authors) {
-        throw Boom.serverUnavailable('Get new authors failed');
-      }
 
       query.authors = newAuthors;
     }
@@ -132,7 +120,7 @@ exports.editMovieReview = async (req, res, next, type) => {
 
       const data = { oldImageId: oldCoverId, newImage: coverImage };
       try {
-        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
+        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
           data,
           coverImageConfig,
         );
@@ -150,30 +138,24 @@ exports.editMovieReview = async (req, res, next, type) => {
       }
     }
 
-    try {
-      const upadatedBlog = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-        ])
-        .select('-__v -media');
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate([
+        { path: 'tags', select: 'tagName' },
+        { path: 'authors', select: 'name type' },
+      ])
+      .select('-__v -media');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit movie blog review successfully',
-        data: upadatedBlog,
-      });
-    } catch (error) {
-      console.log(error);
-      throw Boom.badRequest('Update movie blog review failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedBlog,
+    });
   } catch (error) {
     console.log(error);
     return next(error);
@@ -184,47 +166,27 @@ exports.deleteMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
-      .populate([
-        { path: 'tags', select: 'tagName' },
-        { path: 'authors', select: 'name type' },
-      ]);
+      .populate({ path: 'cover' })
+
     if (!movieReview) {
-      throw Boom.notFound('Not found movie blog review');
+      throw Boom.badRequest('Not found movie blog review');
     }
 
-    const authorsId = movieReview.authors.map(author => author._id);
-    const tagsId = movieReview.tags.map(tag => tag._id);
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: movieReview.cover })
+    const isDeleted = await Post.findByIdAndDelete(movieReview._id)
 
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedCoverImage: cloudinary.uploader.destroy(
-          movieReview.cover.public_id,
-        ),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInAuthors: Utils.post.deletePostInAuthors(
-          movieReview._id,
-          authorsId,
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(movieReview._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete movie blog review successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Delete movie blog review failed');
+    if (!isDeleted) {
+      throw Boom.badRequest('Delete movie failed')
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete movie blog review successfully`,
+    });
   } catch (error) {
     return next(error);
   }

@@ -2625,7 +2625,7 @@
                   "example": {
                     "status": 200,
                     "message": "Get newest posts successfully",
-                    "metaData": {
+                    "metadata": {
                       "totalPage": 9,
                       "pageSize": 5,
                       "currentPage": 1

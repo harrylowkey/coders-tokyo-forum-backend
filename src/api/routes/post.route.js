@@ -1,77 +1,198 @@
 const express = require('express');
-const validate = require('express-validation');
-const multer = require('multer');
-
-const postController = require('../controllers/post.controller');
-const authorization = require('../../middlewares/authorize');
-const paginate = require('../../middlewares/pagination');
-
 const router = express.Router();
-var storage = multer.diskStorage({
-  filename: function(req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
+const multer = require('multer')
+const {
+  BlogController, BookController, FoodController,
+  MovieController, PostController, DiscussionController
+} = require('@controllers')
 
-router.route('/').get(paginate({ limit: 15 }), postController.getPosts);
-router
-  .route('/by-tag')
-  .get(paginate({ limit: 15 }), postController.getPostsByTagsName);
-router.route('/:postId').get(postController.getOnePost);
+const { checkAccessToken } = require('@middlewares/authorize');
+const paginate = require('@middlewares/pagination');
+const { Blog, Book, Food,
+  Movie, Video, Audio, Discussion
+} = require('@validations');
+
+/** ----------- CONFIG --------------- */
+const { blogCoverConfig, audioConfig, foodPhotosConfig, videoConfig } = require('@configVar')
+const { configStorage } = require('../../config/cloudinary')
+const uploadBlog = configStorage(blogCoverConfig)
+const uploadFoodPhotos = configStorage(foodPhotosConfig)
+
+const {
+  uploadVideo,
+  uploadAudio,
+} = require('../../config/cloudinary').configMulter
+
+/** ------------ -------------------- */
+
 
 router
-  .route('/')
+  .route('/blogs')
   .post(
-    authorization.checkAccessToken,
-    upload.fields([
-      { name: 'coverImage', maxCount: 1 },
-      { name: 'video', maxCount: 1 },
-      { name: 'audio', maxCount: 1 },
-      { name: 'foodPhotos', maxCount: 10 },
-    ]),
-    postController.createPost,
-  );
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Blog.validatePOST,
+    BlogController.createBlog,
+  )
 
+router
+  .route('/blogs/:postId')
+  .put(
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Blog.validatePUT,
+    BlogController.editBlog,
+  )
+
+router
+  .route('/books')
+  .post(
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Book.validatePOST,
+    BookController.createBookReview,
+  )
+  .put(
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Book.validatePUT,
+    BookController.editBookReview,
+  )
+
+router
+  .route('/food')
+  .post(
+    checkAccessToken,
+    uploadFoodPhotos.fields([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'foodPhotos', maxCount: 10 }
+    ]),
+    Food.validatePOST,
+    FoodController.createFoodReview
+  )
+  .put(
+    checkAccessToken,
+    uploadFoodPhotos.fields([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'foodPhotos', maxCount: 10 }
+    ]),
+    Food.validatePUT,
+    FoodController.editFoodReview
+  )
+
+router
+  .route('/movies')
+  .post(
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Movie.validatePOST,
+    MovieController.createMovieReview,
+  )
+  .put(
+    checkAccessToken,
+    uploadBlog.single('coverImage'),
+    Movie.validatePUT,
+    MovieController.editMovieReview,
+  )
+
+router
+  .route('/videos')
+  .post(
+    checkAccessToken,
+    uploadVideo.single('video'),
+    Video.validatePOST,
+    PostController.createVideo,
+  )
+
+router
+  .route('/videos/:postId')
+  .put(
+    checkAccessToken,
+    uploadVideo.single('video'),
+    Video.validatePUT,
+    PostController.editVideo,
+  )
+
+router
+  .route('/songs')
+  .post(
+    checkAccessToken,
+    uploadAudio.single('audio'),
+    Audio.validatePOST,
+    PostController.createSong,
+  )
+  .put(
+    checkAccessToken,
+    uploadAudio.single('audio'),
+    Audio.validatePUT,
+    PostController.editSong,
+  )
+
+router
+  .route('/podcasts')
+  .post(
+    checkAccessToken,
+    uploadAudio.single('audio'),
+    Audio.validatePOST,
+    PostController.createPodcast,
+  )
+
+router
+  .route('/podcasts/:postId')
+  .put(
+    checkAccessToken,
+    uploadAudio.single('audio'),
+    Audio.validatePUT,
+    PostController.editPodcast,
+  )
+
+router
+  .route('/discussions')
+  .post(
+    checkAccessToken,
+    Discussion.validatePOST,
+    DiscussionController.createDiscussion,
+  )
+  .put(
+    checkAccessToken,
+    Discussion.validatePUT,
+    DiscussionController.editDiscussion,
+  )
+
+router
+    .route('/tags')
+    .get(paginate(), PostController.getPostsByTagsName);
+  
 router
   .route('/:postId')
-  .put(
-    authorization.checkAccessToken,
-    upload.fields([
-      { name: 'coverImage', maxCount: 1 },
-      { name: 'video', maxCount: 1 },
-      { name: 'audio', maxCount: 1 },
-      { name: 'foodPhotos', maxCount: 10 },
-    ]),
-    postController.editPost,
-  );
+  .get(PostController.getOnePost);
 
 router
   .route('/users/:userId')
-  .get(paginate({ limit: 15 }), postController.getPosts);
+  .get(paginate({ limit: 15 }), PostController.getPosts);
 
-  router
-  .route('/saved-posts/users/:userId/')
-  .get(paginate({ limit: 15 }), postController.getSavedPosts);
+router
+  .route('/user/saved-posts')
+  .get(paginate({ limit: 15 }), checkAccessToken, PostController.getSavedPosts);
 
 router
   .route('/:postId')
-  .delete(authorization.checkAccessToken, postController.deletePost);
+  .delete(checkAccessToken, PostController.deletePost);
 
 router
   .route('/:postId/like')
-  .post(authorization.checkAccessToken, postController.likePost);
+  .post(checkAccessToken, PostController.likePost);
 
 router
   .route('/:postId/unlike')
-  .post(authorization.checkAccessToken, postController.unlikePost);
+  .post(checkAccessToken, PostController.unlikePost);
 
 router
   .route('/:postId/save')
-  .post(authorization.checkAccessToken, postController.savePost);
+  .post(checkAccessToken, PostController.savePost);
 
 router
   .route('/:postId/unsave')
-  .post(authorization.checkAccessToken, postController.unsavePost);
+  .post(checkAccessToken, PostController.unsavePost);
 
 module.exports = router;

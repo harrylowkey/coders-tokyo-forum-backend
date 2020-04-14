@@ -1,30 +1,26 @@
 const express = require('express');
-const validate = require('express-validation');
-
-const authController = require('../controllers/auth.controller');
-const authorization = require('../../middlewares/authorize');
 const {
-  login,
-  register,
-  forgotPassword,
-  sendEmailVerifyCode,
-} = require('../validations/auth.validation');
+  signUpValidate,
+  loginValidate,
+  emailCodeValidate,
+  changePasswordValidate,
+  forgotPasswordValidate,
+} = require('../validations/auth');
+const { AuthController } = require('@controllers');
+const { checkAccessToken } = require('@middlewares/authorize');
 
 const router = express.Router();
 
-router.route('/register').post(validate(register), authController.register);
-router.route('/login').post(validate(login), authController.login);
-router
-  .route('/logout')
-  .get(authorization.checkAccessToken, authController.logout);
+router.route('/register').post(signUpValidate, AuthController.register);
+router.route('/login').post(loginValidate, AuthController.login);
 router
   .route('/forgot-password')
-  .put(validate(forgotPassword), authController.forgotPassword);
+  .put(forgotPasswordValidate, AuthController.forgotPassword);
 router
   .route('/send-verify-code')
-  .post(validate(sendEmailVerifyCode), authController.sendEmailVerifyCode);
+  .post(emailCodeValidate, AuthController.sendEmailVerifyCode);
 router
   .route('/change-password')
-  .put(authorization.checkAccessToken, authController.changePassword);
+  .put(checkAccessToken, changePasswordValidate, AuthController.changePassword);
 
 module.exports = router;

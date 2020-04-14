@@ -1,14 +1,14 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
+const mongoose = require('mongoose')
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
-const Post = require('../models').Post;
-const User = require('../models').User;
-const Tag = require('../models').Tag;
+const { Post, User, Tag } = require('@models')
+const Utils = require('@utils')
 const types = [
   'discussion',
   'blog',
@@ -20,12 +20,15 @@ const types = [
   'podcast',
 ];
 
+/** ------------------ GET ------------------------- */
 exports.getOnePost = async (req, res, next) => {
   try {
     const {
       params: { postId },
-      query: { type },
+      query: { type, limitComment, pageComment },
     } = req;
+
+    const [_pageComment, _limitComment] = Utils.post.standardizePageLimitComment5(pageComment, limitComment)
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -42,6 +45,30 @@ exports.getOnePost = async (req, res, next) => {
         path: 'likes',
         select: 'username',
       },
+      {
+        path: 'savedBy',
+        select: 'username',
+      },
+      {
+        path: 'comments',
+        select: '-__v',
+        options: {
+          sort: { createdAt: -1 },
+          limit: _limitComment,
+          skip: (_pageComment - 1) * _limitComment
+        },
+        populate: {
+          path: 'userId',
+          select: '_id username'
+        },
+        populate: {
+          path: 'childComments',
+          select: '-__v',
+          options: {
+            sort: { createdAt: -1 }
+          }
+        }
+      }
     ];
 
     let negativeQuery = '-__v ';
@@ -80,30 +107,45 @@ exports.getOnePost = async (req, res, next) => {
         break;
     }
 
-    const post = await Post.findOne({
-      _id: postId,
-      type: `${type}`,
-    })
-      .lean()
-      .populate(populateQuery)
-      .select(negativeQuery);
+    const [post, counter] = await Promise.all([
+      Post.findOne({
+        _id: postId,
+        type,
+      })
+        .lean()
+        .populate(populateQuery)
+        .select(negativeQuery),
+      Post.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(postId),
+            type,
+          },
+        },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
+    ])
 
     if (!post) {
-      throw Boom.notFound(
-        `Not found ${
-          type == 'blog'
-            ? type
-            : type === 'song' || type === 'podcast' || type === 'video'
-            ? type
-            : type + ' blog reivew'
-        }`,
-      );
+      throw Boom.badRequest('Not found post');
     }
 
+    let metadata = {
+      totalLikes: counter[0].likes,
+      totalComments: counter[0].comments,
+      totalSaves: counter[0].saves,
+      comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
+    }
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      data: post,
+      metadata,
+      data: post
     });
   } catch (error) {
     return next(error);
@@ -115,8 +157,9 @@ exports.getPosts = async (req, res, next) => {
     const {
       query: { type },
       limit,
-      skip,
+      page,
     } = req;
+
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -127,12 +170,20 @@ exports.getPosts = async (req, res, next) => {
     let populateQuery = [
       {
         path: 'tags',
-        select: 'tagName',
+        select: 'tagName _id',
       },
       {
         path: 'likes',
-        select: 'username',
+        select: 'username _id',
       },
+      {
+        path: 'comments',
+        select: '-__v',
+        populate: {
+          path: 'userId',
+          select: '_id username'
+        }
+      }
     ];
 
     let negativeQuery = '-__v ';
@@ -176,41 +227,51 @@ exports.getPosts = async (req, res, next) => {
     if (req.params.userId) {
       user = await User.findById(req.params.userId).lean();
       if (!user) {
-        throw Boom.notFound(`Not found user to get ${type}s`);
+        throw Boom.badRequest(`Not found user to get ${type}s`);
       }
       query.userId = req.params.userId;
     }
 
-    const posts = await Post.find(query)
-      .lean()
-      .skip(skip)
-      .limit(limit)
-      .populate(populateQuery)
-      .select(negativeQuery);
+    const [posts, postCounter, counter] = await Promise.all([
+      Post.find(query)
+        .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate(populateQuery)
+        .select(negativeQuery)
+        .sort({ createdAt: -1 }),
+      Post.countDocuments(query).lean(),
+      Post.aggregate([
+        {
+          $match: {
+            type,
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
+    ])
 
-    if (!posts) {
-      throw Boom.notFound(
-        `Not found ${
-          type == 'blogs'
-            ? type
-            : type === 'songs' || type === 'podcasts' || type === 'videos'
-            ? type
-            : type + ' blog reivews'
-        }`,
-      );
-    }
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
 
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = Math.ceil(posts.length / limit);
-    metaData.totalPage = totalPage;
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
-      data: posts,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     return next(error);
@@ -222,39 +283,91 @@ exports.getPostsByTagsName = async (req, res, next) => {
     const {
       query: { tag },
       limit,
-      skip,
+      page,
     } = req;
 
-    let query = { tagName: tag };
-    const tagsMatched = await Tag.find(query)
-      .lean()
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: 'posts',
-        select: '-__v',
-        populate: { path: 'authors', select: 'name type' },
-        populate: { path: 'tags', select: 'tagName' },
-        populate: { path: 'likes', select: 'username' },
-      })
-      .select('-__v');
-    if (!tagsMatched) {
-      throw Boom.badRequest('Get posts by tag failed');
+
+    const tagIds = [];
+    //case 1 tag
+    if (typeof tag === 'string') {
+      const existedTag = await Tag.findOne({ tagName: tag })
+      if (!existedTag) {
+        return res.status(200).json({
+          status: 200,
+          metadata: Utils.post.getmetadata(1, 1, 0),
+          data: [],
+        });
+      }
+      tagIds.push(existedTag._id)
     }
 
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = tagsMatched[0]
-      ? Math.ceil(tagsMatched[0].posts.length / limit)
-      : 0;
-    metaData.totalPage = totalPage;
+    // case >= 2 tags
+    if (typeof tag === 'object') {
+      const promises = []
+      tag.map(tag => {
+        promises.push(Tag.findOne({ tagName: tag }))
+      })
+      const tags = await Promise.all(promises)
+      tags.map(tag => {
+        if (tag && tag.tagName) {
+          tagIds.push(tag._id)
+        }
+      })
+    }
+
+    const [posts, postCounter, counter] = await Promise.all([
+      Post.find({
+        tags: { $in: tagIds }
+      })
+        .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate({ path: 'authors', select: '_id name type' })
+        .populate({ path: 'tags', select: '_id tagName' })
+        .populate({ path: 'likes', select: '_id username' })
+        .populate({
+          path: 'comments',
+          select: '-__v',
+          populate: {
+            path: 'userId',
+            select: '_id username'
+          }
+        }),
+      Post.count({
+        tags: { $in: tagIds }
+      }).lean(),
+      Post.aggregate([
+        {
+          $match: {
+            tags: { $in: tagIds }
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
+    ])
+
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
+
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
-      data: tagsMatched,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     console.log(error);
@@ -262,85 +375,39 @@ exports.getPostsByTagsName = async (req, res, next) => {
   }
 };
 
-exports.createPost = (req, res, next) => {
-  try {
-    const { type, isUpload } = req.query;
-    if (!type) {
-      throw Boom.badRequest('Type is required');
-    }
-    if (!types.includes(type)) {
-      throw Boom.badRequest(`This ${type} type is not supported yet`);
-    }
-    switch (type) {
-      case 'blog':
-        BlogController.createBlog(req, res, next, type);
-        break;
-      case 'book':
-        BookController.createBookReview(req, res, next, type);
-        break;
-      case 'food':
-        FoodController.createFoodReview(req, res, next, type);
-        break;
-      case 'movie':
-        MovieController.createMovieReview(req, res, next, type);
-        break;
-      case 'video':
-        MediaController.createVideo(req, res, next, type, isUpload);
-        break;
-      case 'song':
-        MediaController.createAudio(req, res, next, type);
-        break;
-      case 'podcast':
-        MediaController.createAudio(req, res, next, type);
-        break;
-      case 'discussion':
-        DiscussionController.createDiscussion(req, res, next, type);
-        break;
-    }
-  } catch (error) {
-    return next(error);
-  }
-};
 
-exports.editPost = (req, res, next) => {
-  try {
-    const { type, isUpload } = req.query;
-    if (!type) {
-      throw Boom.badRequest('Type is required');
-    }
-    if (!types.includes(type)) {
-      throw Boom.badRequest(`This ${type} type is not supported yet`);
-    }
-    switch (type) {
-      case 'blog':
-        BlogController.editBlog(req, res, next, type);
-        break;
-      case 'book':
-        BookController.editBookReview(req, res, next, type);
-        break;
-      case 'food':
-        FoodController.editFoodReview(req, res, next, type);
-        break;
-      case 'movie':
-        MovieController.editMovieReview(req, res, next, type);
-        break;
-      case 'video':
-        MediaController.editVideo(req, res, next, type, isUpload);
-        break;
-      case 'song':
-        MediaController.editAudio(req, res, next, type);
-        break;
-      case 'podcast':
-        MediaController.editAudio(req, res, next, type);
-        break;
-      case 'discussion':
-        DiscussionController.editDiscussion(req, res, next, type);
-        break;
-    }
-  } catch (error) {
-    return next();
-  }
-};
+/** ------------------- POST ---------------------------- */
+
+exports.createSong = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'song');
+}
+
+exports.createPodcast = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'podcast');
+}
+
+exports.createVideo = (req, res, next) => {
+  MediaController.createVideo(req, res, next, 'video', req.query.isUpload);
+}
+
+/** ------------------ PUT ---------------------------------- */
+
+
+
+exports.editVideo = (req, res, next) => {
+  MediaController.editVideo(req, res, next, 'video', req.query.isUpload);
+}
+
+exports.editSong = (req, res, next) => {
+  MediaController.createAudio(req, res, next, 'song');
+}
+
+exports.editPodcast = (req, res, next) => {
+  console.log('here')
+  MediaController.editAudio(req, res, next, 'podcast');
+}
+
+
 
 exports.deletePost = async (req, res, next) => {
   try {
@@ -392,35 +459,23 @@ exports.likePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to like');
+      throw Boom.badRequest('Not found post');
     }
 
-    try {
-      await Promise.props({
-        pushUserIdToPost: Post.findByIdAndUpdate(
-          postId,
-          {
-            $push: { likes: user._id },
-          },
-          { new: true },
-        ),
-        pushLikedPostToUser: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { likedPosts: postId },
-          },
-          { new: true },
-        ),
-      });
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $addToSet: { likes: user._id },
+      },
+      { new: true, upsert: true },
+    )
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Like post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Like post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Like post succesfully',
+    });
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
@@ -434,34 +489,21 @@ exports.unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to unlike');
+      throw Boom.badRequest('Not found post')
     }
 
-    try {
-      await Promise.props({
-        pushUserIdToPost: Post.findByIdAndUpdate(
-          postId,
-          {
-            $pull: { likes: user._id },
-          },
-          { new: true },
-        ),
-        pullLikedPostToUser: User.findByIdAndUpdate(
-          user._id,
-          {
-            $pull: { likedPosts: postId },
-          },
-          { new: true },
-        ),
-      });
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $pull: { likes: user._id },
+      },
+      { new: true },
+    )
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Unlike post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Unlike post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Unlike post succesfully',
+    });
   } catch (error) {
     return next(error);
   }
@@ -476,26 +518,24 @@ exports.savePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to save');
+      throw Boom.badRequest('Not found post to save');
     }
 
-    try {
-      await User.findByIdAndUpdate(
-        user._id,
-        {
-          $push: { savedPosts: postId },
-        },
-        { new: true },
-      );
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $addToSet: { savedBy: user._id },
+      },
+      { new: true, upsert: true },
+    );
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Save post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Save post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Save post succesfully',
+    });
+
   } catch (error) {
+    console.log(error)
     return next(error);
   }
 };
@@ -509,25 +549,22 @@ exports.unsavePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.notFound('Not found post to unsave');
+      throw Boom.badRequest('Not found post to unsave');
     }
 
-    try {
-      await User.findByIdAndUpdate(
-        user._id,
-        {
-          $pull: { savedPosts: postId },
-        },
-        { new: true },
-      );
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        $pull: { savedBy: user._id },
+      },
+      { new: true },
+    );
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Unsave post succesfully',
-      });
-    } catch (error) {
-      throw Boom.badRequest('Unsave post failed, try later');
-    }
+    return res.status(200).json({
+      status: 200,
+      message: 'Unsave post succesfully',
+    });
+
   } catch (error) {
     return next(error);
   }
@@ -536,45 +573,63 @@ exports.unsavePost = async (req, res, next) => {
 exports.getSavedPosts = async (req, res, next) => {
   try {
     const {
-      skip ,
-      limit ,
-      params: { userId },
+      page,
+      limit,
     } = req;
 
-    const [allPosts, posts] = await Promise.all([ 
-      User.findById(userId).lean().select('savedPosts -_id'),
-      User.findById(userId, { savedPosts: { $slice: [ skip, limit ]}})
-          .lean()
-          .populate({
-            path: 'savedPosts',
-            select: '-__v',
-            populate: [
-              { 
-                path: 'tags', 
-                select: 'tagName type', 
-                populate: {
-                  path: 'likes', select: 'username' 
-              }},
-            ],
-          })
+    const [postCounter, posts, counter] = await Promise.all([
+      Post.count({ savedBy: { $in: [req.user._id] } }).lean(),
+      Post.find({ savedBy: { $in: [req.user._id] } })
+        .lean()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort({ createdAt: - 1 })
+        .populate({
+          path: 'savedBy',
+          select: '_id username',
+        })
+        .populate({ path: 'authors', select: '_id name type' })
+        .populate({ path: 'tags', select: '_id tagName' })
+        .populate({ path: 'likes', select: '_id username' })
+        .populate({
+          path: 'comments',
+          select: '-__v',
+          populate: {
+            path: 'userId',
+            select: '_id username'
+          }
+        }),
+      Post.aggregate([
+        {
+          $match: {
+            savedBy: { $in: [mongoose.Types.ObjectId(req.user._id)] },
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            comments: { $size: '$comments' },
+            likes: { $size: '$likes' },
+            saves: { $size: '$savedBy' }
+          }
+        }
+      ])
     ])
-    if (!posts) {
-      throw Boom.notFound('Get saved posts failed');
-    }
 
-    let metaData = {
-      pageSize: limit,
-      currentPage: req.query.page ? Number(req.query.page) : 1,
-    };
-    let totalPage = allPosts.savedPosts.length
-      ? allPosts.savedPosts.length / limit | 1
-      : 0;
-    metaData.totalPage = totalPage;
+    const data = posts.map((post, index) => {
+      if (post._id.toString() === counter[index]._id.toString()) {
+        let metadata = { ...counter[index] }
+        return { ...post, metadata }
+      }
+      return { ...post }
+    })
+
     return res.status(200).json({
       status: 200,
-      message: 'success',
-      metaData,
-      data: posts.savedPosts,
+      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      data,
     });
   } catch (error) {
     return next(error);

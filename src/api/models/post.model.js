@@ -56,22 +56,8 @@ const postSchema = new Schema(
       },
     ],
     cover: {
-      type: Object,
-      pubic_id: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      secure_url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'File',
     },
     likes: [
       {
@@ -85,19 +71,8 @@ const postSchema = new Schema(
       default: null,
     },
     media: {
-      type: Object,
-      public_id: String,
-      url: String,
-      secure_url: String,
-      type: Object,
-      signature: String,
-      width: Number,
-      height: Number,
-      format: String,
-      resource_type: String,
-      frame_rate: Number,
-      bit_rate: Number,
-      duration: Number,
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'File'
     },
     food: {
       type: Object,
@@ -124,26 +99,17 @@ const postSchema = new Schema(
       },
       photos: [
         {
-          type: Object,
-          required: true,
-          pubic_id: {
-            type: String,
-            trim: true,
-            lowercase: true,
-          },
-          url: {
-            type: String,
-            trim: true,
-            lowercase: true,
-          },
-          secure_url: {
-            type: String,
-            trim: true,
-            lowercase: true,
-          },
-        },
+          type: Schema.Types.ObjectId,
+          ref: 'File',
+        }
       ],
     },
+    savedBy: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+      }
+    ]
   },
   { timestamps: true },
 );

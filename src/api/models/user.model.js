@@ -26,22 +26,8 @@ const userSchema = new Schema(
       required: true,
     },
     avatar: {
-      type: Object,
-      pubic_id: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-      secure_url: {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'File',
     },
     socialLinks: [
       {
@@ -83,29 +69,7 @@ const userSchema = new Schema(
     rankId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Rank',
-    },
-    posts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
-    likedPosts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
-    savedPosts: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Post',
-      },
-    ],
-    verifyCode: {
-      code: Number,
-      expiresIn: Number,
-    },
+    }
   },
   { timestamps: true },
 );

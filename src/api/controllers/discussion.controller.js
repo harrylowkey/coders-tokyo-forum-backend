@@ -1,59 +1,43 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const Post = require('@models').Post;
 const Promise = require('bluebird');
 
-exports.createDiscussion = async (req, res, next, type) => {
+exports.createDiscussion = async (req, res, next) => {
+  const type = 'discussion'
+
   const {
     body: { topic, tags, content },
     user,
   } = req;
 
   try {
-    const newDiscusstion = new Post({
-      userId: user,
+    let discussion = {
+      userId: user._id,
       topic,
       content,
       type,
+    };
+
+    let discussionTags
+    if (tags) {
+      discussionTags = await Utils.post.createTags(tags)
+      discussion.tags = discussionTags.map(tag => tag._id)
+    }
+    let createdDissucsion = await new Post(discussion).save()
+    let resData = {
+      _id: createdDissucsion._id,
+      tags: discussionTags || [],
+      topic,
+      content,
+      type,
+      userId: user._id,
+      createdAt: createdDissucsion.createdAt
+    }
+    return res.status(200).json({
+      staus: 200,
+      data: resData,
     });
-
-    const newTags = await Utils.post.createTags(newDiscusstion, tags);
-    if (!newTags) {
-      throw Boom.serverUnavailable('Create tag failed');
-    }
-    const tagsId = newTags.map(tag => ({
-      _id: tag.id,
-    }));
-    newDiscusstion.tags = tagsId;
-
-    try {
-      const isOk = await Promise.props({
-        pushDiscussionIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newDiscusstion },
-          },
-          { new: true },
-        ),
-        createNewDiscusstion: newDiscusstion.save(),
-      });
-
-      const discussionCreated = await Post.findById(
-        isOk.createNewDiscusstion._id,
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName ' })
-        .select(' -__v -url -media -authors');
-
-      return res.status(200).json({
-        staus: 200,
-        message: 'Create new discussion successfully',
-        data: discussionCreated,
-      });
-    } catch (error) {
-      throw Boom.badRequest("Create new discusstion failed");
-    }
   } catch (error) {
     return next(error);
   }
@@ -63,15 +47,16 @@ exports.editDiscussion = async (req, res, next, type) => {
   const { topic, content, tags } = req.body;
 
   try {
-    const discussion = await Post.findById({
+    const discussion = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
     })
       .lean()
       .populate({ path: 'tags', select: 'tagName ' });
 
     if (!discussion) {
-      throw Boom.notFound('Not found discussion, edit discussion failed');
+      throw Boom.badRequest('Not found discussion, edit discussion failed');
     }
 
     let query = {};
@@ -79,36 +64,28 @@ exports.editDiscussion = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        discussion._id,
+        discussion,
         tags,
       );
 
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
-    try {
-      const updatedDiscussion = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName ' })
-        .select(' -__v -url -media -authors');
+    const updatedDiscussion = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate({ path: 'tags', select: 'tagName ' })
+      .select(' -__v -url -media -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit discussion failed',
-        data: updatedDiscussion,
-      });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
+    return res.status(200).json({
+      status: 200,
+      data: updatedDiscussion,
+    });
   } catch (error) {
     return next(error);
   }
@@ -116,37 +93,13 @@ exports.editDiscussion = async (req, res, next, type) => {
 
 exports.deleteDiscussion = async (req, res, next, type) => {
   try {
-    const discussion = await Post.findOne({
-      _id: req.params.postId,
-      type,
-    })
-      .lean()
-      .populate([{ path: 'tags', select: 'tagName' }]);
-    if (!discussion) {
-      throw Boom.notFound('Not found discussion');
-    }
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
+    if (!isDeleted) throw Boom.badRequest('Delete post failed')
 
-    const tagsId = discussion.tags.map(tag => tag._id);
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(discussion._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete discussion successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
+    return res.status(200).json({
+      status: 200,
+      message: `Delete discussion successfully`,
+    });
   } catch (error) {
     return next(error);
   }

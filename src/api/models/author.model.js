@@ -14,12 +14,13 @@ const authorSchema = new Schema({
     enum: types,
     default: 'author',
   },
-  posts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Post',
-    },
-  ],
+  avatar: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'File'
+  },
+  description: {
+    type: String
+  }
 });
 
 authorSchema.index({ name: 1, type: 1 });

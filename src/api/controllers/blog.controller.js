@@ -1,84 +1,86 @@
 const Boom = require('@hapi/boom');
-const Utils = require('../../utils');
-const User = require('../models').User;
-const Post = require('../models').Post;
+const Utils = require('@utils');
+const { Post, File } = require('@models')
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('../../config/vars');
+const { CloudinaryService } = require('@services')
+const { FILE_REFERENCE_QUEUE } = require('@bull')
 
-exports.createBlog = async (req, res, next, type) => {
-  const coverImage = req.files['coverImage'][0].path;
+exports.createBlog = async (req, res, next) => {
+  const type = 'blog'
+  const blogCover = req.file
   const {
     body: { tags },
-    user,
   } = req;
   try {
     const newBlog = new Post({
-      userId: user,
+      userId: req.user._id,
       ...req.body,
       type,
+    })
+
+    const promises = {
+      blogCover: new File({
+        secureURL: blogCover.secure_url,
+        publicId: blogCover.public_id,
+        fileName: blogCover.originalname,
+        sizeBytes: blogCover.bytes,
+        userId: req.user._id,
+        postId: newBlog._id,
+        resourceType: blogCover.resource_type
+      }).save()
+    }
+    if (tags) {
+      promises.blogTags = Utils.post.createTags(tags)
+    }
+
+    let result = await Promise.props(promises)
+
+    newBlog.cover = result.blogCover._id;
+    if (result.blogTags) newBlog.tags = result.blogTags.map(tag => tag._id)
+
+    let createdBlog = await newBlog.save()
+    let dataRes = {
+      _id: createdBlog._id,
+      topic: createdBlog.topic,
+      description: createdBlog.description,
+      content: createdBlog.content,
+      type: createdBlog.type,
+      tags: result.blogTags || [],
+      cover: {
+        secureURL: result.blogCover.secureURL,
+        publicId: result.blogCover.publicId,
+        fileName: result.blogCover.fileName,
+        createdAt: result.blogCover.createdAt,
+        sizeBytes: result.blogCover.sizeBytes
+      },
+      createdAt: createdBlog.createdAt,
+    }
+    return res.status(200).json({
+      status: 200,
+      data: dataRes,
     });
-    try {
-      const result = await Promise.props({
-        tags: Utils.post.createTags(newBlog, tags),
-        coverImage: cloudinary.uploader.upload(coverImage, coverImageConfig),
-      });
-
-      const tagsId = result.tags.map(tag => ({
-        _id: tag.id,
-      }));
-
-      const cover = {
-        public_id: result.coverImage.public_id,
-        url: result.coverImage.url,
-        secure_url: result.coverImage.secure_url,
-      };
-
-      newBlog.tags = tagsId;
-      newBlog.cover = cover;
-    } catch (error) {
-      throw Boom.badRequest(error.message);
-    }
-
-    try {
-      const isOk = await Promise.props({
-        pushBlogIdToOwner: User.findByIdAndUpdate(
-          user._id,
-          {
-            $push: { posts: newBlog },
-          },
-          { new: true },
-        ),
-        createNewBlog: newBlog.save(),
-      });
-
-      const blog = await Post.findById(isOk.createNewBlog._id)
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -url -authors');
-
-      return res.status(200).json({
-        status: 200,
-        message: 'Create new blog successfully',
-        data: blog,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Create new blog failed');
-    }
   } catch (error) {
     return next(error);
   }
 };
 
-exports.editBlog = async (req, res, next, type) => {
+exports.editBlog = async (req, res, next) => {
+  const type = 'blog'
   const { topic, description, content, tags } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    }).lean();
+    })
+      .lean()
+      .populate({
+        path: 'tags',
+        select: '_id tagName'
+      })
+
     if (!blog) {
-      throw Boom.notFound('Not found blog, edit blog failed');
+      throw Boom.badRequest('Not found blog');
     }
 
     let query = {};
@@ -87,60 +89,36 @@ exports.editBlog = async (req, res, next, type) => {
     if (content) query.content = content;
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        blog._id,
+        blog,
         tags,
       );
-
-      if (!newTags) {
-        throw Boom.serverUnavailable('Get new tags failed');
-      }
       query.tags = newTags;
     }
 
-    const files = req.files || {};
-    const coverImageInput = files['coverImage'] || null;
-    if (coverImageInput) {
-      const coverImage = coverImageInput[0].path;
-      const oldCover = blog.cover || {};
-      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
+    let blogCover = req.file
+    if (blogCover) {
+      const uploadedCoverImage = await
+        CloudinaryService.uploadFileProcess(req.user, blog, blogCover, '_blog_image_cover_');
 
-      const data = { oldImageId: oldCoverId, newImage: coverImage };
-      try {
-        const uploadedCoverImage = await Utils.cloudinary.deleteOldImageAndUploadNewImage(
-          data,
-          coverImageConfig,
-        );
-
-        query.cover = {
-          public_id: uploadedCoverImage.public_id,
-          url: uploadedCoverImage.url,
-          secure_url: uploadedCoverImage.secure_url,
-        };
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
+      query.cover = uploadedCoverImage._id
     }
 
-    try {
-      const upadatedBlog = await Post.findByIdAndUpdate(
-        req.params.postId,
-        {
-          $set: query,
-        },
-        { new: true },
-      )
-        .lean()
-        .populate({ path: 'tags', select: 'tagName' })
-        .select('-__v -media -url -authors');
+    const upadatedBlog = await Post.findByIdAndUpdate(
+      req.params.postId,
+      {
+        $set: query,
+      },
+      { new: true },
+    )
+      .lean()
+      .populate({ path: 'tags', select: 'tagName' })
+      .populate({ path: 'cover', select: 'publicId sercureURL fileName sizeBytes'})
+      .select('-__v -media -url -authors');
 
-      return res.status(200).json({
-        status: 200,
-        message: 'Edit blog successfully',
-        data: upadatedBlog,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Update blog failed');
-    }
+    return res.status(200).json({
+      status: 200,
+      data: upadatedBlog,
+    });
   } catch (error) {
     return next(error);
   }
@@ -150,37 +128,25 @@ exports.deleteBlog = async (req, res, next, type) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
+      userId: req.user._id,
       type,
-    })
-      .populate({ path: 'tags', select: 'tagName' })
-      .lean();
+    }).lean()
+    .populate({ path: 'cover'})
     if (!blog) {
-      throw Boom.notFound('Not found blog');
+      throw Boom.badRequest('Not found blog');
     }
 
-    const tagsId = blog.tags.map(tag => tag._id);
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: blog.cover })
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
 
-    try {
-      await Promise.props({
-        isDeletedPost: Post.findByIdAndDelete(req.params.postId),
-        isDeletedCoverImage: cloudinary.uploader.destroy(blog.cover.public_id),
-        isDetetedInOwner: User.findByIdAndUpdate(
-          req.user._id,
-          {
-            $pull: { posts: req.params.postId },
-          },
-          { new: true },
-        ),
-        isDeletedInTags: Utils.post.deletePostInTags(blog._id, tagsId),
-      });
-
-      return res.status(200).json({
-        status: 200,
-        message: `Delete blog successfully`,
-      });
-    } catch (error) {
-      throw Boom.badRequest('Delete blog failed');
+    if (!isDeleted) {
+      throw Boom.badRequest('Delete blog failed')
     }
+
+    return res.status(200).json({
+      status: 200,
+      message: `Delete blog successfully`,
+    });
   } catch (error) {
     return next(error);
   }
