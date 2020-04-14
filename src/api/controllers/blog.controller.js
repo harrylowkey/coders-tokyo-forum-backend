@@ -25,7 +25,8 @@ exports.createBlog = async (req, res, next) => {
         fileName: blogCover.originalname,
         sizeBytes: blogCover.bytes,
         userId: req.user._id,
-        postId: newBlog._id
+        postId: newBlog._id,
+        resourceType: 'image'
       }).save()
     }
     if (tags) {

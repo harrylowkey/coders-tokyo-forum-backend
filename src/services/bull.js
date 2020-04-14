@@ -7,10 +7,10 @@ const { File, Post } = require('@models')
 const UESR_QUEUE = new Queue(`${QUEUES.USER_QUEUE.name}`, QUEUES.USER_QUEUE.options);
 const CLOUDINARY_QUEUE = {
   deleteAsset: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:delete_assset`, QUEUES.CLOUDINARY_QUEUE.options),
-  renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename-file`, QUEUES.CLOUDINARY_QUEUE.options)
+  renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename_file`, QUEUES.CLOUDINARY_QUEUE.options)
 }
 const FILE_REFERENCE_QUEUE = {
-  deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete-file`, QUEUES.FILE_REFERENCE_QUEUE.options)
+  deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_file`, QUEUES.FILE_REFERENCE_QUEUE.options)
 }
 const EMAIL_QUEUE = {
   sendWelcomeEmail: new Queue(`${QUEUES.EMAIL_QUEUE.name}:send_welcome_email`, QUEUES.EMAIL_QUEUE.options),
@@ -38,9 +38,9 @@ EMAIL_QUEUE.sendEmailCode.process(async (job, done) => {
 })
 
 CLOUDINARY_QUEUE.deleteAsset.process(async (job, done) => {
-  const { data: { publicId} } = job;
+  const { data: { publicId, resourceType } } = job;
   try {
-    const result = await cloudinary.uploader.destroy(publicId)
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType })
     done(null, result)
   } catch (error) {
     console.log('Exception when deleting asset on Cloudinary', error);
@@ -49,16 +49,16 @@ CLOUDINARY_QUEUE.deleteAsset.process(async (job, done) => {
 })
 
 CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
-  const { data: { currentPath, newPath, fileId, postId } } = job
+  const { data: { currentPath, newPath, fileId, postId, resourceType } } = job
   try {
-    const result = await cloudinary.uploader.rename(currentPath, newPath);
+    const result = await cloudinary.uploader.rename(currentPath, newPath, { resource_type: resourceType });
     done(null, result)
   } catch (error) {
     console.log('Exception when renaming file on Cloudinary', error);
     await Promise.all([
       File.findByIdAndDelete(fileId),
       Post.findByIdAndUpdate(postId, { $set: { media: null } }, { new: true }),
-      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath }),
+      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath, resourceType}),
     ]);
     done(error, null);
   }
@@ -68,7 +68,7 @@ FILE_REFERENCE_QUEUE.deleteFile.process(async (job, done) => {
   try {
     const { data: { file } } = job;
     if (!file) return done(null)
-    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: file.publicId })
+    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: file.publicId, resourceType: file.resourceType })
     const result = await File.findByIdAndDelete(file._id)
     done(null, result);
   } catch (e) {

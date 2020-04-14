@@ -32,7 +32,6 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     let newMedia
     if (isUpload == 'true') {
       const video = req.file
-      //FIXME: Still can not upload and renaming video
       let promises = {
         uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video.path, '_video_', videoConfig)
       }

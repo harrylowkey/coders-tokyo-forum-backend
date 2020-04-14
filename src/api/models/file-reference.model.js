@@ -31,6 +31,7 @@ const fileSchema = new Schema({
   },
   fileName: String,
   sizeBytes: Number,
+  resourceType: String
 }, { timestamps: true });
 
 fileSchema.index(

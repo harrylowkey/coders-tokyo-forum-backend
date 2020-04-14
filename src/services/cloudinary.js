@@ -79,7 +79,8 @@ exports.uploadFileProcess = async (user, data, newFile, fileType) => {
     fileName: newFileName,
     sizeBytes: newFile.bytes,
     userId: user._id,
-    postId: data._id
+    postId: data._id,
+    resourceType: 'image'
   }).save();
 
 
@@ -112,6 +113,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     sizeBytes: newFile.bytes,
     userId: user._id,
     postId: data._id,
+    resourceType: 'video',
     media: {
       type: newFile.type,
       signature: newFile.signature,
@@ -129,7 +131,8 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     currentPath: newFile.public_id,
     newPath,
     fileId: newFileCreated.id,
-    postId: data._id
+    postId: data._id,
+    resourceType: 'video'
   })
 
   return newFileCreated;

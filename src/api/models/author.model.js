@@ -13,6 +13,13 @@ const authorSchema = new Schema({
     type: String,
     enum: types,
     default: 'author',
+  },
+  avatar: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'File'
+  },
+  description: {
+    type: String
   }
 });
 

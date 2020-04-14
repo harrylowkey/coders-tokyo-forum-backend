@@ -29,7 +29,8 @@ exports.createBookReview = async (req, res, next) => {
         fileName: blogCover.originalname,
         sizeBytes: blogCover.bytes,
         userId: req.user._id,
-        postId: newBook._id
+        postId: newBook._id,
+        resourceType: 'image'
       }).save()
     }
     if (tags) promises.tagsCreated = Utils.post.createTags(tags)
