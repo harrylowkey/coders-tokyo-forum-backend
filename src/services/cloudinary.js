@@ -6,41 +6,7 @@ const File = require('@models').File
 
 
 
-exports.deteteManyImages = async photos => {
-  const deleteImagePromise = image => {
-    return new Promise((resolve, reject) => {
-      try {
-        const deletedImage = cloudinary.uploader.destroy(image);
-        return resolve(deletedImage);
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  };
 
-  const deleteImagePromises = photos.map(photo => deleteImagePromise(photo));
-  return Promise.all(deleteImagePromises);
-};
-
-exports.deleteOldVideoAndUploadNewVideo = async (data, config = {}) => {
-  const { oldVideoId, newVideo } = data;
-
-  const result = await Promise.props({
-    isDeleted: cloudinary.uploader.destroy(oldVideoId, {
-      resource_type: 'video',
-    }),
-    isUploaded: cloudinary.uploader.upload(newVideo, config),
-  });
-
-  if (
-    result.isDeleted.result !== (oldVideoId == 'null' ? 'not found' : 'ok') ||
-    !result.isUploaded
-  ) {
-    return false;
-  }
-
-  return result.isUploaded;
-};
 
 exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')

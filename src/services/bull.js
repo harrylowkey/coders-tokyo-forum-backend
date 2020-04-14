@@ -10,7 +10,8 @@ const CLOUDINARY_QUEUE = {
   renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename_file`, QUEUES.CLOUDINARY_QUEUE.options),
 }
 const FILE_REFERENCE_QUEUE = {
-  deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_file`, QUEUES.FILE_REFERENCE_QUEUE.options)
+  deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_file`, QUEUES.FILE_REFERENCE_QUEUE.options),
+  deleteMultipleFiles: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_mmultipleFiles`, QUEUES.FILE_REFERENCE_QUEUE.options)
 }
 const EMAIL_QUEUE = {
   sendWelcomeEmail: new Queue(`${QUEUES.EMAIL_QUEUE.name}:send_welcome_email`, QUEUES.EMAIL_QUEUE.options),
@@ -58,7 +59,7 @@ CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
     await Promise.all([
       File.findByIdAndDelete(fileId),
       Post.findByIdAndUpdate(postId, { $set: { media: null } }, { new: true }),
-      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath, resourceType}),
+      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: currentPath, resourceType }),
     ]);
     done(error, null);
   }
@@ -77,6 +78,28 @@ FILE_REFERENCE_QUEUE.deleteFile.process(async (job, done) => {
   }
 })
 
+/**
+ * files = [{ _id, sercureURL, publicId }]
+ */
+
+FILE_REFERENCE_QUEUE.deleteMultipleFiles.process(async (job, done) => {
+  try {
+    const { data: { files } } = job;
+    if (!files.length) return done(null)
+    const result = await File.deleteMany({
+      _id: {
+        $in: files.map(file => file._id)
+      }
+    })
+    files.map(file => {
+      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: file.publicId, resourceType: file.resourceType })
+    })
+    done(null, result)
+  } catch (e) {
+    console.log('Exception when deleting file in DATABASE', e);
+    done(e, null);
+  }
+})
 
 //TODO: Implement logger package
 EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
@@ -89,8 +112,8 @@ CLOUDINARY_QUEUE.renameFile.on('completed', (job, result) => {
 
   if (result)
     console.log('****__QUEUE_JOB__**** Cloudinary renamed file SUCCESS')
-  })
-  
+})
+
 CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {
   if (result.result === 'not found')
     console.log('****__QUEUE_JOB__**** Cloudinary deleted asset FAILED')
@@ -100,9 +123,17 @@ CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {
 })
 
 FILE_REFERENCE_QUEUE.deleteFile.on('completed', (job, result) => {
-  if (!result) 
+  if (!result)
     console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE FAILED')
-  
+
+  if (result)
+    console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE SUCCESS')
+})
+
+FILE_REFERENCE_QUEUE.deleteMultipleFiles.on('completed', (job, result) => {
+  if (!result)
+    console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE FAILED')
+
   if (result)
     console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE SUCCESS')
 })

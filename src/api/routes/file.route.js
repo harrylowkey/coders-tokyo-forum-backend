@@ -23,6 +23,9 @@ router
   .get(checkAccessToken, FileController.getFile);
 
 router
+  .route('/delete')
+  .delete(checkAccessToken, FileController.uploadMultipleFoodPhotos)
+router
   .route('/upload/avatar')
   .post(checkAccessToken, uploadAvatar.single('file'), FileController.uploadFile)
 
@@ -43,5 +46,9 @@ router
 router
   .route('/upload/foodPhotos')
   .post(checkAccessToken, uploadBlogCover.array('files', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
+
+router
+  .route('/delete/multipleFiles')
+  .delete(checkAccessToken, FileController.deleteMultipleFiles)
 
 module.exports = router;

@@ -1,5 +1,7 @@
 const Boom = require('@hapi/boom');
 const { File } = require('@models');
+const mongoose = require('mongoose')
+const { FILE_REFERENCE_QUEUE } = require('@bull');
 const { CloudinaryService } = require('@services')
 const { videoConfig, audioConfig, 
         blogCoverConfig, avatarConfig, 
@@ -101,4 +103,22 @@ exports.uploadMultipleFoodPhotos = async (req, res, next) => {
   } catch (error) {
     return next(error)
   }
+}
+
+exports.deleteMultipleFiles = async (req, res, next) => {
+  const fileIds = req.body.fileIds
+  const files = await File.find({
+    $and: [ 
+      { _id: { $in: fileIds } }, 
+      { userId: req.user._id }
+    ]
+  })
+  if (!files.length) {
+    throw Boom.badRequest('Not found any files')
+  }
+  FILE_REFERENCE_QUEUE.deleteMultipleFiles.add({ files })
+  return res.status(200).json({
+    status: 200,
+    message: 'Delete success'
+  })
 }
