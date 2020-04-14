@@ -1,6 +1,12 @@
 const cloudinary = require('cloudinary');
 const cloudinaryStorage = require('multer-storage-cloudinary');
 const multer = require('multer');
+const { blogCoverConfig, 
+        audioConfig, 
+        foodPhotosConfig, 
+        videoConfig,
+        avatarConfig
+      } = require('@configVar')
 
 exports.config = () => {
   cloudinary.config({
@@ -21,4 +27,27 @@ exports.configStorage = (dataConfig) => {
   });
   const upload = multer({ storage });
   return upload
+}
+
+const videoStorage = multer.diskStorage(videoConfig)
+const uploadVideo = multer({ storage: videoStorage })
+
+const audioStorage = multer.diskStorage(audioConfig)
+const uploadAudio = multer({ storage: audioStorage })
+
+const foodStorage = multer.diskStorage(foodPhotosConfig)
+const uploadFood = multer({ storage: foodStorage })
+
+const blogCoverStorage = multer.diskStorage(blogCoverConfig)
+const uploadBlogCover = multer({ storage: blogCoverStorage })
+
+const avatarStorage = multer.diskStorage(avatarConfig)
+const uploadAvatar = multer({ storage: avatarStorage })
+
+exports.configMulter = {
+  uploadVideo,
+  uploadAudio,
+  uploadFood,
+  uploadAvatar,
+  uploadBlogCover
 }

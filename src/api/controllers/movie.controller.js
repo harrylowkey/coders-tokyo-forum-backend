@@ -28,7 +28,7 @@ exports.createMovieReview = async (req, res, next) => {
         sizeBytes: blogCover.bytes,
         userId: req.user._id,
         postId: newMovieReview._id,
-        resourceType: 'image'
+        resourceType: blogCover.resource_type
       }).save(),
       authorsCreated: Utils.post.creatAuthors(authors)
     }

@@ -1,6 +1,10 @@
 const Boom = require('@hapi/boom');
 const { File } = require('@models');
-const { FILE_REFERENCE_QUEUE } = require('@bull')
+const { CloudinaryService } = require('@services')
+const { videoConfig, audioConfig, 
+        blogCoverConfig, avatarConfig, 
+        foodPhotosConfig 
+      } = require('@configVar');
 
 //TODO: Cache getOne, getByID
 exports.getFile = async (req, res, next) => {
@@ -45,6 +49,43 @@ exports.deleteFile = async (req, res, next) => {
       status: 200,
       message: 'Delete success'
     })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.uploadFile = async (req, res, next) => {
+  try {
+    const file = req.file
+    const type = req.query.type
+    let config
+
+    switch (type) {
+      case 'avatar':
+        config = avatarConfig
+        break
+      case 'video':
+        config = videoConfig
+        break
+      case 'audio':
+        config = audioConfig
+        break
+      case 'blogCover':
+        config = blogCoverConfig
+        break
+      case 'food':
+        config = foodPhotosConfig
+        break
+      default:
+        throw Boom.badRequest('Invalid file type')
+    }
+
+    const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config)
+    return res.status(200).json({
+      status: 200,
+      data
+    })
+    // const 
   } catch (error) {
     return next(error)
   }

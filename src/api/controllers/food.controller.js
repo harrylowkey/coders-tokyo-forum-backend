@@ -40,7 +40,7 @@ exports.createFoodReview = async (req, res, next) => {
         sizeBytes: foodCover.bytes,
         userId: req.user._id,
         postId: newFoodBlog._id,
-        resourceType: 'image'
+        resourceType: foodCover.resource_type
       }).save(),
       foodPhotos: File.insertMany(foodPhotos)
     }

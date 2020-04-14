@@ -18,11 +18,10 @@ const { configStorage } = require('../../config/cloudinary')
 const uploadBlog = configStorage(blogCoverConfig)
 const uploadFoodPhotos = configStorage(foodPhotosConfig)
 
-const videoStorage = multer.diskStorage(videoConfig)
-const uploadVideo = multer({ storage: videoStorage })
-
-const audioStorage = multer.diskStorage(audioConfig)
-const uploadAudio = multer({ storage: audioStorage })
+const {
+  uploadVideo,
+  uploadAudio,
+} = require('../../config/cloudinary').configMulter
 
 /** ------------ -------------------- */
 

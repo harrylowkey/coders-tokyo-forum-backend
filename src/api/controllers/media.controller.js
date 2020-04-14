@@ -33,7 +33,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     if (isUpload == 'true') {
       const video = req.file
       let promises = {
-        uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video.path, '_video_', videoConfig)
+        uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video, '_video_', videoConfig)
       }
 
       if (tags) {
@@ -108,7 +108,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
       const newVideo = req.file
       if (newVideo) {
         const uploadedVideo = await
-          CloudinaryService.uploadMediaProcess(req.user, video, newVideo.path, '_video_', videoConfig);
+          CloudinaryService.uploadMediaProcess(req.user, video, newVideo, '_video_', videoConfig);
 
         query.media = uploadedVideo._id;
         query.url = null;
@@ -186,7 +186,7 @@ exports.createAudio = async (req, res, next, type) => {
 
     const audio = req.file
     let promises = {
-      uploadedAudio: CloudinaryService.uploadMediaProcess(req.user, newAudio, audio.path, `_${type}_`, audioConfig),
+      uploadedAudio: CloudinaryService.uploadMediaProcess(req.user, newAudio, audio, `_${type}_`, audioConfig),
       authorsCreated: Utils.post.creatAuthors(authors)
     }
 
@@ -262,7 +262,7 @@ exports.editAudio = async (req, res, next, type) => {
     const newAudio = req.file
     if (newAudio) {
       const uploadedAudio = await
-        CloudinaryService.uploadMediaProcess(req.user, audio, newAudio.path, `_${type}_`, audioConfig);
+        CloudinaryService.uploadMediaProcess(req.user, audio, newAudio, `_${type}_`, audioConfig);
 
       query.media = uploadedAudio._id;
     }

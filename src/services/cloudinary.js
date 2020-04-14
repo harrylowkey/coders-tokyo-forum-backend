@@ -56,7 +56,7 @@ exports.deleteOldVideoAndUploadNewVideo = async (data, config = {}) => {
   return result.isUploaded;
 };
 
-exports.uploadFileProcess = async (user, data, newFile, fileType) => {
+exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
   const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
   const newFileName = `${user.username}${fileType}${newFile.originalname.split('.')[0]}`
@@ -80,7 +80,7 @@ exports.uploadFileProcess = async (user, data, newFile, fileType) => {
     sizeBytes: newFile.bytes,
     userId: user._id,
     postId: data._id,
-    resourceType: 'image'
+    resourceType: newFile.resource_type
   }).save();
 
 
@@ -96,8 +96,8 @@ exports.uploadFileProcess = async (user, data, newFile, fileType) => {
 
 exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, config) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const newFile = await cloudinary.uploader.upload(newFileToUpload, config)
-  const newFileName = `${user.username}${fileType}${newFile.original_filename}`
+  const newFile = await cloudinary.uploader.upload(newFileToUpload.path, config)
+  const newFileName = `${user.username}${fileType}${newFileToUpload.originalname.split('.')[0]}`
   const newPath = videoConfig.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
   const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
@@ -113,7 +113,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     sizeBytes: newFile.bytes,
     userId: user._id,
     postId: data._id,
-    resourceType: 'video',
+    resourceType: newFile.resource_type,
     media: {
       type: newFile.type,
       signature: newFile.signature,
@@ -132,9 +132,61 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     newPath,
     fileId: newFileCreated.id,
     postId: data._id,
-    resourceType: 'video'
+    resourceType: newFile.resource_type
   })
 
   return newFileCreated;
 };
+
+exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileType, config) => {
+  const { CLOUDINARY_QUEUE } = require('@bull')
+  const newFile = await cloudinary.uploader.upload(newFileToUpload.path, config)
+  const newFileName = `${user.username}_${fileType}_${newFileToUpload.originalname.split('.')[0]}`
+  const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+
+  let newFileCreated
+  if (resourceType === 'image') {
+    newFileCreated = await new File({
+      secureURL: newSecureURL,
+      publicId: newPath,
+      fileName: newFileName,
+      userId: user._id,
+      resourceType
+    }).save();
+  }
+
+  if (resourceType === 'video') {
+    await new File({
+      secureURL: newSecureURL,
+      publicId: newPath,
+      fileName: newFileName,
+      sizeBytes: newFile.bytes,
+      userId: user._id,
+      postId: data._id,
+      resourceType: newFile.resource_type,
+      media: {
+        type: newFile.type,
+        signature: newFile.signature,
+        width: newFile.width,
+        height: newFile.height,
+        format: newFile.format,
+        resource_type: newFile.resource_type,
+        frame_rate: newFile.frame_rate,
+        bit_rate: newFile.bit_rate,
+        duration: newFile.duration,
+      }
+    }).save();
+  }
+  
+  CLOUDINARY_QUEUE.renameFile.add({
+    currentPath: newFile.public_id,
+    newPath,
+    fileId: newFileCreated.id,
+    postId: '',
+    resourceType: newFile.resource_type
+  })
+
+  return newFileCreated;
+} 
 

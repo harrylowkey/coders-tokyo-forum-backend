@@ -7,7 +7,7 @@ const { File, Post } = require('@models')
 const UESR_QUEUE = new Queue(`${QUEUES.USER_QUEUE.name}`, QUEUES.USER_QUEUE.options);
 const CLOUDINARY_QUEUE = {
   deleteAsset: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:delete_assset`, QUEUES.CLOUDINARY_QUEUE.options),
-  renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename_file`, QUEUES.CLOUDINARY_QUEUE.options)
+  renameFile: new Queue(`${QUEUES.CLOUDINARY_QUEUE.name}:rename_file`, QUEUES.CLOUDINARY_QUEUE.options),
 }
 const FILE_REFERENCE_QUEUE = {
   deleteFile: new Queue(`${QUEUES.FILE_REFERENCE_QUEUE.name}:delete_file`, QUEUES.FILE_REFERENCE_QUEUE.options)
@@ -87,8 +87,8 @@ CLOUDINARY_QUEUE.renameFile.on('completed', (job, result) => {
 
   if (result)
     console.log('****__QUEUE_JOB__**** Cloudinary renamed file SUCCESS')
-})
-
+  })
+  
 CLOUDINARY_QUEUE.deleteAsset.on('completed', (job, result) => {
   if (result.result === 'not found')
     console.log('****__QUEUE_JOB__**** Cloudinary deleted asset FAILED')
@@ -104,6 +104,7 @@ FILE_REFERENCE_QUEUE.deleteFile.on('completed', (job, result) => {
   if (result)
     console.log('****__QUEUE_JOB__**** FileReference deleted file in DATABASE SUCCESS')
 })
+
 
 
 module.exports = {

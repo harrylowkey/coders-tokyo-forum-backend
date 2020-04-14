@@ -30,7 +30,7 @@ exports.createBookReview = async (req, res, next) => {
         sizeBytes: blogCover.bytes,
         userId: req.user._id,
         postId: newBook._id,
-        resourceType: 'image'
+        resourceType: blogCover.resource_type
       }).save()
     }
     if (tags) promises.tagsCreated = Utils.post.createTags(tags)
