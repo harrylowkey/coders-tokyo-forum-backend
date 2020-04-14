@@ -4,21 +4,7 @@ const Boom = require('@hapi/boom')
 const { avatarConfig, blogCoverConfig, videoConfig, audioConfig } = require('@configVar')
 const File = require('@models').File
 
-exports.uploadManyImages = async (images, config = {}) => {
-  const uploadImagePromise = image => {
-    return new Promise((resolve, reject) => {
-      try {
-        const uploadedImage = cloudinary.uploader.upload(image, config);
-        return resolve(uploadedImage);
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  };
 
-  const uploadImagePromises = images.map(image => uploadImagePromise(image));
-  return Promise.all(uploadImagePromises);
-};
 
 exports.deteteManyImages = async photos => {
   const deleteImagePromise = image => {
@@ -87,7 +73,7 @@ exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   CLOUDINARY_QUEUE.renameFile.add({
     currentPath: newFile.public_id,
     newPath,
-    fileId: newFileCreated.id,
+    fileId: newFileCreated._id,
     postId: data._id
   })
 
@@ -130,7 +116,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
   CLOUDINARY_QUEUE.renameFile.add({
     currentPath: newFile.public_id,
     newPath,
-    fileId: newFileCreated.id,
+    fileId: newFileCreated._id,
     postId: data._id,
     resourceType: newFile.resource_type
   })
@@ -178,15 +164,62 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
       }
     }).save();
   }
-  
+
   CLOUDINARY_QUEUE.renameFile.add({
     currentPath: newFile.public_id,
     newPath,
-    fileId: newFileCreated.id,
+    fileId: newFileCreated._id,
     postId: '',
     resourceType: newFile.resource_type
   })
 
   return newFileCreated;
-} 
+}
 
+exports.uploadMultipleFiles = async (user, files, fileType, config = {}) => {
+  const { CLOUDINARY_QUEUE } = require('@bull')
+  try {
+    const uploadImagePromise = image => {
+      return new Promise((resolve, reject) => {
+        try {
+          const uploadedImage = cloudinary.uploader.upload(image.path, config);
+          return resolve(uploadedImage);
+        } catch (error) {
+          return reject(error);
+        }
+      });
+    };
+
+    const uploadImagePromises = files.map(image => uploadImagePromise(image));
+    const images = await Promise.all(uploadImagePromises);
+
+    const foodPhotos = images.map(photo => {
+      const newFileName = `${user.username}${fileType}${photo.original_filename.split('.')[0]}`
+      const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+      const newSecureURL = photo.secure_url.replace(photo.public_id, newPath);
+      const resourceType = photo.resource_type
+      return {
+        secureURL: newSecureURL,
+        publicId: newPath,
+        fileName: newFileName,
+        userId: user._id,
+        resourceType
+      }
+    })
+
+    const data = await File.insertMany(foodPhotos)
+    data.map((image, index) => {
+      CLOUDINARY_QUEUE.renameFile.add({
+        currentPath: images[index].public_id,
+        newPath: image.publicId,
+        fileId: image._id,
+        postId: '',
+        resourceType: image.resourceType
+      })
+    })
+
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+};

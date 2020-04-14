@@ -1,6 +1,7 @@
 const express = require('express');
 const { checkAccessToken } = require('@middlewares/authorize');
 const FileController = require('../controllers/file.controller');
+const { foodPhotosConfig } = require('@configVar')
 
 const {
   uploadVideo,
@@ -9,8 +10,6 @@ const {
   uploadAvatar,
   uploadBlogCover
 } = require('../../config/cloudinary').configMulter
-
-
 
 
 const router = express.Router();
@@ -38,5 +37,11 @@ router
 router
   .route('/upload/blogCover')
   .post(checkAccessToken, uploadBlogCover.single('file'), FileController.uploadFile)
+
+
+//FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
+router
+  .route('/upload/foodPhotos')
+  .post(checkAccessToken, uploadBlogCover.array('files', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
 
 module.exports = router;

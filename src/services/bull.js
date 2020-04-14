@@ -77,6 +77,8 @@ FILE_REFERENCE_QUEUE.deleteFile.process(async (job, done) => {
   }
 })
 
+
+//TODO: Implement logger package
 EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
   console.log('****__QUEUE_JOB__**** Send email code success')
 })

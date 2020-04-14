@@ -85,7 +85,19 @@ exports.uploadFile = async (req, res, next) => {
       status: 200,
       data
     })
-    // const 
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.uploadMultipleFoodPhotos = async (req, res, next) => {
+  try {
+    const files = req.files;
+    const data = await CloudinaryService.uploadMultipleFiles(req.user, files, '__foodPhotos__', foodPhotosConfig)
+    return res.status(200).json({
+      status: 200,
+      data
+    })
   } catch (error) {
     return next(error)
   }
