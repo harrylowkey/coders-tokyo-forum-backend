@@ -10,11 +10,11 @@ exports.createFoodReview = async (req, res, next) => {
   const {
     body: {
       tags,
-      food: { price, location, star, foodName },
+      banner,
+      food,
     },
     user,
   } = req;
-
 
   try {
     const newFoodBlog = new Post({
@@ -23,7 +23,6 @@ exports.createFoodReview = async (req, res, next) => {
       type,
     });
 
-    const foodCover = req.files['coverImage'][0];
     const foodPhotos = req.files['foodPhotos'].map(photo => ({
       secureURL: photo.secure_url,
         publicId: photo.public_id,
@@ -32,45 +31,38 @@ exports.createFoodReview = async (req, res, next) => {
         user: req.user._id,
         postId: newFoodBlog._id
     }))
-    let promises = {
-      foodCover: new File({
-        secureURL: foodCover.secure_url,
-        publicId: foodCover.public_id,
-        fileName: foodCover.originalname,
-        sizeBytes: foodCover.bytes,
-        user: req.user._id,
-        postId: newFoodBlog._id,
-        resourceType: foodCover.resource_type
-      }).save(),
+
+    let blogTags = []
+    newBlog.cover = req.body.banner._id
+    
+    let _promises = {
       foodPhotos: File.insertMany(foodPhotos)
     }
-    if (tags) {
-      promises.tagsCreated = Utils.post.createTags(tags)
-    }
+    if (tags) promises.createdTags = Utils.post.createTags(tags)
 
-    const result = await Promise.props(promises);
+    const result = await Promise.props(_promises);
+    if (tags) newBlog.tags = result.createdTags.map(tag => tag._id)
     newFoodBlog.foodPhotos = result.foodPhotos.map(photo => photo._id)
-    const food = {
-      foodName,
-      price,
-      location,
-      star,
-    };
-
-    if (result.tagsCreated) {
-      newFoodBlog.tags = result.tagsCreated.map(tag => tag._id);
-    }
 
     newFoodBlog.cover = result.foodCover._id
     newFoodBlog.food = food;
 
-    const createdFoodBlog = await new Post(newFoodBlog).save()
+    const promises = [
+      newFoodBlog.save(),
+      File.findByIdAndUpdate(
+        banner._id,
+        {
+          $set: { postId: newFoodBlog._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const [createdFoodBlog, _] = await Promise.all(promises)
     const dataRes = {
       _id: createdFoodBlog._id,
-      tags: result.tagsCreated || [],
-      food: {
-        ...food,
-      },
+      tags:blogTags,
+      food,
       foodPhotos: result.foodPhotos.map(photo => ({
         secureURL: photo.secureURL,
         publicId: photo.publicId,
@@ -81,13 +73,7 @@ exports.createFoodReview = async (req, res, next) => {
       description: createdFoodBlog.description,
       content: createdFoodBlog.content,
       type: createdFoodBlog.type,
-      cover: { 
-        secureURL: result.foodCover.secureURL,
-        publicId: result.foodCover.publicId,
-        fileName: result.foodCover.fileName,
-        createdAt: result.foodCover.createdAt,
-        sizeBytes: result.foodCover.sizeBytes
-      },
+      cover: req.body.banner,
       createdAt: createdFoodBlog.createdAt
     }
     return res.status(200).json({
@@ -123,7 +109,7 @@ exports.editFoodReview = async (req, res, next, type) => {
       description,
       content,
       tags,
-      food: { price, location, star, foodName },
+      food: { priceAverage, address, restaurant, quality, service, space, openTime, foodName, price, starts },
     } = req.body;
 
     let query = {};
@@ -155,16 +141,17 @@ exports.editFoodReview = async (req, res, next, type) => {
     }
 
     let oldFoodData = foodReview.food
-    query.food = {
-      foodName: oldFoodData.foodName,
-      price: oldFoodData.price,
-      location: oldFoodData.location,
-      status: oldFoodData.status
-    };
+    query.food = oldFoodData
+    if (priceAverage) query.food.priceAverage = priceAverage;
+    if (address) query.food.address = address;
+    if (restaurant) query.food.restaurant = restaurant;
+    if (quality) query.food.quality = quality;
+    if (service) query.food.service = service;
+    if (space) query.food.space = space;
+    if (openTime) query.food.openTime = openTime;
     if (foodName) query.food.foodName = foodName;
     if (price) query.food.price = price;
-    if (location) query.food.location = location;
-    if (star) query.food.star = star;
+    if (stars) query.food.stars = stars;
 
     const foodPhotosInput = files['foodPhotos'] || null;
     if (foodPhotosInput) {

@@ -46,10 +46,14 @@ exports.register = async (req, res, next) => {
   const isExistingEmail = await User.findOne({ email: req.body.email });
   try {
     if (isExistingEmail) throw Boom.conflict('Email already existed');
-    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.emai])
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.email])
     let emailCode = await Redis.getCache({
       key: redisKey
     })
+
+    if (!emailCode) {
+      throw Boom.badRequest('Not found email code')
+    }
 
     if (emailCode !== req.body.code) {
       throw Boom.badRequest('Invalid or expired code')
@@ -81,9 +85,6 @@ exports.register = async (req, res, next) => {
 exports.sendEmailVerifyCode = async (req, res, next) => {
   const { email } = req.body;
   try {
-    const user = await User.findOne({ email }).lean();
-    if (!user) throw Boom.badRequest('Not found user');
-
     const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email])
     let emailCode = await Redis.getCache({
       key: redisKey
@@ -153,10 +154,14 @@ exports.changePassword = async (req, res, next) => {
     const userId = req.user._id;
     const user = await User.findById(userId).lean()
 
-    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.emai])
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.email])
     let emailCode = await Redis.getCache({
       key: redisKey
     })
+
+    if (!emailCode) {
+      throw Boom.badRequest('Not found email code')
+    }
 
     if (emailCode !== req.body.code) {
       throw Boom.badRequest('Invalid or expired code')

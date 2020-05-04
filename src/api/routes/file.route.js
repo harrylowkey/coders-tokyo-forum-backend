@@ -41,6 +41,7 @@ router
   .route('/upload/blogCover')
   .post(checkAccessToken, uploadBlogCover.single('file'), FileController.uploadFile)
 
+//TODO route update banner
 
 //FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
 router

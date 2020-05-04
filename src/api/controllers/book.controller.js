@@ -29,7 +29,18 @@ exports.createBookReview = async (req, res, next) => {
     if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
     newBook.authors = authorsCreated.map(author => author._id)
 
-    const createdBook = await newBook.save()
+    const promises = [
+      newBook.save(),
+      File.findByIdAndUpdate(
+        banner._id,
+        {
+          $set: { postId: newBook._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const [createdBook, _] = await Promise.all(promises)
     const dataRes = {
       _id: createdBook._id,
       topic: createdBook.topic,

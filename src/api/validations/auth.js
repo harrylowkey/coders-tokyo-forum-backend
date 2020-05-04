@@ -21,6 +21,7 @@ let signUpValidate = (req, res, next) => {
           message: 'Password must include lower, uppper characters and number',
         };
       }),
+    code: Joi.number().required()
   })
   
   const { error } = schema.validate(req.body)
@@ -110,7 +111,7 @@ let changePasswordValidate = (req, res, next) => {
         };
       }),
     oldPassword: Joi.string().required(),
-    emailCode: Joi.number().required()
+    code: Joi.number().required()
   })
 
   const { error } = schema.validate(req.body)

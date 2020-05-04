@@ -1,12 +1,12 @@
 const Boom = require('@hapi/boom');
-const { File } = require('@models');
+const { File, Post } = require('@models');
 const mongoose = require('mongoose')
 const { FILE_REFERENCE_QUEUE } = require('@bull');
 const { CloudinaryService } = require('@services')
-const { videoConfig, audioConfig, 
-        blogCoverConfig, avatarConfig, 
-        foodPhotosConfig 
-      } = require('@configVar');
+const { videoConfig, audioConfig,
+  blogCoverConfig, avatarConfig,
+  foodPhotosConfig
+} = require('@configVar');
 
 //TODO: Cache getOne, getByID
 exports.getFile = async (req, res, next) => {
@@ -82,7 +82,7 @@ exports.uploadFile = async (req, res, next) => {
         throw Boom.badRequest('Invalid file type')
     }
 
-    const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config)
+    const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config, null)
     return res.status(200).json({
       status: 200,
       data
@@ -108,8 +108,8 @@ exports.uploadMultipleFoodPhotos = async (req, res, next) => {
 exports.deleteMultipleFiles = async (req, res, next) => {
   const fileIds = req.body.fileIds
   const files = await File.find({
-    $and: [ 
-      { _id: { $in: fileIds } }, 
+    $and: [
+      { _id: { $in: fileIds } },
       { user: req.user._id }
     ]
   })
@@ -121,4 +121,54 @@ exports.deleteMultipleFiles = async (req, res, next) => {
     status: 200,
     message: 'Delete success'
   })
+}
+
+exports.updateImage = async (req, res, next) => {
+  try {
+    exports.uploadFile = async (req, res, next) => {
+      try {
+        const file = req.file
+        const type = req.query.type
+        const postId = req.body.postId
+        let config
+
+        switch (type) {
+          case 'avatar':
+            config = avatarConfig
+            break
+          case 'video':
+            config = videoConfig
+            break
+          case 'audio':
+            config = audioConfig
+            break
+          case 'blogCover':
+            config = blogCoverConfig
+            break
+          default:
+            throw Boom.badRequest('Invalid file type')
+        }
+
+        const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config, postId)
+        let updatedPost = await Post.findByIdAndUpdate(
+          postId,
+          { $set: { cover: data._id } },
+          { new: true },
+        )
+
+        if (updatedPost) {
+          const oldImage = await File.findById(postId).lean();
+          FILE_REFERENCE_QUEUE.deleteFile.add({ oldImage });
+        }
+        return res.status(200).json({
+          status: 200,
+          data: updatedPost
+        })
+      } catch (error) {
+        return next(error)
+      }
+    }
+  } catch (error) {
+    return next(error)
+  }
 }

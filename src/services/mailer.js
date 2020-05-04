@@ -54,7 +54,6 @@ let sendEmail = (mail, type) => {
   else {
     switch (type) {
       case 'VERIFY_CODE':
-        console.log(path.join(__dirname, `../../views/verifyCode.pug`))
         mail.subject = 'Verify Code'
         mail.html = pug.renderFile(
           path.join(__dirname, `../../views/verifyCode.pug`),

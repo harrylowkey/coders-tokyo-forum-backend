@@ -5,9 +5,6 @@ const { avatarConfig, blogCoverConfig, videoConfig, audioConfig } = require('@co
 const File = require('@models').File
 
 
-
-
-
 exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
   const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
@@ -90,7 +87,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
   return newFileCreated;
 };
 
-exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileType, config) => {
+exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileType, config, postId = null) => {
   const { CLOUDINARY_QUEUE } = require('@bull')
   const newFile = await cloudinary.uploader.upload(newFileToUpload.path, config)
   const newFileName = `${user.username}_${fileType}_${newFileToUpload.originalname.split('.')[0]}`
@@ -109,13 +106,13 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
   }
 
   if (resourceType === 'video') {
-    await new File({
+    newFileCreated = await new File({
       secureURL: newSecureURL,
       publicId: newPath,
       fileName: newFileName,
       sizeBytes: newFile.bytes,
       user: user._id,
-      postId: data._id,
+      postId,
       resourceType: newFile.resource_type,
       media: {
         type: newFile.type,

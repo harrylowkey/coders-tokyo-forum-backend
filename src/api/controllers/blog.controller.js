@@ -8,7 +8,7 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
   const {
-    body: { tags },
+    body: { tags, banner },
   } = req;
   try {
     const newBlog = new Post({
@@ -20,10 +20,22 @@ exports.createBlog = async (req, res, next) => {
     let blogTags = []
     if (tags) blogTags = await Utils.post.createTags(tags)
 
-    newBlog.cover =  req.body.banner._id
+    newBlog.cover = req.body.banner._id
     if (blogTags.length) newBlog.tags = blogTags.map(tag => tag._id)
 
-    let createdBlog = await newBlog.save()
+    const promises = [
+      newBlog.save(),
+      File.findByIdAndUpdate(
+        banner._id,
+        {
+          $set: { postId: newBlog._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const [createdBlog, _] = await Promise.all(promises)
+
     let dataRes = {
       _id: createdBlog._id,
       topic: createdBlog.topic,
@@ -103,7 +115,7 @@ exports.deleteBlog = async (req, res, next, type) => {
       user: req.user._id,
       type,
     }).lean()
-    .populate({ path: 'cover'})
+      .populate({ path: 'cover' })
     if (!blog) {
       throw Boom.badRequest('Not found blog');
     }

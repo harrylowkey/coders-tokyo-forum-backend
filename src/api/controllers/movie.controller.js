@@ -24,11 +24,22 @@ exports.createMovieReview = async (req, res, next) => {
 
     let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newBook.cover = req.body.banner._id;
-    if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
-    newBook.authors = authorsCreated.map(author => author._id)
+    newMovieReview.cover = req.body.banner._id;
+    if (blogTags.length) newMovieReview.tags = blogTags.map(tag => tag._id)
+    newMovieReview.authors = authorsCreated.map(author => author._id)
 
-    const createdMovieReview = await newMovieReview.save()
+    const promises = [
+      newMovieReview.save(),
+      File.findByIdAndUpdate(
+        banner._id,
+        {
+          $set: { postId: newMovieReview._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const [createdMovieReview, _] = await Promise.all(promises)
     let dataRes = {
       _id: createdMovieReview.id,
       url: createdMovieReview.url,
