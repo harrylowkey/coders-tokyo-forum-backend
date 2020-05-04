@@ -17,7 +17,8 @@ let validatePOST = (req, res, next) => {
       type: Joi.string().valid(
         'author',
       ).required()
-    }).required()
+    }).required(),
+    book: Joi.object().required()
   })
   
   let reqData = req.body;
@@ -44,7 +45,8 @@ let validatePUT = (req, res, next) => {
       type: Joi.string().valid(
         'author',
       ).required()
-    }).optional()
+    }).optional(),
+    book: Joi.object().optional()
   })
   
   let reqData = req.body;

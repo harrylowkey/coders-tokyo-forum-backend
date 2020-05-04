@@ -9,7 +9,7 @@ exports.createBookReview = async (req, res, next) => {
   const type = 'book'
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
-    body: { tags, authors },
+    body: { tags, authors, book },
     user,
   } = req;
 
@@ -28,6 +28,7 @@ exports.createBookReview = async (req, res, next) => {
     newBook.cover = req.body.banner._id;
     if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
     newBook.authors = authorsCreated.map(author => author._id)
+    newBook.book = book
 
     const promises = [
       newBook.save(),
@@ -63,7 +64,7 @@ exports.createBookReview = async (req, res, next) => {
 
 exports.editBookReview = async (req, res, next) => {
   const type = 'book'
-  const { topic, description, content, tags, authors } = req.body;
+  const { topic, description, content, tags, authors, book } = req.body;
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
@@ -78,17 +79,16 @@ exports.editBookReview = async (req, res, next) => {
       throw Boom.badRequest('Not found book blog reivew, edit failed');
     }
 
-    let query = {};
+    let query = { book };
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
-    if (tags) {
+    
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         book,
         tags,
       );
       query.tags = newTags;
-    }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(

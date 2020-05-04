@@ -16,7 +16,8 @@ let validatePOST = (req, res, next) => {
         'director'
       ).required()
     }).required(),
-    url: Joi.string().optional()
+    url: Joi.string().optional(),
+    movie: Joi.object.require()
   })
 
   let reqData = req.body;
@@ -46,7 +47,8 @@ let validatePUT = (req, res, next) => {
         'director'
       ).required()
     }).optional(),
-    url: Joi.string().optional()
+    url: Joi.string().optional(),
+    movie: Joi.object.optional()
   })
 
   let reqData = req.body;

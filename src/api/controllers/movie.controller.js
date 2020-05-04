@@ -8,7 +8,7 @@ const { coverImageConfig } = require('@configVar');
 exports.createMovieReview = async (req, res, next) => {
   const type = 'movie'
   const {
-    body: { tags, authors },
+    body: { tags, authors, banner, movie },
     user,
   } = req;
 
@@ -27,6 +27,7 @@ exports.createMovieReview = async (req, res, next) => {
     newMovieReview.cover = req.body.banner._id;
     if (blogTags.length) newMovieReview.tags = blogTags.map(tag => tag._id)
     newMovieReview.authors = authorsCreated.map(author => author._id)
+    newMovieReview.movie = movie
 
     const promises = [
       newMovieReview.save(),
@@ -63,7 +64,14 @@ exports.createMovieReview = async (req, res, next) => {
 };
 
 exports.editMovieReview = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors, url } = req.body;
+  const { topic,
+    description,
+    content,
+    tags,
+    authors,
+    url,
+    movie
+  } = req.body;
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
@@ -77,7 +85,7 @@ exports.editMovieReview = async (req, res, next, type) => {
       throw Boom.badRequest('Not found food blog reivew, edit failed');
     }
 
-    let query = {};
+    let query = { movie };
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
