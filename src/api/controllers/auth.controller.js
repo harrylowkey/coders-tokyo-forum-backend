@@ -46,6 +46,14 @@ exports.register = async (req, res, next) => {
   const isExistingEmail = await User.findOne({ email: req.body.email });
   try {
     if (isExistingEmail) throw Boom.conflict('Email already existed');
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.emai])
+    let emailCode = await Redis.getCache({
+      key: redisKey
+    })
+
+    if (emailCode !== req.body.code) {
+      throw Boom.badRequest('Invalid or expired code')
+    }
 
     await Utils.validator.validatePassword(req.body.password)
     const newUser = await User.create(req.body)
@@ -116,10 +124,6 @@ exports.forgotPassword = async (req, res, next) => {
       throw Boom.badRequest('Not found user')
     }
 
-    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
-    if (!checkVerifyCode)
-      throw Boom.badRequest('The email code is invalid or expired')
-
     if (newPassword !== confirmPassword) {
       throw Boom.badRequest(`Confirm password isn't matched`);
     }
@@ -145,13 +149,18 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
   try {
-    const { oldPassword, newPassword, confirmPassword, emailCode } = req.body;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
     const userId = req.user._id;
     const user = await User.findById(userId).lean()
 
-    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
-    if (!checkVerifyCode)
-      throw Boom.badRequest('The email code is invalid or expired')
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.emai])
+    let emailCode = await Redis.getCache({
+      key: redisKey
+    })
+
+    if (emailCode !== req.body.code) {
+      throw Boom.badRequest('Invalid or expired code')
+    }
     
     const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
     if (!isMatchedOldPass) {

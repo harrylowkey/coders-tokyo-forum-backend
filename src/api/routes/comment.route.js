@@ -20,6 +20,22 @@ router
     CommentController.createComment,
   );
 
+router
+  .route('/reply/:commentId')
+  .post(
+    checkAccessToken,
+    commentValidate,
+    CommentController.replyComment,
+  );
+
+  router
+  .route('/thread/reply/:parentId/:commentId')
+  .post(
+    checkAccessToken,
+    commentValidate,
+    CommentController.threadReplyComment,
+  );
+
   router
   .route('/:commentId')
   .put(

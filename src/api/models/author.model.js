@@ -7,7 +7,7 @@ const authorSchema = new Schema({
   name: {
     type: String,
     required: true,
-    maxlength: 20,
+    maxlength: 50,
   },
   type: {
     type: String,

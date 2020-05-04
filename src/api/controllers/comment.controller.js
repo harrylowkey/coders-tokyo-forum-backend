@@ -7,7 +7,6 @@ exports.createComment = async (req, res, next) => {
   try {
     const { content } = req.body
     const { postId } = req.params
-    const { parentId } = req.query
 
     const user = req.user;
     if (!user) {
@@ -22,7 +21,8 @@ exports.createComment = async (req, res, next) => {
       postId,
       content,
       userId: user._id,
-      parentId: parentId || null
+      parentId: null,
+      replyToComment: null
     }
 
     const comment = new Comment(data)
@@ -36,25 +36,6 @@ exports.createComment = async (req, res, next) => {
       ),
       comment.save()
     ]
-
-    if (parentId) {
-      const parentComment = await Comment.findById(parentId).lean()
-      if (!parentComment) {
-        throw Boom.badRequest('Not found parent comment')
-      }
-
-      if (parentComment.parentId) {
-        throw Boom.badRequest('Cannot reply to this comment')
-      }
-      
-      promises.push(
-        Comment.findByIdAndUpdate(
-          parentId,
-          { $push: { childComments: comment._id } },
-          { new: true }
-        )
-      )
-    }
 
     const [_, savedComment] = await Promise.all(promises)
 
@@ -71,9 +52,88 @@ exports.createComment = async (req, res, next) => {
   }
 }
 
+exports.replyComment = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const { commentId } = req.params
+    const { content } = req.body
+
+    const parentComment = await Comment.findById(commentId).lean()
+    if (!parentComment) {
+      throw Boom.badRequest('Not found comment to reply')
+    }
+
+    const data = {
+      content,
+      userId: user._id,
+      parentId: parentComment._id,
+      replyToComment: parentComment._id
+    }
+
+    const comment = new Comment(data)
+
+    const promises = [
+      comment.save(),
+      Comment.findByIdAndUpdate(
+        commentId,
+        { $push: { childComments: comment._id } },
+        { new: true }
+      )
+    ]
+
+    const [_, newComment] = await Promise.all(promises)
+    return res
+      .status(200)
+      .json({ status: 200, data: comment })
+
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.threadReplyComment = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const { commentId, parentId } = req.params
+    const { content } = req.body
+
+    const [parentComment, comment] = [Comment.findById(parentId).lean(), Comment.findById(commentId).lean()]
+
+    if (!parentComment || !comment) {
+      throw Boom.badRequest("Not found thread or comment to reply")
+    }
+
+    const data = {
+      content,
+      userId: user._id,
+      parentId: parentId,
+      replyToComment: commentId
+    }
+
+    const newComment = new Comment(data)
+
+    const promises = [
+      newComment.save(),
+      Comment.findByIdAndUpdate(
+        parentId,
+        { $push: { childComments: newComment._id } },
+        { new: true }
+      )
+    ]
+
+    const [_, createdComment] = await Promise.all(promises)
+    return res
+      .status(200)
+      .json({ status: 200, data: newComment })
+
+  } catch (error) {
+    return next(error)
+  }
+}
+
 exports.editComment = async (req, res, next) => {
   try {
-    const comment = await Comment.findOne({ 
+    const comment = await Comment.findOne({
       _id: req.params.commentId,
       userId: req.user._id,
     })
@@ -159,7 +219,7 @@ exports.getComments = async (req, res, next) => {
   try {
     const {
       query: { page, limit },
-      params: { commentId}
+      params: { commentId }
     } = req
 
     const [_page, _limit] = Utils.post.standardizePageLimitComment5(page, limit)
@@ -176,18 +236,18 @@ exports.getComments = async (req, res, next) => {
             skip: (_page - 1) * _limit
           }
         }),
-        Comment.aggregate([
-          {
-            $match: {
-              _id: mongoose.Types.ObjectId(commentId),
-            },
+      Comment.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(commentId),
           },
-          {
-            $project: {
-              childComments: { $size: '$childComments' },
-            }
+        },
+        {
+          $project: {
+            childComments: { $size: '$childComments' },
           }
-        ])
+        }
+      ])
     ])
 
     if (!comment) {
@@ -196,8 +256,8 @@ exports.getComments = async (req, res, next) => {
 
     return res
       .status(200)
-      .json({ 
-        status: 200, 
+      .json({
+        status: 200,
         metadata: Utils.post.getmetadata(_page, _limit, counter[0].childComments),
         data: comment.childComments
       })

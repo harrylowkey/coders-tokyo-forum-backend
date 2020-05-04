@@ -48,6 +48,7 @@
     "ioredis": "^4.16.1",
     "joi": "^14.3.1",
     "module-alias": "^2.2.2",
+    "mongoose-deep-populate": "^3.1.1",
     "multer-storage-cloudinary": "^2.2.1",
     "nodemon": "^1.19.1",
     "zlib": "^1.0.5"

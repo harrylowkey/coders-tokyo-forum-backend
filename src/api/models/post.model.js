@@ -42,7 +42,7 @@ const postSchema = new Schema(
     },
     description: {
       type: String,
-      maxlength: 400,
+      maxlength: 1000,
     },
     content: {
       type: String,
@@ -74,6 +74,13 @@ const postSchema = new Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'File'
     },
+    foodPhotos: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'File',
+        default: null
+      }
+    ],
     food: {
       type: Object,
       foodName: {
@@ -96,13 +103,7 @@ const postSchema = new Schema(
         max: 5,
         min: 0,
         required: true,
-      },
-      photos: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'File',
-        }
-      ],
+      }
     },
     savedBy: [
       {

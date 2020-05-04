@@ -63,11 +63,25 @@ exports.getOnePost = async (req, res, next) => {
         },
         populate: {
           path: 'childComments',
-          select: '-__v',
+          select: 'content createdAt parentId',
           options: {
             sort: { createdAt: -1 }
-          }
-        }
+          },
+          populate: [
+            {
+              path: 'replyToComment',
+              select: 'userId',
+              populate: {
+                path: 'userId',
+                select: 'username job'
+              }
+            },
+            {
+              path: 'userId',
+              select: 'username'
+            }
+          ]
+        },
       }
     ];
 
@@ -85,6 +99,9 @@ exports.getOnePost = async (req, res, next) => {
         negativeQuery += '-url -media';
         break;
       case 'food':
+        populateQuery.push({
+          path: 'foodPhotos',
+        });
         negativeQuery += '-authors -media';
         break;
       case 'movie':
@@ -173,6 +190,10 @@ exports.getPosts = async (req, res, next) => {
         select: 'tagName _id',
       },
       {
+        path: 'userId',
+        select: 'username _id',
+      },
+      {
         path: 'likes',
         select: 'username _id',
       },
@@ -181,7 +202,6 @@ exports.getPosts = async (req, res, next) => {
         select: '-__v',
         populate: {
           path: 'userId',
-          select: '_id username'
         }
       }
     ];
@@ -191,30 +211,32 @@ exports.getPosts = async (req, res, next) => {
     switch (type) {
       case 'blog':
         negativeQuery += '-authors -url -media';
+        populateQuery.push({ path: 'cover'});
         break;
       case 'book':
         populateQuery.push({
           path: 'authors',
           select: 'name',
-        });
+        }, { path: 'cover'});
         negativeQuery += '-url -media';
         break;
       case 'food':
         negativeQuery += '-authors -media';
         break;
       case 'movie':
-        populateQuery.push({ path: 'authors', select: 'name type' });
+        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover'});
         negativeQuery += '-media';
         break;
       case 'video':
         negativeQuery += '-authors';
+        populateQuery.push({ path: 'cover'});
         break;
       case 'podcast':
-        populateQuery.push({ path: 'authors', select: 'name type' });
+        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover'});
         negativeQuery += '-url';
         break;
       case 'song':
-        populateQuery.push({ path: 'authors', select: 'name type' });
+        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover'});
         negativeQuery += '-url';
         break;
       case 'discussion':
@@ -403,7 +425,6 @@ exports.editSong = (req, res, next) => {
 }
 
 exports.editPodcast = (req, res, next) => {
-  console.log('here')
   MediaController.editAudio(req, res, next, 'podcast');
 }
 

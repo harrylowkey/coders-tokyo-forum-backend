@@ -14,7 +14,8 @@ let validatePOST = (req, res, next) => {
       url: Joi.string().optional(),
       price: Joi.string().required(),
       location: Joi.string().optional(),
-      star: Joi.number().optional()
+      stars: Joi.number().optional(),
+      country: Joi.string().optional()
     }).required(),
     foodPhotos: Joi.array().required()
   })

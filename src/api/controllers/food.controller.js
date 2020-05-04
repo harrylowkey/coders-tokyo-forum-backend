@@ -49,12 +49,12 @@ exports.createFoodReview = async (req, res, next) => {
     }
 
     const result = await Promise.props(promises);
+    newFoodBlog.foodPhotos = result.foodPhotos.map(photo => photo._id)
     const food = {
       foodName,
       price,
       location,
       star,
-      photos: result.foodPhotos.map(photo => photo._id)
     };
 
     if (result.tagsCreated) {
@@ -70,13 +70,13 @@ exports.createFoodReview = async (req, res, next) => {
       tags: result.tagsCreated || [],
       food: {
         ...food,
-        photos: result.foodPhotos.map(photo => ({
-          secureURL: photo.secureURL,
-          publicId: photo.publicId,
-          fileName: photo.fileName,
-          sizeBytes: photo.sizeBytes
-        }))
       },
+      foodPhotos: result.foodPhotos.map(photo => ({
+        secureURL: photo.secureURL,
+        publicId: photo.publicId,
+        fileName: photo.fileName,
+        sizeBytes: photo.sizeBytes
+      })),
       topic: createdFoodBlog.topic,
       description: createdFoodBlog.description,
       content: createdFoodBlog.content,
@@ -139,19 +139,10 @@ exports.editFoodReview = async (req, res, next, type) => {
       query.tags = newTags;
     }
 
-    const files = req.files || {};
-    const coverImageInput = files['coverImage'] || null;
-    if (coverImageInput) {
-      const coverImage = coverImageInput[0].path;
-      const oldCover = foodReview.cover || {};
-      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
-
-      const data = { oldImageId: oldCoverId, newImage: coverImage };
+    let blogCover = req.file
+    if (blogCover) {
       try {
-        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
-          data,
-          coverImageConfig,
-        );
+        const uploadedCoverImage = await CloudinaryService.uploadFileProcess(req.user, foodReview, blogCover, '_blog_image_cover_');
 
         query.cover = {
           public_id: uploadedCoverImage.public_id,
@@ -202,7 +193,7 @@ exports.editFoodReview = async (req, res, next, type) => {
           secure_url: photo.secure_url,
         }));
 
-        query.food.photos = newFoodPhotos;
+        query.foodPhotos = newFoodPhotos;
       } catch (error) {
         throw Boom.badRequest(error.message);
       }
@@ -240,7 +231,7 @@ exports.deleteFoodReview = async (req, res, next, type) => {
     if (!foodReview) {
       throw Boom.badRequest('Not found food blog review');
     }
-    const photos = foodReview.food.photos.map(photo => photo.public_id);
+    const photos = foodReview.foodPhotos.map(photo => photo.public_id);
 
     let result = await Promise.props({
       idDeletedFoodBlog: Post.findByIdAndDelete(req.params.postId),
