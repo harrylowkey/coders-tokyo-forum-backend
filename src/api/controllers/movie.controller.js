@@ -26,7 +26,7 @@ exports.createMovieReview = async (req, res, next) => {
         publicId: blogCover.public_id,
         fileName: blogCover.originalname,
         sizeBytes: blogCover.bytes,
-        userId: req.user._id,
+        user: req.user._id,
         postId: newMovieReview._id,
         resourceType: blogCover.resource_type
       }).save(),
@@ -78,7 +78,7 @@ exports.editMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -166,7 +166,7 @@ exports.deleteMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

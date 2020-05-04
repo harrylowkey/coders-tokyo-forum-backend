@@ -14,7 +14,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
   } = req;
   try {
     const newVideo = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
@@ -75,7 +75,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type
     })
       .lean()
@@ -144,7 +144,7 @@ exports.deleteVideo = async (req, res, next, type) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -179,7 +179,7 @@ exports.createAudio = async (req, res, next, type) => {
   } = req;
   try {
     const newAudio = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
@@ -226,7 +226,7 @@ exports.editAudio = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -296,7 +296,7 @@ exports.deleteAudio = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

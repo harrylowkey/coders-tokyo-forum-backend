@@ -13,7 +13,7 @@ exports.createBlog = async (req, res, next) => {
   } = req;
   try {
     const newBlog = new Post({
-      userId: req.user._id,
+      user: req.user._id,
       ...req.body,
       type,
     })
@@ -24,7 +24,7 @@ exports.createBlog = async (req, res, next) => {
         publicId: blogCover.public_id,
         fileName: blogCover.originalname,
         sizeBytes: blogCover.bytes,
-        userId: req.user._id,
+        user: req.user._id,
         postId: newBlog._id,
         resourceType: blogCover.resource_type
       }).save()
@@ -70,7 +70,7 @@ exports.editBlog = async (req, res, next) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -128,7 +128,7 @@ exports.deleteBlog = async (req, res, next, type) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     }).lean()
     .populate({ path: 'cover'})

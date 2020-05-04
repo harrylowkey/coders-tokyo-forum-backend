@@ -16,7 +16,7 @@ exports.createBookReview = async (req, res, next) => {
 
   try {
     const newBook = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
@@ -28,7 +28,7 @@ exports.createBookReview = async (req, res, next) => {
         publicId: blogCover.public_id,
         fileName: blogCover.originalname,
         sizeBytes: blogCover.bytes,
-        userId: req.user._id,
+        user: req.user._id,
         postId: newBook._id,
         resourceType: blogCover.resource_type
       }).save()
@@ -74,7 +74,7 @@ exports.editBookReview = async (req, res, next) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -141,7 +141,7 @@ exports.deleteBookReview = async (req, res, next, type) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

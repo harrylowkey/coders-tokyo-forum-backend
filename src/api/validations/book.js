@@ -16,11 +16,6 @@ let validatePOST = (req, res, next) => {
       name: Joi.string().required(),
       type: Joi.string().valid(
         'author',
-        'singer',
-        'composer',
-        'actor',
-        'actress',
-        'director'
       ).required()
     }).required()
   })
@@ -51,11 +46,6 @@ let validatePUT = (req, res, next) => {
       name: Joi.string().required(),
       type: Joi.string().valid(
         'author',
-        'singer',
-        'composer',
-        'actor',
-        'actress',
-        'director'
       ).required()
     }).optional()
   })

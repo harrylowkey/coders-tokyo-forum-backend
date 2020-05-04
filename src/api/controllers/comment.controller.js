@@ -20,7 +20,7 @@ exports.createComment = async (req, res, next) => {
     const data = {
       postId,
       content,
-      userId: user._id,
+      user: user._id,
       parentId: null,
       replyToComment: null
     }
@@ -65,7 +65,7 @@ exports.replyComment = async (req, res, next) => {
 
     const data = {
       content,
-      userId: user._id,
+      user: user._id,
       parentId: parentComment._id,
       replyToComment: parentComment._id
     }
@@ -105,7 +105,7 @@ exports.threadReplyComment = async (req, res, next) => {
 
     const data = {
       content,
-      userId: user._id,
+      user: user._id,
       parentId: parentId,
       replyToComment: commentId
     }
@@ -135,7 +135,7 @@ exports.editComment = async (req, res, next) => {
   try {
     const comment = await Comment.findOne({
       _id: req.params.commentId,
-      userId: req.user._id,
+      user: req.user._id,
     })
     if (!comment) {
       throw Boom.badRequest('Not found comment')

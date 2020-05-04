@@ -72,7 +72,6 @@ let createPostValidate = (req, res, next) => {
     })
   })
 
-  console.log(req.body, req.files)
   req.files = JSON.parse(JSON.stringify(req.files))
   req.body = JSON.parse(JSON.stringify(req.body))
 

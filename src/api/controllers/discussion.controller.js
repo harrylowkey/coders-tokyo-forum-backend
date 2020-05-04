@@ -13,7 +13,7 @@ exports.createDiscussion = async (req, res, next) => {
 
   try {
     let discussion = {
-      userId: user._id,
+      user: user._id,
       topic,
       content,
       type,
@@ -31,7 +31,7 @@ exports.createDiscussion = async (req, res, next) => {
       topic,
       content,
       type,
-      userId: user._id,
+      user: user._id,
       createdAt: createdDissucsion.createdAt
     }
     return res.status(200).json({
@@ -49,7 +49,7 @@ exports.editDiscussion = async (req, res, next, type) => {
   try {
     const discussion = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

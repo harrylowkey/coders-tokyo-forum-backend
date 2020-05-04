@@ -14,7 +14,7 @@ exports.getFile = async (req, res, next) => {
     const file = await
       File.findOne({
         _id: req.params.fileId,
-        userId: req.user._id
+        user: req.user._id
       })
         .lean()
         .populate({
@@ -39,7 +39,7 @@ exports.deleteFile = async (req, res, next) => {
     const file = await
       File.findOne({
         _id: req.params.fileId,
-        userId: req.user._id
+        user: req.user._id
       }).lean()
 
     if (!file) {
@@ -110,7 +110,7 @@ exports.deleteMultipleFiles = async (req, res, next) => {
   const files = await File.find({
     $and: [ 
       { _id: { $in: fileIds } }, 
-      { userId: req.user._id }
+      { user: req.user._id }
     ]
   })
   if (!files.length) {

@@ -58,7 +58,7 @@ exports.getOnePost = async (req, res, next) => {
           skip: (_pageComment - 1) * _limitComment
         },
         populate: {
-          path: 'userId',
+          path: 'user',
           select: '_id username'
         },
         populate: {
@@ -70,14 +70,14 @@ exports.getOnePost = async (req, res, next) => {
           populate: [
             {
               path: 'replyToComment',
-              select: 'userId',
+              select: 'user',
               populate: {
-                path: 'userId',
+                path: 'user',
                 select: 'username job'
               }
             },
             {
-              path: 'userId',
+              path: 'user',
               select: 'username'
             }
           ]
@@ -190,7 +190,7 @@ exports.getPosts = async (req, res, next) => {
         select: 'tagName _id',
       },
       {
-        path: 'userId',
+        path: 'user',
         select: 'username _id',
       },
       {
@@ -201,7 +201,7 @@ exports.getPosts = async (req, res, next) => {
         path: 'comments',
         select: '-__v',
         populate: {
-          path: 'userId',
+          path: 'user',
         }
       }
     ];
@@ -251,7 +251,7 @@ exports.getPosts = async (req, res, next) => {
       if (!user) {
         throw Boom.badRequest(`Not found user to get ${type}s`);
       }
-      query.userId = req.params.userId;
+      query.user = req.params.userId;
     }
 
     const [posts, postCounter, counter] = await Promise.all([
@@ -352,7 +352,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
           path: 'comments',
           select: '-__v',
           populate: {
-            path: 'userId',
+            path: 'user',
             select: '_id username'
           }
         }),
@@ -616,7 +616,7 @@ exports.getSavedPosts = async (req, res, next) => {
           path: 'comments',
           select: '-__v',
           populate: {
-            path: 'userId',
+            path: 'user',
             select: '_id username'
           }
         }),

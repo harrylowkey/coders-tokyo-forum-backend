@@ -37,8 +37,8 @@ module.exports = {
     chunk_size: 6000000, //6mb
     transformation: [
       {
-        width: 1080,
-        height: 730,
+        width: 880,
+        height: 450,
       },
     ],
   },
@@ -54,11 +54,7 @@ module.exports = {
       {
         width: 400,
         height: 400,
-        gravity: 'face',
-        radius: 'max',
-        crop: 'crop',
-      },
-      { width: 200, crop: 'scale' },
+      }
     ],
   },
   foodPhotosConfig: {

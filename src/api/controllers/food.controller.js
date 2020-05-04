@@ -18,7 +18,7 @@ exports.createFoodReview = async (req, res, next) => {
 
   try {
     const newFoodBlog = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
@@ -29,7 +29,7 @@ exports.createFoodReview = async (req, res, next) => {
         publicId: photo.public_id,
         fileName: photo.originalname,
         sizeBytes: photo.bytes,
-        userId: req.user._id,
+        user: req.user._id,
         postId: newFoodBlog._id
     }))
     let promises = {
@@ -38,7 +38,7 @@ exports.createFoodReview = async (req, res, next) => {
         publicId: foodCover.public_id,
         fileName: foodCover.originalname,
         sizeBytes: foodCover.bytes,
-        userId: req.user._id,
+        user: req.user._id,
         postId: newFoodBlog._id,
         resourceType: foodCover.resource_type
       }).save(),
@@ -104,7 +104,7 @@ exports.editFoodReview = async (req, res, next, type) => {
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

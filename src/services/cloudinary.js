@@ -30,7 +30,7 @@ exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
     publicId: newPath,
     fileName: newFileName,
     sizeBytes: newFile.bytes,
-    userId: user._id,
+    user: user._id,
     postId: data._id,
     resourceType: newFile.resource_type
   }).save();
@@ -63,7 +63,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     publicId: newPath,
     fileName: newFileName,
     sizeBytes: newFile.bytes,
-    userId: user._id,
+    user: user._id,
     postId: data._id,
     resourceType: newFile.resource_type,
     media: {
@@ -103,7 +103,7 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
       secureURL: newSecureURL,
       publicId: newPath,
       fileName: newFileName,
-      userId: user._id,
+      user: user._id,
       resourceType
     }).save();
   }
@@ -114,7 +114,7 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
       publicId: newPath,
       fileName: newFileName,
       sizeBytes: newFile.bytes,
-      userId: user._id,
+      user: user._id,
       postId: data._id,
       resourceType: newFile.resource_type,
       media: {
@@ -168,7 +168,7 @@ exports.uploadMultipleFiles = async (user, files, fileType, config = {}) => {
         secureURL: newSecureURL,
         publicId: newPath,
         fileName: newFileName,
-        userId: user._id,
+        user: user._id,
         resourceType
       }
     })

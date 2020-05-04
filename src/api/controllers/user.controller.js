@@ -11,7 +11,7 @@ exports.getById = async (req, res, next) => {
       .select('-verifyCode -__v -password')
       .populate({
         path: 'avatar',
-        select: '-__v -userId'
+        select: '-__v -user'
       })
 
     if (!user) throw Boom.badRequest('Not found user')
@@ -28,8 +28,8 @@ exports.getById = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   const { username, hobbies, socialLinks, sex, age, job } = req.body;
   try {
-    const user = await User.findById(req.params.userId).lean();
-    if (!user) {
+    const user = a    if (!user) {wait User.findById(req.params.userId).lean();
+
       throw Boom.badRequest('Not found user');
     }
     const query = {};
@@ -173,7 +173,7 @@ exports.getByUsername = async(req, res, next) => {
     .lean()
     .populate({
       path: 'avatar',
-      select: '-__v -userId'
+      select: '-__v -user'
     })
     if (!user) throw Boom.badRequest('Not found user')
     return res.status(200).json({
