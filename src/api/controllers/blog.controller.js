@@ -7,7 +7,6 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
-  const blogCover = req.file
   const {
     body: { tags },
   } = req;
@@ -18,25 +17,11 @@ exports.createBlog = async (req, res, next) => {
       type,
     })
 
-    const promises = {
-      blogCover: new File({
-        secureURL: blogCover.secure_url,
-        publicId: blogCover.public_id,
-        fileName: blogCover.originalname,
-        sizeBytes: blogCover.bytes,
-        user: req.user._id,
-        postId: newBlog._id,
-        resourceType: blogCover.resource_type
-      }).save()
-    }
-    if (tags) {
-      promises.blogTags = Utils.post.createTags(tags)
-    }
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    let result = await Promise.props(promises)
-
-    newBlog.cover = result.blogCover._id;
-    if (result.blogTags) newBlog.tags = result.blogTags.map(tag => tag._id)
+    newBlog.cover =  req.body.banner._id
+    if (blogTags.length) newBlog.tags = blogTags.map(tag => tag._id)
 
     let createdBlog = await newBlog.save()
     let dataRes = {
@@ -45,14 +30,8 @@ exports.createBlog = async (req, res, next) => {
       description: createdBlog.description,
       content: createdBlog.content,
       type: createdBlog.type,
-      tags: result.blogTags || [],
-      cover: {
-        secureURL: result.blogCover.secureURL,
-        publicId: result.blogCover.publicId,
-        fileName: result.blogCover.fileName,
-        createdAt: result.blogCover.createdAt,
-        sizeBytes: result.blogCover.sizeBytes
-      },
+      tags: blogTags,
+      cover: req.body.banner,
       createdAt: createdBlog.createdAt,
     }
     return res.status(200).json({
@@ -66,7 +45,7 @@ exports.createBlog = async (req, res, next) => {
 
 exports.editBlog = async (req, res, next) => {
   const type = 'blog'
-  const { topic, description, content, tags } = req.body;
+  const { topic, description, content, tags, banner } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
@@ -87,6 +66,7 @@ exports.editBlog = async (req, res, next) => {
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
+    if (banner) query.cover = req.body.banner._id
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         blog,
@@ -94,15 +74,7 @@ exports.editBlog = async (req, res, next) => {
       );
       query.tags = newTags;
     }
-
-    let blogCover = req.file
-    if (blogCover) {
-      const uploadedCoverImage = await
-        CloudinaryService.uploadFileProcess(req.user, blog, blogCover, '_blog_image_cover_');
-
-      query.cover = uploadedCoverImage._id
-    }
-
+    
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
       {

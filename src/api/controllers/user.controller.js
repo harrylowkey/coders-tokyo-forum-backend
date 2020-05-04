@@ -28,9 +28,9 @@ exports.getById = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   const { username, hobbies, socialLinks, sex, age, job } = req.body;
   try {
-    const user = a    if (!user) {wait User.findById(req.params.userId).lean();
-
-      throw Boom.badRequest('Not found user');
+    const user = await User.findById(req.params.userId).lean();
+    if (!user) {
+      throw Boom.notFound('Not found user to update');
     }
     const query = {};
     if (username) query.username = username;

@@ -8,13 +8,10 @@ let validatePOST = (req, res, next) => {
     description: Joi.string().required(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string().required()).optional(),
-    coverImage: Joi.object().required()
+    banner: Joi.object().required()
   })
 
   let reqData = req.body;
-  if (req.file) {
-    reqData.coverImage = req.file
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)
@@ -33,13 +30,10 @@ let validatePUT = (req, res, next) => {
     description: Joi.string().optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string().required()).optional(),
-    coverImage: Joi.object().optional()
+    banner: Joi.object().optional()
   })
 
   let reqData = req.body;
-  if (req.file) {
-    reqData.coverImage = req.file
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)

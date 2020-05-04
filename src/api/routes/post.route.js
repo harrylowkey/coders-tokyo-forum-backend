@@ -30,7 +30,6 @@ router
   .route('/blogs')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Blog.validatePOST,
     BlogController.createBlog,
   )
@@ -39,7 +38,6 @@ router
   .route('/blogs/:postId')
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Blog.validatePUT,
     BlogController.editBlog,
   )
@@ -48,13 +46,11 @@ router
   .route('/books')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Book.validatePOST,
     BookController.createBookReview,
   )
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Book.validatePUT,
     BookController.editBookReview,
   )
@@ -84,13 +80,11 @@ router
   .route('/movies')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Movie.validatePOST,
     MovieController.createMovieReview,
   )
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Movie.validatePUT,
     MovieController.editMovieReview,
   )
@@ -117,13 +111,11 @@ router
   .route('/songs')
   .post(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePOST,
     PostController.createSong,
   )
   .put(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePUT,
     PostController.editSong,
   )
@@ -132,7 +124,6 @@ router
   .route('/podcasts')
   .post(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePOST,
     PostController.createPodcast,
   )
@@ -141,7 +132,6 @@ router
   .route('/podcasts/:postId')
   .put(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePUT,
     PostController.editPodcast,
   )

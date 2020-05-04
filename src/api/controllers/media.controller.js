@@ -184,20 +184,16 @@ exports.createAudio = async (req, res, next, type) => {
       type,
     });
 
-    const audio = req.file
-    let promises = {
-      uploadedAudio: CloudinaryService.uploadMediaProcess(req.user, newAudio, audio, `_${type}_`, audioConfig),
-      authorsCreated: Utils.post.creatAuthors(authors)
-    }
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    if (tags) {
-      promises.tagsCreated = Utils.post.createTags(tags)
-    }
+    let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    const data = await Promise.props(promises);
-    if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
-    if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
-    newAudio.media = data.uploadedAudio;
+    newAudio.cover = req.body.banner._id;
+    if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id)
+
+    newAudio.authors = authorsCreated.map(author => author._id)
+    newAudio.media = req.body.audio
 
     const createdNewAudio = await newAudio.save()
     let dataRes = {
@@ -207,8 +203,9 @@ exports.createAudio = async (req, res, next, type) => {
       content: createdNewAudio.content,
       type: createdNewAudio.type,
       updatedAt: createdNewAudio.updatedAt,
-      tags: data.tagsCreated || [],
-      media: data.uploadedAudio,
+      authors: authorsCreated,
+      tags: blogTags,
+      media: req.body.audio,
     }
 
     return res.status(200).json({
@@ -222,7 +219,7 @@ exports.createAudio = async (req, res, next, type) => {
 };
 
 exports.editAudio = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors } = req.body;
+  const { topic, description, content, tags, authors, banner } = req.body;
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
@@ -259,13 +256,8 @@ exports.editAudio = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    const newAudio = req.file
-    if (newAudio) {
-      const uploadedAudio = await
-        CloudinaryService.uploadMediaProcess(req.user, audio, newAudio, `_${type}_`, audioConfig);
-
-      query.media = uploadedAudio._id;
-    }
+    if (banner) query.cover = req.body.banner._id
+    if (audio) query.media = req.body.audio._id
 
     const updatedAudio = await Post.findByIdAndUpdate(
       req.params.postId,

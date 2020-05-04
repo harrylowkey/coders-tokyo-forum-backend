@@ -26,10 +26,6 @@ let validatePOST = (req, res, next) => {
   if (Object.keys(req.body).length === 0) {
     throw Boom.badRequest('Atleast 1 field required')
   }
-  if (req.file) {
-    reqData.audio = req.file,
-    reqData.audioSize= req.file.size
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)
@@ -63,10 +59,6 @@ let validatePUT = (req, res, next) => {
   })
   
   let reqData = req.body;
-  if (req.file) {
-    reqData.audio = req.file,
-    reqData.audioSize= req.file.size
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)

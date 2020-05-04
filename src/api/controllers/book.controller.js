@@ -7,7 +7,6 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBookReview = async (req, res, next) => {
   const type = 'book'
-  const blogCover = req.file;
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
     body: { tags, authors },
@@ -21,25 +20,14 @@ exports.createBookReview = async (req, res, next) => {
       type,
     });
 
-    let promises = {
-      authorsCreated: Utils.post.creatAuthors(authors),
-      blogCover: new File({
-        secureURL: blogCover.secure_url,
-        publicId: blogCover.public_id,
-        fileName: blogCover.originalname,
-        sizeBytes: blogCover.bytes,
-        user: req.user._id,
-        postId: newBook._id,
-        resourceType: blogCover.resource_type
-      }).save()
-    }
-    if (tags) promises.tagsCreated = Utils.post.createTags(tags)
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    let data = await Promise.props(promises)
+    let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newBook.cover = data.blogCover._id;
-    if (data.tagsCreated) newBook.tags = data.tagsCreated.map(tag => tag._id)
-    if (data.authorsCreated) newBook.authors = data.authorsCreated.map(author => author._id)
+    newBook.cover = req.body.banner._id;
+    if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
+    newBook.authors = authorsCreated.map(author => author._id)
 
     const createdBook = await newBook.save()
     const dataRes = {
@@ -48,15 +36,9 @@ exports.createBookReview = async (req, res, next) => {
       description: createdBook.description,
       content: createdBook.content,
       type: createdBook.type,
-      cover: {
-        secureURL: data.blogCover.secureURL,
-        publicId: data.blogCover.publicId,
-        fileName: data.blogCover.fileName,
-        createdAt: data.blogCover.createdAt,
-        sizeBytes: data.blogCover.sizeBytes
-      },
-      authors: data.authorsCreated || [],
-      tags: data.tagsCreated || [],
+      cover: req.body.banner,
+      authors: authorsCreated,
+      tags: blogTags,
       createdAt: createdBook.createdAt
     }
     return res.status(200).json({
@@ -105,13 +87,7 @@ exports.editBookReview = async (req, res, next) => {
       query.authors = newAuthors;
     }
 
-    let blogCover = req.file
-    if (blogCover) {
-      const uploadedCoverImage = await
-        CloudinaryService.uploadFileProcess(req.user, book, blogCover, '_book_blog_review_cover_');
-
-      query.cover = uploadedCoverImage._id
-    }
+    if (banner) query.cover = req.body.banner._id
 
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
