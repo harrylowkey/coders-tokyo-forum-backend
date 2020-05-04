@@ -25,7 +25,7 @@ const commentSchema = new Schema(
       type: String,
       required: true,
     },
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
