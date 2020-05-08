@@ -20,7 +20,6 @@ exports.getById = async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    console.log(error)
     return next(error)
   }
 };
@@ -188,7 +187,7 @@ exports.getByUsername = async (req, res, next) => {
 
 exports.follow = async (req, res, next) => {
   try {
-    const user = req._user
+    const user = req.user
     const userToFollow = await User.findById(req.params.userId).lean()
     if (!userToFollow) {
       throw Boom.badRequest('Not found user to follow')
@@ -207,7 +206,7 @@ exports.follow = async (req, res, next) => {
       ),
       User.findByIdAndUpdate(userToFollow._id,
         {
-          $addToSet: { followers: user._id }
+          $addToSet: { followers: user }
         },
         { new: true },
       )
@@ -228,20 +227,20 @@ exports.follow = async (req, res, next) => {
 
 exports.unfollow = async (req, res, next) => {
   try {
-    const user = req._user
+    const user = req.user
     const userToUnfollow = await User.findById(req.params.userId).lean()
     if (!userToUnfollow) {
       throw Boom.badRequest('Not found user to unfollow')
     }
 
-    if (user._id.toString() === userToFollow._id.toString()) {
+    if (user._id.toString() === userToUnfollow._id.toString()) {
       throw Boom.badRequest('Can not unfollow yourself')
     }
 
     const [updateFollwing, updateFollowers] = await Promise.all([
       User.findByIdAndUpdate(user._id,
         {
-          $pull: { following: userToUnfollow }
+          $pull: { following: userToUnfollow._id }
         },
         { new: true },
       ),
@@ -252,14 +251,14 @@ exports.unfollow = async (req, res, next) => {
         { new: true },
       )
     ])
-    
+
     if (!updateFollowers || !updateFollwing) {
       throw Boom.badRequest('Follow failed')
     }
 
     return res.status(200).json({
       status: 200,
-      message: 'Follow success'
+      message: 'Unfollow success'
     }) 
   } catch (error) {
     return next(error)

@@ -85,7 +85,7 @@ exports.getOnePost = async (req, res, next) => {
       },
       {
         path: 'user',
-        select: '_id username'
+        select: '_id username job createdAt description sex followers following'
       }
     ];
 

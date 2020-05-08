@@ -23,7 +23,7 @@ exports.checkAccessToken = async (req, res, next) => {
       _id: user._id,
       username: user.username
     };
-    
+
     return next();
   } catch (error) {
     return next(error);
