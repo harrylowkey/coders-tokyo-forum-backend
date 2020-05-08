@@ -3,19 +3,14 @@ const Boom = require('@hapi/boom')
 
 let uploadAvatarValidate = (req, res, next) => {
   let schema = Joi.object().keys({
-    avatar: Joi.string().required()
+    avatar: Joi.object().required()
   })
 
-  // const { error } = schema.validate(req.body)
-  // if (error) {
-  //   throw Boom.badRequest(error.message)
-  // }
-
-  const extension = ['jpeg', 'jpg', 'png']
-  const imageExt = req.file.path.split('.')[1]
-  if (!extension.includes(imageExt)) {
-    throw Boom.badRequest('Invalid image extension')
+  const { error } = schema.validate(req.body)
+  if (error) {
+    throw Boom.badRequest(error.message)
   }
+
   return next()
 }
 

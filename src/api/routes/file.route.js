@@ -27,7 +27,7 @@ router
   .delete(checkAccessToken, FileController.uploadMultipleFoodPhotos)
 router
   .route('/upload/avatar')
-  .post(checkAccessToken, uploadAvatar.single('file'), FileController.uploadFile)
+  .post(checkAccessToken, uploadAvatar.single('avatar'), FileController.uploadFile)
 
 router
   .route('/upload/video')

@@ -89,6 +89,7 @@ exports.updateProfile = async (req, res, next) => {
  */
 exports.uploadAvatar = async (req, res, next) => {
   try {
+    const { avatar } = req.body
     const user = await User.findById(req.user._id)
       .lean()
       .populate({
@@ -97,13 +98,15 @@ exports.uploadAvatar = async (req, res, next) => {
     if (!user) {
       throw Boom.badRequest('Not found user')
     }
-    const newAvatar = req.file;
-    const avatar = await CloudinaryService.uploadFileProcess(req.user, user, newAvatar, '_avatar_');
+
+    if (user.avatar.publicId) {
+      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: user.avatar.publicId })
+    }
 
     const updatedAvatar = await User.findByIdAndUpdate(
       req.user._id,
       {
-        $set: { avatar: avatar._id },
+        $set: { avatar },
       },
       { new: true },
     )
