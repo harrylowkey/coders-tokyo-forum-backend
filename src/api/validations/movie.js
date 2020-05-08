@@ -17,7 +17,8 @@ let validatePOST = (req, res, next) => {
       ).required()
     }).required(),
     url: Joi.string().optional(),
-    movie: Joi.object.require()
+    movie: Joi.object().required(),
+    type: Joi.string().optional()
   })
 
   let reqData = req.body;
@@ -48,7 +49,8 @@ let validatePUT = (req, res, next) => {
       ).required()
     }).optional(),
     url: Joi.string().optional(),
-    movie: Joi.object.optional()
+    movie: Joi.object().optional(),
+    type: Joi.string().optional()
   })
 
   let reqData = req.body;

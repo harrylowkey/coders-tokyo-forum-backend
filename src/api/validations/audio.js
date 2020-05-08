@@ -19,7 +19,8 @@ let validatePOST = (req, res, next) => {
         'director'
       ).required()
     }).required(),
-    audioSize: Joi.number().max(audioConfig.chunk_size)
+    audioSize: Joi.number().max(audioConfig.chunk_size),
+    type: Joi.string().optional()
   })
   
   let reqData = req.body;
@@ -55,7 +56,8 @@ let validatePUT = (req, res, next) => {
         'director'
       ).required()
     }).optional(),
-    audioSize: Joi.number().max(audioConfig.chunk_size)
+    audioSize: Joi.number().max(audioConfig.chunk_size),
+    type: Joi.string().optional()
   })
   
   let reqData = req.body;

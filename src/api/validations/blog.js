@@ -8,7 +8,8 @@ let validatePOST = (req, res, next) => {
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string()).optional(),
-    banner: Joi.object().required()
+    banner: Joi.object().required(),
+    type: Joi.string().optional()
   })
 
   let reqData = req.body;
@@ -30,7 +31,8 @@ let validatePUT = (req, res, next) => {
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string()).optional(),
-    banner: Joi.object().optional()
+    banner: Joi.object().optional(),
+    type: Joi.string().optional()
   })
 
   let reqData = req.body;

@@ -17,7 +17,8 @@ let validatePOST = (req, res, next) => {
       stars: Joi.number().optional(),
       country: Joi.string().optional()
     }).required(),
-    foodPhotos: Joi.array().required()
+    foodPhotos: Joi.array().required(),
+    type: Joi.string().optional()
   })
   
   let reqData = req.body;
@@ -53,7 +54,8 @@ let validatePUT = (req, res, next) => {
       location: Joi.string().optional(),
       star: Joi.number().optional()
     }).optional(),
-    foodPhotos: Joi.array().optional()
+    foodPhotos: Joi.array().optional(),
+    type: Joi.string().optional()
   })
   
   let reqData = req.body;

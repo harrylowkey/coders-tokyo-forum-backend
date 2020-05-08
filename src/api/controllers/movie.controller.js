@@ -51,6 +51,7 @@ exports.createMovieReview = async (req, res, next) => {
       cover: req.body.banner,
       authors: authorsCreated,
       tags: blogTags,
+      movie,
       createdAt: createdMovieReview.createdAt
     }
 
