@@ -16,7 +16,7 @@ router
   .route('/:userId')
   .get(checkAccessToken, UserController.getById);
 router
-  .route('/:userId')
+  .route('/')
   .put(checkAccessToken,
     updateProfileValidate,
     UserController.updateProfile
@@ -25,7 +25,6 @@ router
   .route('/avatars')
   .post(
     checkAccessToken,
-    upload.single('path'),
     uploadAvatarValidate,
     UserController.uploadAvatar,
   );
@@ -35,6 +34,22 @@ router
 
 router
   .route('/usernames/:username')
-  .get(UserController.getByUsername);
+  .get(checkAccessToken, UserController.getByUsername);
+
+router
+  .route('/:userId/follow')
+  .post(checkAccessToken, UserController.follow)
+
+  router
+  .route('/:userId/unfollow')
+  .post(checkAccessToken, UserController.unfollow)
+
+  router
+  .route('/:userId/followers')
+  .get(checkAccessToken, UserController.getFollowers)
+
+  router
+  .route('/:userId/following')
+  .get(checkAccessToken, UserController.getFollowing)
 
 module.exports = router;

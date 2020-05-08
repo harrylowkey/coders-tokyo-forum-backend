@@ -35,7 +35,7 @@ exports.createDiscussion = async (req, res, next) => {
       createdAt: createdDissucsion.createdAt
     }
     return res.status(200).json({
-      staus: 200,
+      status: 200,
       data: resData,
     });
   } catch (error) {

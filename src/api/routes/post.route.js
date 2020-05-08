@@ -9,7 +9,8 @@ const {
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
 const { Blog, Book, Food,
-  Movie, Video, Audio, Discussion
+  Movie, Video, Audio, Discussion,
+  Post
 } = require('@validations');
 
 /** ----------- CONFIG --------------- */
@@ -150,12 +151,12 @@ router
   )
 
 router
-    .route('/tags')
-    .get(paginate(), PostController.getPostsByTagsName);
-  
+  .route('/tags')
+  .get(paginate(), PostController.getPostsByTagsName);
+
 router
   .route('/:postId')
-  .get(PostController.getOnePost);
+  .get(Post.validateGetPost, PostController.getOnePost);
 
 router
   .route('/users/:userId')

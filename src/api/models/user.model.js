@@ -43,7 +43,6 @@ const userSchema = new Schema(
       type: String,
       minlength: 4,
       maxlength: 6,
-      lowercase: true,
       trim: true,
       sparse: true,
     },
@@ -69,7 +68,20 @@ const userSchema = new Schema(
     rankId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Rank',
-    }
+    },
+    description: String,
+    followers: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User',
+      }
+    ],
+    following: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User',
+      }
+    ],
   },
   { timestamps: true },
 );

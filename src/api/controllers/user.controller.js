@@ -26,23 +26,23 @@ exports.getById = async (req, res, next) => {
 };
 
 exports.updateProfile = async (req, res, next) => {
-  const { username, hobbies, socialLinks, sex, age, job } = req.body;
+  const { username, hobbies, socialLinks, sex, age, job, description } = req.body;
   try {
-    const user = await User.findById(req.params.userId).lean();
+    const user = await User.findById(req.user._id).lean();
     if (!user) {
       throw Boom.notFound('Not found user to update');
     }
-    const query = {};
-    if (username) query.username = username;
-    if (sex) query.sex = sex;
-    if (age) query.age = age;
-    if (job) query.job = job;
-    if (hobbies) query.hobbies = hobbies;
-    if (socialLinks) query.socialLinks = socialLinks;
-
+    const data = {};
+    if (username) data.username = username;
+    if (sex) data.sex = sex;
+    if (age) data.age = age;
+    if (job) data.job = job;
+    if (hobbies) data.hobbies = hobbies;
+    if (socialLinks) data.socialLinks = socialLinks;
+    if (description) data.description = description
     const result = await User.findByIdAndUpdate(
-      req.params.userId,
-      { $set: query },
+      req.user._id,
+      { $set: data },
       { new: true },
     )
       .lean()
@@ -148,7 +148,7 @@ exports.deleteFile = async (req, res, next) => {
 
     const deletedAva = await User.findByIdAndUpdate(
       req.user._id,
-      { 
+      {
         $set: { avatar: null }
       },
       { new: true }
@@ -167,21 +167,131 @@ exports.deleteFile = async (req, res, next) => {
   }
 };
 
-exports.getByUsername = async(req, res, next) => {
+exports.getByUsername = async (req, res, next) => {
   try {
     const user = await User.findOne({ username: req.params.username })
-    .lean()
-    .populate({
-      path: 'avatar',
-      select: '-__v -user'
-    })
+      .lean()
+      .populate({
+        path: 'avatar',
+        select: '-__v -user'
+      })
     if (!user) throw Boom.badRequest('Not found user')
     return res.status(200).json({
       status: 200,
       data: user
     })
   } catch (error) {
-    console.log(error)
+    return next(error)
+  }
+}
+
+
+exports.follow = async (req, res, next) => {
+  try {
+    const user = req._user
+    const userToFollow = await User.findById(req.params.userId).lean()
+    if (!userToFollow) {
+      throw Boom.badRequest('Not found user to follow')
+    }
+
+    const [updateFollwing, updateFollowers] = await Promise.all([
+      User.findByIdAndUpdate(user._id,
+        {
+          $addToSet: { following: userToFollow }
+        },
+        { new: true },
+      ),
+      User.findByIdAndUpdate(userToFollow._id,
+        {
+          $addToSet: { followers: user._id }
+        },
+        { new: true },
+      )
+    ])
+    
+    if (!updateFollowers || !updateFollwing) {
+      throw Boom.badRequest('Follow failed')
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Follow success'
+    }) 
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.unfollow = async (req, res, next) => {
+  try {
+    const user = req._user
+    const userToUnfollow = await User.findById(req.params.userId).lean()
+    if (!userToUnfollow) {
+      throw Boom.badRequest('Not found user to unfollow')
+    }
+
+    const [updateFollwing, updateFollowers] = await Promise.all([
+      User.findByIdAndUpdate(user._id,
+        {
+          $pull: { following: userToUnfollow }
+        },
+        { new: true },
+      ),
+      User.findByIdAndUpdate(userToUnfollow._id,
+        {
+          $pull: { followers: user._id }
+        },
+        { new: true },
+      )
+    ])
+    
+    if (!updateFollowers || !updateFollwing) {
+      throw Boom.badRequest('Follow failed')
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: 'Follow success'
+    }) 
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.getFollowers = async (req, res, next) => {
+  try {
+    const user = req._user
+    const followers = await User.findById(user._id)
+      .lean()
+      .populate({
+        path: 'followers',
+        select: '_id username'
+      })
+
+    return res.status(200).json({
+      status: 200,
+      data: followers
+    }) 
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.getFollowing = async (req, res, next) => {
+  try {
+    const user = req._user
+    const following = await User.findById(user._id)
+      .lean()
+      .populate({
+        path: 'followers',
+        select: '_id username'
+      })
+
+    return res.status(200).json({
+      status: 200,
+      data: following
+    }) 
+  } catch (error) {
     return next(error)
   }
 }

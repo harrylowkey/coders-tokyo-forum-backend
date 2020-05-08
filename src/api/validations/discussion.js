@@ -6,7 +6,7 @@ let validatePOST = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
     content: Joi.string().required(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
   })
   
   const { error } = schema.validate(req.body)
@@ -21,7 +21,7 @@ let validatePUT = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().optional(),
     content: Joi.string().optional(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
   })
   
   const { error } = schema.validate(req.body)

@@ -1,9 +1,9 @@
 const Joi = require('@hapi/joi');
 const Boom = require('@hapi/boom')
 
-let updateProfileValidate = (req, res, next) => {
+let uploadAvatarValidate = (req, res, next) => {
   let schema = Joi.object().keys({
-    path: Joi.string().required()
+    avatar: Joi.string().required()
   })
 
   const { error } = schema.validate(req.body)
@@ -19,19 +19,21 @@ let updateProfileValidate = (req, res, next) => {
   return next()
 }
 
-let uploadAvatarValidate = (req, res, next) => {
+let updateProfileValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     username: Joi.string().optional(),
     sex: Joi.string().optional(),
     age: Joi.number().optional(),
     job: Joi.string().optional(),
     hobbies: Joi.array().items(Joi.string()).optional(),
+    description: Joi.string().optional(),
     socialLinks: Joi.array().items(
       Joi.object(({
         type: Joi.string().required(),
-        url: Joi.string().required()
+        url: Joi.string().required(),
+        _id: Joi.string().optional()
       }))
-    ).optional()
+    ).optional(),
   })
 
   const { error } = schema.validate(req.body)

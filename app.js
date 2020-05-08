@@ -20,13 +20,14 @@ const Arena = require('bull-arena');
 const QUEUES = require('./src/config/queues');
 const redis = require('./src/config/redis')
 
+app.use(cors())
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, { explorer: true }));
 
 mongoDB.connect();
 cloudinary.config();
 redis.config(redisConfig)
 
-app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -43,6 +44,8 @@ const arenaRoutes = Arena(
   },
   arenaConfig,
 );
+
+
 
 app.use('/arena', arenaRoutes);
 app.use('/api/v1', apiRoutes);

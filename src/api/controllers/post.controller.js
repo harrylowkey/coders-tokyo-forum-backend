@@ -82,6 +82,10 @@ exports.getOnePost = async (req, res, next) => {
             }
           ]
         },
+      },
+      {
+        path: 'user',
+        select: '_id username'
       }
     ];
 
@@ -154,9 +158,9 @@ exports.getOnePost = async (req, res, next) => {
     }
 
     let metadata = {
-      totalLikes: counter[0].likes,
-      totalComments: counter[0].comments,
-      totalSaves: counter[0].saves,
+      likes: counter[0].likes,
+      comments: counter[0].comments,
+      saves: counter[0].saves,
       comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
     }
     return res.status(200).json({

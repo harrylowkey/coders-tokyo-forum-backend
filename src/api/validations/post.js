@@ -97,6 +97,21 @@ let createPostValidate = (req, res, next) => {
   return next()
 }
 
+let validateGetPost = (req, res, next) => {
+  let schema = Joi.object().keys({
+    postId: Joi.string().length(24)
+  })
+
+  req.params = JSON.parse(JSON.stringify(req.params))
+  const { error } = schema.validate(req.params)
+  if (error) {
+    throw Boom.badRequest(error.message)
+  }
+
+  return next()
+}
+
 module.exports = {
   createPostValidate,
+  validateGetPost
 };

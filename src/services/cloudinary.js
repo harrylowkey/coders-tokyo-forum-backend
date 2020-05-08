@@ -5,12 +5,12 @@ const { avatarConfig, blogCoverConfig, videoConfig, audioConfig } = require('@co
 const File = require('@models').File
 
 
-exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
+exports.uploadFileProcess = async (user, data, newFile, fileType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
+  // const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
   const newFileName = `${user.username}${fileType}${newFile.originalname.split('.')[0]}`
-  const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
-  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+  // const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  // const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
   if (fileType === '_avatar_' && data.avatar) {
     const file = await File.findById(data.avatar._id).lean();
@@ -23,8 +23,8 @@ exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   }
 
   const newFileCreated = await new File({
-    secureURL: newSecureURL,
-    publicId: newPath,
+    secureURL: newFile.secure_url,
+    publicId: newFile.public_id,
     fileName: newFileName,
     sizeBytes: newFile.bytes,
     user: user._id,
@@ -33,12 +33,12 @@ exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   }).save();
 
 
-  CLOUDINARY_QUEUE.renameFile.add({
-    currentPath: newFile.public_id,
-    newPath,
-    fileId: newFileCreated._id,
-    postId: data._id
-  })
+  // CLOUDINARY_QUEUE.renameFile.add({
+  //   currentPath: newFile.public_id,
+  //   newPath,
+  //   fileId: newFileCreated._id,
+  //   postId: data._id
+  // })
 
   return newFileCreated;
 };
