@@ -194,6 +194,10 @@ exports.follow = async (req, res, next) => {
       throw Boom.badRequest('Not found user to follow')
     }
 
+    if (user._id.toString() === userToFollow._id.toString()) {
+      throw Boom.badRequest('Can not follow yourself')
+    }
+
     const [updateFollwing, updateFollowers] = await Promise.all([
       User.findByIdAndUpdate(user._id,
         {
@@ -228,6 +232,10 @@ exports.unfollow = async (req, res, next) => {
     const userToUnfollow = await User.findById(req.params.userId).lean()
     if (!userToUnfollow) {
       throw Boom.badRequest('Not found user to unfollow')
+    }
+
+    if (user._id.toString() === userToFollow._id.toString()) {
+      throw Boom.badRequest('Can not unfollow yourself')
     }
 
     const [updateFollwing, updateFollowers] = await Promise.all([
