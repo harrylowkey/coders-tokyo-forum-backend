@@ -5,7 +5,7 @@ const Boom = require('@hapi/boom')
 let createPostValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
-    description: Joi.string().required(),
+    description: Joi.string().allow('').optional(),,
     content: Joi.string().required(),
     type: Joi.string().valid(
       'song',
@@ -17,7 +17,7 @@ let createPostValidate = (req, res, next) => {
       'podcast',
       'discussion'
     ).required(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
     authors: Joi.array().items({
       name: Joi.string().required(),
       type: Joi.string().valid(

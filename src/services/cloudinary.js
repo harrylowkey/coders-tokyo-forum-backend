@@ -88,17 +88,17 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
 };
 
 exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileType, config, postId = null) => {
-  const { CLOUDINARY_QUEUE } = require('@bull')
+  // const { CLOUDINARY_QUEUE } = require('@bull')
   const newFile = await cloudinary.uploader.upload(newFileToUpload.path, config)
   const newFileName = `${user.username}_${fileType}_${newFileToUpload.originalname.split('.')[0]}`
-  const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
-  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+  // const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  // const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
   let newFileCreated
   if (resourceType === 'image') {
     newFileCreated = await new File({
-      secureURL: newSecureURL,
-      publicId: newPath,
+      secureURL: newFile.secure_url,
+      publicId: newFile.public_id,
       fileName: newFileName,
       user: user._id,
       resourceType
@@ -107,8 +107,8 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
 
   if (resourceType === 'video') {
     newFileCreated = await new File({
-      secureURL: newSecureURL,
-      publicId: newPath,
+      secureURL: newFile.secure_url,
+      publicId: newFile.public_id,
       fileName: newFileName,
       sizeBytes: newFile.bytes,
       user: user._id,
@@ -128,13 +128,13 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
     }).save();
   }
 
-  CLOUDINARY_QUEUE.renameFile.add({
-    currentPath: newFile.public_id,
-    newPath,
-    fileId: newFileCreated._id,
-    postId: '',
-    resourceType: newFile.resource_type
-  })
+  // CLOUDINARY_QUEUE.renameFile.add({
+  //   currentPath: newFile.public_id,
+  //   newPath,
+  //   fileId: newFileCreated._id,
+  //   postId: '',
+  //   resourceType: newFile.resource_type
+  // })
 
   return newFileCreated;
 }

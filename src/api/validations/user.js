@@ -6,10 +6,10 @@ let uploadAvatarValidate = (req, res, next) => {
     avatar: Joi.string().required()
   })
 
-  const { error } = schema.validate(req.body)
-  if (error) {
-    throw Boom.badRequest(error.message)
-  }
+  // const { error } = schema.validate(req.body)
+  // if (error) {
+  //   throw Boom.badRequest(error.message)
+  // }
 
   const extension = ['jpeg', 'jpg', 'png']
   const imageExt = req.file.path.split('.')[1]
@@ -26,7 +26,7 @@ let updateProfileValidate = (req, res, next) => {
     age: Joi.number().optional(),
     job: Joi.string().optional(),
     hobbies: Joi.array().items(Joi.string()).optional(),
-    description: Joi.string().optional(),
+    description: Joi.string().allow('').optional(),,
     socialLinks: Joi.array().items(
       Joi.object(({
         type: Joi.string().required(),

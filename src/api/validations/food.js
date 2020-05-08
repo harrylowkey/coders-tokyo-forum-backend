@@ -5,9 +5,9 @@ const Boom = require('@hapi/boom')
 let validatePOST = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
-    description: Joi.string().required(),
+    description: Joi.string().allow('').optional(),,
     content: Joi.string().required(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
     coverImage: Joi.object().required(),
     food: Joi.object().keys({
       foodName: Joi.string().required(),
@@ -42,9 +42,9 @@ let validatePUT = (req, res, next) => {
   }
   let schema = Joi.object().keys({
     topic: Joi.string().optional(),
-    description: Joi.string().optional(),
+    description: Joi.string().allow('').optional(),,
     content: Joi.string().optional(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
     coverImage: Joi.object().optional(),
     food: Joi.object().keys({
       foodName: Joi.string().required(),

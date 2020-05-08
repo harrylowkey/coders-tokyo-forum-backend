@@ -38,8 +38,8 @@ router
   .post(checkAccessToken, uploadAudio.single('file'), FileController.uploadFile)
 
 router
-  .route('/upload/blogCover')
-  .post(checkAccessToken, uploadBlogCover.single('file'), FileController.uploadFile)
+  .route('/upload/banner')
+  .post(checkAccessToken, uploadBlogCover.single('banner'), FileController.uploadFile)
 
 //TODO route update banner
 

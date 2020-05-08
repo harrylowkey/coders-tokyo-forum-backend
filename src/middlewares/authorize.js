@@ -3,6 +3,7 @@ const Boom = require('@hapi/boom');
 const User = require('@models').User;
 
 exports.checkAccessToken = async (req, res, next) => {
+  console.log(req)
   try {
     let access_token = req.headers['authorization']
 		if (!access_token) {
