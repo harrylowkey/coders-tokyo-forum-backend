@@ -5,7 +5,7 @@ const { audioConfig} = require('@configVar')
 let validatePOST = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
-    description: Joi.string().allow('').optional(),,
+    description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string()).optional(),
     audio: Joi.object().required(),
@@ -41,7 +41,7 @@ let validatePUT = (req, res, next) => {
   }
   let schema = Joi.object().keys({
     topic: Joi.string().optional(),
-    description: Joi.string().allow('').optional(),,
+    description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string()).optional(),
     audio: Joi.object().optional(),

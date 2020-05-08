@@ -27,7 +27,7 @@ let validatePUT = (req, res, next) => {
 
   let schema = Joi.object().keys({
     topic: Joi.string().optional(),
-    description: Joi.string().allow('').optional(),,
+    description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string()).optional(),
     banner: Joi.object().optional()

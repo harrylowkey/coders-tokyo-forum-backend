@@ -26,7 +26,7 @@ let updateProfileValidate = (req, res, next) => {
     age: Joi.number().optional(),
     job: Joi.string().optional(),
     hobbies: Joi.array().items(Joi.string()).optional(),
-    description: Joi.string().allow('').optional(),,
+    description: Joi.string().allow('').optional(),
     socialLinks: Joi.array().items(
       Joi.object(({
         type: Joi.string().required(),
