@@ -3,9 +3,6 @@ const Boom = require('@hapi/boom')
 
 
 let validatePOST = (req, res, next) => {
-  if (Object.keys(req.body).length === 0) {
-    throw Boom.badRequest('Atleast 1 field required')
-  }
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().required(),

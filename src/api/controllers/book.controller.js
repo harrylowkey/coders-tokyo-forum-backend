@@ -9,7 +9,7 @@ exports.createBookReview = async (req, res, next) => {
   const type = 'book'
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
-    body: { tags, authors, book },
+    body: { tags, authors, book, banner },
     user,
   } = req;
 
@@ -51,6 +51,7 @@ exports.createBookReview = async (req, res, next) => {
       cover: req.body.banner,
       authors: authorsCreated,
       tags: blogTags,
+      book,
       createdAt: createdBook.createdAt
     }
     return res.status(200).json({
