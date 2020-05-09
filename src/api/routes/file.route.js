@@ -23,7 +23,7 @@ router
   .get(checkAccessToken, FileController.getFile);
 
 router
-  .route('/delete')
+  .route('/:fileId')
   .delete(checkAccessToken, FileController.uploadMultipleFoodPhotos)
 router
   .route('/upload/avatar')

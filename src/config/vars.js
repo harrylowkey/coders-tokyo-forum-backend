@@ -68,8 +68,8 @@ module.exports = {
     // async: true,
     transformation: [
       {
-        width: 760,
-        height: 760,
+        width: 960,
+        height: 960,
       },
     ],
   },
