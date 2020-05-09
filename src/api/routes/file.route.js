@@ -46,7 +46,7 @@ router
 //FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
 router
   .route('/upload/foodPhotos')
-  .post(checkAccessToken, uploadBlogCover.array('files', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
+  .post(checkAccessToken, uploadBlogCover.array('file', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
 
 router
   .route('/delete/multipleFiles')

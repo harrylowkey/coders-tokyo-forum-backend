@@ -82,7 +82,7 @@ exports.uploadFile = async (req, res, next) => {
         throw Boom.badRequest('Invalid file type')
     }
 
-    const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config, null)
+    const data = await CloudinaryService.uploadFileProcess(req.user, file, 'image', type, config, null)
     return res.status(200).json({
       status: 200,
       data
@@ -94,8 +94,11 @@ exports.uploadFile = async (req, res, next) => {
 
 exports.uploadMultipleFoodPhotos = async (req, res, next) => {
   try {
-    const files = req.files;
-    const data = await CloudinaryService.uploadMultipleFiles(req.user, files, '__foodPhotos__', foodPhotosConfig)
+    const file = req.files[0];
+    const data = await CloudinaryService.uploadFileProcess(req.user, file, 'image', '__foodPhotos__', foodPhotosConfig)
+    if (!data) {
+      throw Boom.badRequest('Upload failed')
+    }
     return res.status(200).json({
       status: 200,
       data
@@ -149,7 +152,7 @@ exports.updateImage = async (req, res, next) => {
             throw Boom.badRequest('Invalid file type')
         }
 
-        const data = await CloudinaryService.uploadAndRenameFile(req.user, file, 'image', type, config, postId)
+        const data = await CloudinaryService.uploadFileProcess(req.user, file, 'image', type, config, postId)
         let updatedPost = await Post.findByIdAndUpdate(
           postId,
           { $set: { cover: data._id } },

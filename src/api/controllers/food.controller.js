@@ -123,19 +123,19 @@ exports.editFoodReview = async (req, res, next, type) => {
     }
 
     let blogCover = req.file
-    if (blogCover) {
-      try {
-        const uploadedCoverImage = await CloudinaryService.uploadFileProcess(req.user, foodReview, blogCover, '_blog_image_cover_');
+    // if (blogCover) {
+    //   try {
+    //     const uploadedCoverImage = await CloudinaryService.uploadFileProcess(req.user, foodReview, blogCover, '_blog_image_cover_');
 
-        query.cover = {
-          public_id: uploadedCoverImage.public_id,
-          url: uploadedCoverImage.url,
-          secure_url: uploadedCoverImage.secure_url,
-        };
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
-    }
+    //     query.cover = {
+    //       public_id: uploadedCoverImage.public_id,
+    //       url: uploadedCoverImage.url,
+    //       secure_url: uploadedCoverImage.secure_url,
+    //     };
+    //   } catch (error) {
+    //     throw Boom.badRequest(error.message);
+    //   }
+    // }
 
     const foodPhotosInput = files['foodPhotos'] || null;
     if (foodPhotosInput) {
