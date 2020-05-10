@@ -23,25 +23,11 @@ exports.createFoodReview = async (req, res, next) => {
       type,
     });
 
-    const foodPhotos = req.files['foodPhotos'].map(photo => ({
-      secureURL: photo.secure_url,
-        publicId: photo.public_id,
-        fileName: photo.originalname,
-        sizeBytes: photo.bytes,
-        user: req.user._id,
-        postId: newFoodBlog._id
-    }))
-    
-    let _promises = {
-      foodPhotos: File.insertMany(foodPhotos)
-    }
-    if (tags) promises.createdTags = Utils.post.createTags(tags)
+    let createdTags = []
+    if (tags) createdTags = await Utils.post.createTags(tags)
+    if (tags) newFoodBlog.tags = createdTags.map(tag => tag._id)
 
-    const result = await Promise.props(_promises);
-    if (tags) newBlog.tags = result.createdTags.map(tag => tag._id)
-    newFoodBlog.foodPhotos = result.foodPhotos.map(photo => photo._id)
-
-    newBlog.cover = banner._id
+    newFoodBlog.cover = banner._id
     newFoodBlog.food = food;
 
     const promises = [
@@ -58,14 +44,8 @@ exports.createFoodReview = async (req, res, next) => {
     const [createdFoodBlog, _] = await Promise.all(promises)
     const dataRes = {
       _id: createdFoodBlog._id,
-      tags: result.createdTags || [],
+      tags: createdTags,
       food,
-      foodPhotos: result.foodPhotos.map(photo => ({
-        secureURL: photo.secureURL,
-        publicId: photo.publicId,
-        fileName: photo.fileName,
-        sizeBytes: photo.sizeBytes
-      })),
       topic: createdFoodBlog.topic,
       description: createdFoodBlog.description,
       content: createdFoodBlog.content,
@@ -107,6 +87,7 @@ exports.editFoodReview = async (req, res, next, type) => {
       content,
       tags,
       food,
+      banner
     } = req.body;
 
     let query = { food };
@@ -122,52 +103,8 @@ exports.editFoodReview = async (req, res, next, type) => {
       query.tags = newTags;
     }
 
-    let blogCover = req.file
-    // if (blogCover) {
-    //   try {
-    //     const uploadedCoverImage = await CloudinaryService.uploadFileProcess(req.user, foodReview, blogCover, '_blog_image_cover_');
-
-    //     query.cover = {
-    //       public_id: uploadedCoverImage.public_id,
-    //       url: uploadedCoverImage.url,
-    //       secure_url: uploadedCoverImage.secure_url,
-    //     };
-    //   } catch (error) {
-    //     throw Boom.badRequest(error.message);
-    //   }
-    // }
-
-    const foodPhotosInput = files['foodPhotos'] || null;
-    if (foodPhotosInput) {
-      const foodPhotos = foodPhotosInput.map(photo => photo.path);
-      const oldFoodPhotos = foodReview.food.photos || null;
-      let oldFoodPhotosId = [];
-
-      if (oldFoodPhotos) {
-        oldFoodPhotosId = oldFoodPhotos.map(photo => photo.public_id);
-      }
-      try {
-        const result = await Promise.props({
-          isDeletedoldFoodPhotosNotUsed: CloudinaryService.deteteManyImages(
-            oldFoodPhotosId,
-          ),
-          isUploadedNewFoodPhotos: CloudinaryService.uploadManyImages(
-            foodPhotos,
-            foodPhotosConfig,
-          ),
-        });
-
-        const newPhotos = result.isUploadedNewFoodPhotos;
-        const newFoodPhotos = newPhotos.map(photo => ({
-          public_id: photo.public_id,
-          url: photo.url,
-          secure_url: photo.secure_url,
-        }));
-
-        query.foodPhotos = newFoodPhotos;
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
+    if (banner) {
+      query.banner = banner
     }
 
     await Post.findByIdAndUpdate(
