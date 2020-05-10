@@ -73,6 +73,15 @@ module.exports = {
       },
     ],
   },
+  photoConfig: {
+    folder: 'Coders-Tokyo-Forum/posts',
+    use_filename: false,
+    unique_filename: true,
+    resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
+    chunk_size: 6000000, //6mb,
+    maxPhotos: 10,
+  },
   QUEUES: {
     EMAIL_QUEUE: {
       name: 'email',

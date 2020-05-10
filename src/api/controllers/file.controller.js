@@ -5,7 +5,7 @@ const { FILE_REFERENCE_QUEUE } = require('@bull');
 const { CloudinaryService } = require('@services')
 const { videoConfig, audioConfig,
   blogCoverConfig, avatarConfig,
-  foodPhotosConfig
+  foodPhotosConfig, photoConfig
 } = require('@configVar');
 
 //TODO: Cache getOne, getByID
@@ -77,6 +77,9 @@ exports.uploadFile = async (req, res, next) => {
         break
       case 'food':
         config = foodPhotosConfig
+        break
+      case 'photo':
+        config = photoConfig
         break
       default:
         throw Boom.badRequest('Invalid file type')
