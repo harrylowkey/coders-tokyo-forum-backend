@@ -35,12 +35,6 @@ module.exports = {
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
-    transformation: [
-      {
-        width: 880,
-        height: 450,
-      },
-    ],
   },
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',

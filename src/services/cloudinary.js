@@ -105,7 +105,7 @@ exports.uploadFileProcess = async (user, newFileToUpload, resourceType, fileType
     }).save();
   }
 
-  if (resourceType === 'video') {
+  if (resourceType === 'audio') {
     newFileCreated = await new File({
       secureURL: newFile.secure_url,
       publicId: newFile.public_id,

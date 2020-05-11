@@ -174,7 +174,7 @@ exports.deleteVideo = async (req, res, next, type) => {
 
 exports.createAudio = async (req, res, next, type) => {
   const {
-    body: { tags, authors },
+    body: { tags, authors, audio},
     user,
   } = req;
   try {
@@ -195,14 +195,32 @@ exports.createAudio = async (req, res, next, type) => {
     newAudio.authors = authorsCreated.map(author => author._id)
     newAudio.media = req.body.audio
 
-    const createdNewAudio = await newAudio.save()
+    const promises = [
+      newAudio.save(),
+      File.findByIdAndUpdate(
+        banner._id,
+        {
+          $set: { postId: newAudio._id }
+        },
+        { new: true }
+      ),
+      ile.findByIdAndUpdate(
+        audio._id,
+        {
+          $set: { postId: newAudio._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const result = await Promise.all(promises)
     let dataRes = {
-      _id: createdNewAudio._id,
-      topic: createdNewAudio._topic,
-      description: createdNewAudio.description,
-      content: createdNewAudio.content,
-      type: createdNewAudio.type,
-      updatedAt: createdNewAudio.updatedAt,
+      _id: result.createdNewAudio._id,
+      topic: result.createdNewAudio._topic,
+      description: result.createdNewAudio.description,
+      content: result.createdNewAudio.content,
+      type: result.createdNewAudio.type,
+      updatedAt: result.createdNewAudio.updatedAt,
       authors: authorsCreated,
       tags: blogTags,
       media: req.body.audio,
@@ -213,7 +231,6 @@ exports.createAudio = async (req, res, next, type) => {
       data: dataRes,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

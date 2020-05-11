@@ -85,7 +85,12 @@ exports.uploadFile = async (req, res, next) => {
         throw Boom.badRequest('Invalid file type')
     }
 
-    const data = await CloudinaryService.uploadFileProcess(req.user, file, 'image', type, config, null)
+    let resourceType = 'image'
+    if (type === 'audio') {
+      resourceType = 'audio'
+    }
+
+    const data = await CloudinaryService.uploadFileProcess(req.user, file, resourceType, type, config, null)
     return res.status(200).json({
       status: 200,
       data
