@@ -109,7 +109,7 @@ exports.uploadFileProcess = async (user, newFileToUpload, resourceType, fileType
     newFileCreated = await new File({
       secureURL: newFile.secure_url,
       publicId: newFile.public_id,
-      fileName: newFileName,
+      fileName: newFileToUpload.originalname.split('.')[0],
       sizeBytes: newFile.bytes,
       user: user._id,
       postId,

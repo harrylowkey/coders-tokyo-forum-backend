@@ -12,21 +12,15 @@ let validatePOST = (req, res, next) => {
     authors: Joi.array().items({
       name: Joi.string().required(),
       type: Joi.string().valid(
-        'author',
         'artist',
         'composer',
-        'actor',
-        'director'
       ).required()
     }).required(),
-    audioSize: Joi.number().max(audioConfig.chunk_size),
-    type: Joi.string().optional()
+    type: Joi.string().optional(),
+    banner: Joi.object().required()
   })
   
   let reqData = req.body;
-  if (Object.keys(req.body).length === 0) {
-    throw Boom.badRequest('Atleast 1 field required')
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)

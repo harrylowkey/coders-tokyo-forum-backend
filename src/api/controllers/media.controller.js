@@ -65,7 +65,6 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
       data: dataRes,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -135,7 +134,6 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
       data: updatedVideo,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -174,7 +172,7 @@ exports.deleteVideo = async (req, res, next, type) => {
 
 exports.createAudio = async (req, res, next, type) => {
   const {
-    body: { tags, authors, audio},
+    body: { tags, authors, audio, banner },
     user,
   } = req;
   try {
@@ -189,7 +187,7 @@ exports.createAudio = async (req, res, next, type) => {
 
     let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newAudio.cover = req.body.banner._id;
+    newAudio.cover = banner._id;
     if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id)
 
     newAudio.authors = authorsCreated.map(author => author._id)
@@ -204,7 +202,7 @@ exports.createAudio = async (req, res, next, type) => {
         },
         { new: true }
       ),
-      ile.findByIdAndUpdate(
+      File.findByIdAndUpdate(
         audio._id,
         {
           $set: { postId: newAudio._id }
@@ -213,14 +211,14 @@ exports.createAudio = async (req, res, next, type) => {
       )
     ]
 
-    const result = await Promise.all(promises)
+    const [createdNewAudio] = await Promise.all(promises)
     let dataRes = {
-      _id: result.createdNewAudio._id,
-      topic: result.createdNewAudio._topic,
-      description: result.createdNewAudio.description,
-      content: result.createdNewAudio.content,
-      type: result.createdNewAudio.type,
-      updatedAt: result.createdNewAudio.updatedAt,
+      _id: createdNewAudio._id,
+      topic: createdNewAudio._topic,
+      description: createdNewAudio.description,
+      content: createdNewAudio.content,
+      type: createdNewAudio.type,
+      updatedAt: createdNewAudio.updatedAt,
       authors: authorsCreated,
       tags: blogTags,
       media: req.body.audio,
