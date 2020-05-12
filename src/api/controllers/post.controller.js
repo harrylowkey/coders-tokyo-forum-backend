@@ -50,6 +50,10 @@ exports.getOnePost = async (req, res, next) => {
         select: 'username',
       },
       {
+        path: 'cover',
+        select: '_id secureURL',
+      },
+      {
         path: 'comments',
         select: '-__v',
         options: {
@@ -85,7 +89,11 @@ exports.getOnePost = async (req, res, next) => {
       },
       {
         path: 'user',
-        select: '_id username job createdAt description sex followers following'
+        select: '_id username job createdAt description sex followers following avatar socialLinks',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
       }
     ];
 
@@ -163,6 +171,8 @@ exports.getOnePost = async (req, res, next) => {
       saves: counter[0].saves,
       comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
     }
+
+    console.log(post)
     return res.status(200).json({
       status: 200,
       metadata,
@@ -200,6 +210,10 @@ exports.getPosts = async (req, res, next) => {
       {
         path: 'likes',
         select: 'username _id',
+      },
+      {
+        path: 'cover',
+        select: '_id secureURL',
       },
       {
         path: 'comments',

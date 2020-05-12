@@ -179,6 +179,5 @@ exports.uploadMultipleFiles = async (user, files, fileType, config = {}) => {
   //     resourceType: image.resourceType
   //   })
   // })
-  console.log(data)
   return data
 };

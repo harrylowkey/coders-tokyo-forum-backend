@@ -14,7 +14,7 @@ exports.createMovieReview = async (req, res, next) => {
 
   try {
     const newMovieReview = new Post({
-      user: user.id,
+      user: user._id,
       ...req.body,
       type,
     });
