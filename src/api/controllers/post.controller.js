@@ -243,19 +243,14 @@ exports.getPosts = async (req, res, next) => {
         populateQuery.push({ path: 'cover' });
         break;
       case 'book':
-        populateQuery.push(
-          {
-            path: 'authors',
-            select: 'name',
-          },
-        );
+        populateQuery.push({ path: 'authors', select: 'name' });
         negativeQuery += '-url -media';
         break;
       case 'food':
         negativeQuery += '-authors -media';
         break;
       case 'movie':
-        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover' });
+        populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-media';
         break;
       case 'video':
@@ -265,13 +260,13 @@ exports.getPosts = async (req, res, next) => {
       case 'podcast':
         limit = 6
         page = 1
-        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover' });
+        populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'song':
         limit = 6
         page = 1
-        populateQuery.push({ path: 'authors', select: 'name type' }, { path: 'cover' });
+        populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'discussion':
