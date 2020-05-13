@@ -153,6 +153,10 @@ router
   )
 
 router
+  .route('/')
+  .get(PostController.getPosts)
+
+router
   .route('/tags')
   .get(paginate(), PostController.getPostsByTagsName);
 
