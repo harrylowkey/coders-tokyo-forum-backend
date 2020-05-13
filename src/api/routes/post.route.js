@@ -115,12 +115,14 @@ router
     Audio.validatePOST,
     PostController.createSong,
   )
+
+router
+  .route('/songs/:postId')
   .put(
     checkAccessToken,
     Audio.validatePUT,
     PostController.editSong,
   )
-
 router
   .route('/podcasts')
   .post(

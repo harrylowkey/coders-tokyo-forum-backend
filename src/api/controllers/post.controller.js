@@ -94,7 +94,10 @@ exports.getOnePost = async (req, res, next) => {
           path: 'avatar',
           select: '_id secureURL'
         }
-      }
+      },
+      {
+        path: 'media',
+      },
     ];
 
     let negativeQuery = '-__v ';
@@ -172,7 +175,6 @@ exports.getOnePost = async (req, res, next) => {
       comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
     }
 
-    console.log(post)
     return res.status(200).json({
       status: 200,
       metadata,

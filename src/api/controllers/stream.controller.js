@@ -10,13 +10,42 @@ PostSchema.plugin(deepPopulate, {});
 exports.index = async (req, res, next) => {
   const { page, limit } = req;
   try {
+    const generalPopulates = [
+      {
+        path: 'tags',
+        select: 'tagName',
+      },
+      {
+        path: 'likes',
+        select: 'username',
+      },
+      {
+        path: 'savedBy',
+        select: 'username',
+      },
+      {
+        path: 'cover',
+        select: '_id secureURL',
+      },
+      {
+        path: 'user',
+        select: '_id username job createdAt description sex followers following avatar socialLinks',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
+      },
+      {
+        path: 'media',
+      },
+    ]
     const result = await Promise.props({
       newestBlogs: Post.find({
         type: 'blog',
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([{ path: 'tags', select: 'tagName' }, { path: 'cover' }])
+        .populate(generalPopulates)
         .select('-__v -media -url -authors')
         .skip((page - 1) * limit)
         .limit(limit),
@@ -25,11 +54,7 @@ exports.index = async (req, res, next) => {
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name' },
-          { path: 'cover' }
-        ])
+        .populate(generalPopulates)
         .select('-__v -media -url')
         .skip((page - 1) * limit)
         .limit(limit),
@@ -39,32 +64,20 @@ exports.index = async (req, res, next) => {
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([
-          { path: 'tags', select: 'tagName' },
-        ])
+        .populate(generalPopulates)
         .select('-__v -media -authors')
         .skip((page - 1) * limit)
         .limit(limit),
+
       newestMovieReviews: Post.find({
         type: 'movie',
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
+        .populate([...generalPopulates,
+          { path: 'authors', select: 'name type' }
         ])
         .select('-__v -media')
-        .skip((page - 1) * limit)
-        .limit(limit),
-
-      newestVideos: Post.find({
-        type: 'video',
-      })
-        .lean()
-        .sort({ createdAt: -1 })
-        .populate([{ path: 'tags', select: 'tagName' }])
-        .select('-__v -authors')
         .skip((page - 1) * limit)
         .limit(limit),
 
@@ -73,11 +86,7 @@ exports.index = async (req, res, next) => {
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-          { path: 'media' },
-        ])
+        .populate([...generalPopulates, { path: 'authors', select: 'name type' }, { path: 'media' }])
         .select('-__v -url')
         .skip((page - 1) * limit)
         .limit(limit),
@@ -87,33 +96,27 @@ exports.index = async (req, res, next) => {
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate([
-          { path: 'tags', select: 'tagName' },
-          { path: 'authors', select: 'name type' },
-          { path: 'media' },
-        ])
+        .populate([...generalPopulates, { path: 'authors', select: 'name type' }, { path: 'media' }])
         .select('-__v -url')
-        .skip((page - 1) * limit)
-        .limit(limit),
+        .skip((page - 1) * 6)
+        .limit(6),
 
       newestDiscussions: Post.find({
         type: 'discussion',
       })
         .lean()
         .sort({ createdAt: -1 })
-        .populate({ path: 'tags', select: 'tagName ' })
+        .populate(generalPopulates)
         .select(' -__v -url -media -authors')
-        .skip((page - 1) * limit)
-        .limit(limit),
+        .skip((page - 1) * 10)
+        .limit(10),
       counter: Post.count({}).lean(),
     });
 
-    let posts = [];
-    posts = Object.keys(result).reduce((postsArr, key) => {
-      let object = {};
-      object[key] = result[key];
-      return [...postsArr, object];
-    }, []);
+    let posts = {}
+    Object.keys(result).map(key => {
+      posts[key] = result[key];
+    })
     return res.status(200).json({
       status: 200,
       message: 'Get newest posts successfully',
