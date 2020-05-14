@@ -300,7 +300,7 @@ exports.getPosts = async (req, res, next) => {
 
     return res.status(200).json({
       status: 200,
-      metadata: Utils.post.getmetadata(page, limit, postCounter),
+      metadata: Utils.post.getmetadata((Number(req.query.page) || page), (Number(req.query.limit) || limit), postCounter),
       data: posts,
     });
   } catch (error) {
@@ -436,8 +436,6 @@ exports.editPodcast = (req, res, next) => {
   MediaController.editAudio(req, res, next, 'podcast');
 }
 
-
-
 exports.deletePost = async (req, res, next) => {
   try {
     const { type } = req.query;
@@ -504,7 +502,6 @@ exports.likePost = async (req, res, next) => {
       message: 'Like post succesfully',
     });
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
@@ -564,7 +561,6 @@ exports.savePost = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.log(error)
     return next(error);
   }
 };
