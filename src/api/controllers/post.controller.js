@@ -297,7 +297,7 @@ exports.getPosts = async (req, res, next) => {
         .sort({ createdAt: -1 }),
       Post.count(query).lean()
     ])
-
+ 
     return res.status(200).json({
       status: 200,
       metadata: Utils.post.getmetadata((Number(req.query.page) || page), (Number(req.query.limit) || limit), postCounter),

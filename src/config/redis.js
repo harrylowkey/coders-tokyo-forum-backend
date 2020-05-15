@@ -1,9 +1,3 @@
-/*
-* @Author: taidong
-* @Date:   2018-10-25 18:50:39
-* @Last Modified by:   Tai Dong
-* @Last Modified time: 2019-03-04 11:14:21
-*/
 let Redis = require('ioredis')
 let zlib = require('zlib')
 
