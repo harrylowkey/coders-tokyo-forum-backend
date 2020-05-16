@@ -38,14 +38,14 @@ router
   .post(checkAccessToken, uploadAudio.single('file'), FileController.uploadFile)
 
 router
-  .route('/upload/banner')
-  .post(checkAccessToken, uploadBlogCover.single('banner'), FileController.uploadFile)
+  .route('/upload/cover')
+  .post(checkAccessToken, uploadBlogCover.single('cover'), FileController.uploadFile)
 
 router
   .route('/upload/photo')
   .post(checkAccessToken, uploadBlogCover.single('photo'), FileController.uploadFile)
 
-//TODO route update banner
+//TODO route update cover
 
 //FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
 router

@@ -9,7 +9,7 @@ exports.createBookReview = async (req, res, next) => {
   const type = 'book'
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
-    body: { tags, authors, book, banner },
+    body: { tags, authors, book, cover },
     user,
   } = req;
 
@@ -25,7 +25,7 @@ exports.createBookReview = async (req, res, next) => {
 
     let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newBook.cover = req.body.banner._id;
+    newBook.cover = req.body.cover._id;
     if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
     newBook.authors = authorsCreated.map(author => author._id)
     newBook.book = book
@@ -33,7 +33,7 @@ exports.createBookReview = async (req, res, next) => {
     const promises = [
       newBook.save(),
       File.findByIdAndUpdate(
-        banner._id,
+        cover._id,
         {
           $set: { postId: newBook._id }
         },
@@ -48,7 +48,7 @@ exports.createBookReview = async (req, res, next) => {
       description: createdBook.description,
       content: createdBook.content,
       type: createdBook.type,
-      cover: req.body.banner,
+      cover: req.body.cover,
       authors: authorsCreated,
       tags: blogTags,
       book,
@@ -99,7 +99,7 @@ exports.editBookReview = async (req, res, next) => {
       query.authors = newAuthors;
     }
 
-    if (banner) query.cover = req.body.banner._id
+    if (cover) query.cover = req.body.cover._id
 
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,

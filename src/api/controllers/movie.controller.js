@@ -8,7 +8,7 @@ const { coverImageConfig } = require('@configVar');
 exports.createMovieReview = async (req, res, next) => {
   const type = 'movie'
   const {
-    body: { tags, authors, banner, movie },
+    body: { tags, authors, cover, movie },
     user,
   } = req;
 
@@ -24,7 +24,7 @@ exports.createMovieReview = async (req, res, next) => {
 
     let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newMovieReview.cover = req.body.banner._id;
+    newMovieReview.cover = req.body.cover._id;
     if (blogTags.length) newMovieReview.tags = blogTags.map(tag => tag._id)
     newMovieReview.authors = authorsCreated.map(author => author._id)
     newMovieReview.movie = movie
@@ -32,7 +32,7 @@ exports.createMovieReview = async (req, res, next) => {
     const promises = [
       newMovieReview.save(),
       File.findByIdAndUpdate(
-        banner._id,
+        cover._id,
         {
           $set: { postId: newMovieReview._id }
         },
@@ -48,7 +48,7 @@ exports.createMovieReview = async (req, res, next) => {
       description: createdMovieReview.description,
       content: createdMovieReview.content,
       type: createdMovieReview.type,
-      cover: req.body.banner,
+      cover: req.body.cover,
       authors: authorsCreated,
       tags: blogTags,
       movie,
@@ -109,7 +109,7 @@ exports.editMovieReview = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    if (banner) query.cover = req.body.banner._id
+    if (cover) query.cover = req.body.cover._id
     //TODO: delete old image queue
 
     const upadatedBlog = await Post.findByIdAndUpdate(

@@ -8,7 +8,7 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
   const {
-    body: { tags, banner },
+    body: { tags, cover },
   } = req;
   try {
     const newBlog = new Post({
@@ -20,13 +20,13 @@ exports.createBlog = async (req, res, next) => {
     let blogTags = []
     if (tags) blogTags = await Utils.post.createTags(tags)
 
-    newBlog.cover = req.body.banner._id
+    newBlog.cover = req.body.cover._id
     if (blogTags.length) newBlog.tags = blogTags.map(tag => tag._id)
 
     const promises = [
       newBlog.save(),
       File.findByIdAndUpdate(
-        banner._id,
+        cover._id,
         {
           $set: { postId: newBlog._id }
         },
@@ -43,7 +43,7 @@ exports.createBlog = async (req, res, next) => {
       content: createdBlog.content,
       type: createdBlog.type,
       tags: blogTags,
-      cover: req.body.banner,
+      cover: req.body.cover,
       createdAt: createdBlog.createdAt,
     }
     return res.status(200).json({
@@ -57,7 +57,7 @@ exports.createBlog = async (req, res, next) => {
 
 exports.editBlog = async (req, res, next) => {
   const type = 'blog'
-  const { topic, description, content, tags, banner } = req.body;
+  const { topic, description, content, tags, cover } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
@@ -78,7 +78,7 @@ exports.editBlog = async (req, res, next) => {
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
-    if (banner) query.cover = req.body.banner._id
+    if (cover) query.cover = req.body.cover._id
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         blog,

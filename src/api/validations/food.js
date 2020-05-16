@@ -8,7 +8,7 @@ let validatePOST = (req, res, next) => {
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string()).optional(),
-    banner: Joi.object().required(),
+    cover: Joi.object().required(),
     food: Joi.object().keys({
       restaurant: Joi.string().required(),
       url: Joi.string().optional(),

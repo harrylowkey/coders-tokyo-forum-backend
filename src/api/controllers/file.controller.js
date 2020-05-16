@@ -72,7 +72,7 @@ exports.uploadFile = async (req, res, next) => {
       case 'audio':
         config = audioConfig
         break
-      case 'banner':
+      case 'cover':
         config = blogCoverConfig
         break
       case 'food':

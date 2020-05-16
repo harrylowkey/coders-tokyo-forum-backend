@@ -17,7 +17,7 @@ let validatePOST = (req, res, next) => {
       ).required()
     }).required(),
     type: Joi.string().optional(),
-    banner: Joi.object().required()
+    cover: Joi.object().required()
   })
   
   let reqData = req.body;

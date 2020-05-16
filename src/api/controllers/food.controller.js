@@ -10,7 +10,7 @@ exports.createFoodReview = async (req, res, next) => {
   const {
     body: {
       tags,
-      banner,
+      cover,
       food,
     },
     user,
@@ -27,13 +27,13 @@ exports.createFoodReview = async (req, res, next) => {
     if (tags) createdTags = await Utils.post.createTags(tags)
     if (tags) newFoodBlog.tags = createdTags.map(tag => tag._id)
 
-    newFoodBlog.cover = banner._id
+    newFoodBlog.cover = cover._id
     newFoodBlog.food = food;
 
     const promises = [
       newFoodBlog.save(),
       File.findByIdAndUpdate(
-        banner._id,
+        cover._id,
         {
           $set: { postId: newFoodBlog._id }
         },
@@ -50,7 +50,7 @@ exports.createFoodReview = async (req, res, next) => {
       description: createdFoodBlog.description,
       content: createdFoodBlog.content,
       type: createdFoodBlog.type,
-      cover: req.body.banner,
+      cover: req.body.cover,
       createdAt: createdFoodBlog.createdAt
     }
     return res.status(200).json({
@@ -87,7 +87,7 @@ exports.editFoodReview = async (req, res, next, type) => {
       content,
       tags,
       food,
-      banner
+      cover
     } = req.body;
 
     let query = { food };
@@ -103,8 +103,8 @@ exports.editFoodReview = async (req, res, next, type) => {
       query.tags = newTags;
     }
 
-    if (banner) {
-      query.banner = banner
+    if (cover) {
+      query.cover = cover
     }
 
     await Post.findByIdAndUpdate(

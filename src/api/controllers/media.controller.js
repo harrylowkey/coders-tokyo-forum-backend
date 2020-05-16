@@ -172,7 +172,7 @@ exports.deleteVideo = async (req, res, next, type) => {
 
 exports.createAudio = async (req, res, next, type) => {
   const {
-    body: { tags, authors, audio, banner },
+    body: { tags, authors, audio, cover },
     user,
   } = req;
   try {
@@ -187,7 +187,7 @@ exports.createAudio = async (req, res, next, type) => {
 
     let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newAudio.cover = banner._id;
+    newAudio.cover = cover._id;
     if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id)
 
     newAudio.authors = authorsCreated.map(author => author._id)
@@ -196,7 +196,7 @@ exports.createAudio = async (req, res, next, type) => {
     const promises = [
       newAudio.save(),
       File.findByIdAndUpdate(
-        banner._id,
+        cover._id,
         {
           $set: { postId: newAudio._id }
         },
@@ -234,7 +234,7 @@ exports.createAudio = async (req, res, next, type) => {
 };
 
 exports.editAudio = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors, banner } = req.body;
+  const { topic, description, content, tags, authors, cover } = req.body;
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
@@ -271,7 +271,7 @@ exports.editAudio = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    if (banner) query.cover = req.body.banner._id
+    if (cover) query.cover = req.body.cover._id
     if (audio) query.media = req.body.audio._id
 
     const updatedAudio = await Post.findByIdAndUpdate(
