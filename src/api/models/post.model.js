@@ -74,14 +74,14 @@ const postSchema = new Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'File'
     },
-    foodPhotos: [
-      {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'File',
-        default: null
-      }
-    ],
     food: {
+      foodPhotos: [
+        {
+          type: mongoose.SchemaTypes.ObjectId,
+          ref: 'File',
+          default: null
+        }
+      ],
       type: Object,
       priceAverage: String,
       address: String,

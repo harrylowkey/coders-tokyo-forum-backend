@@ -72,7 +72,8 @@ exports.editMovieReview = async (req, res, next) => {
     tags,
     authors,
     url,
-    movie
+    movie,
+    cover,
   } = req.body;
   try {
     const movieReview = await Post.findOne({
@@ -111,7 +112,6 @@ exports.editMovieReview = async (req, res, next) => {
     }
 
     if (cover) query.cover = req.body.cover._id
-    //TODO: delete old image queue
 
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -132,7 +132,6 @@ exports.editMovieReview = async (req, res, next) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };

@@ -45,26 +45,27 @@ let validatePUT = (req, res, next) => {
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string()).optional(),
-    coverImage: Joi.object().optional(),
+    cover: Joi.object().optional(),
     food: Joi.object().keys({
-      foodName: Joi.string().required(),
+      restaurant: Joi.string().optional(),
       url: Joi.string().optional(),
-      price: Joi.string().required(),
-      location: Joi.string().optional(),
-      star: Joi.number().optional()
+      stars: Joi.number().optional(),
+      country: Joi.string().optional(),
+      priceAverage: Joi.string().allow('').optional(),
+      quality: Joi.number().optional(),
+      price: Joi.number().optional(),
+      service: Joi.number().optional(),
+      space: Joi.number().optional(),
+      stars: Joi.number().optional(),
+      location: Joi.string().allow('').optional(),
+      openTime: Joi.string().allow('').optional(),
+      foodPhotos: Joi.array().optional(),
     }).optional(),
     foodPhotos: Joi.array().optional(),
     type: Joi.string().optional()
   })
   
   let reqData = req.body;
-  if (req.files.coverImage) {
-    reqData.coverImage = req.files['coverImage'][0]
-  }
-
-  if (req.files.foodPhotos) {
-    reqData.foodPhotos = req.files['foodPhotos'].map(photo => photo)
-  }
   const { error } = schema.validate(reqData)
   if (error) {
     throw Boom.badRequest(error.message)

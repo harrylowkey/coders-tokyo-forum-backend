@@ -110,7 +110,7 @@ exports.index = async (req, res, next) => {
         .select(' -__v -url -media -authors')
         .skip((page - 1) * 10)
         .limit(10),
-      counter: Post.count({}).lean(),
+      counter: Post.countDocuments({}).lean(),
     });
 
     let posts = {}

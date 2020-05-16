@@ -117,7 +117,7 @@ exports.getOnePost = async (req, res, next) => {
         populateQuery.push({
           path: 'foodPhotos',
         });
-        negativeQuery += '-authors -media';
+        negativeQuery += '-authors -media -url';
         break;
       case 'movie':
         populateQuery.push({ path: 'authors', select: 'name type' });
@@ -295,7 +295,7 @@ exports.getPosts = async (req, res, next) => {
         .populate(populateQuery)
         .select(negativeQuery)
         .sort({ createdAt: -1 }),
-      Post.count(query).lean()
+      Post.countDocuments(query).lean()
     ])
  
     return res.status(200).json({
@@ -364,7 +364,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
             select: '_id username'
           }
         }),
-      Post.count({
+      Post.countDocuments({
         tags: { $in: tagIds }
       }).lean(),
       Post.aggregate([
@@ -587,7 +587,7 @@ exports.getSavedPosts = async (req, res, next) => {
     } = req;
 
     const [postCounter, posts, counter] = await Promise.all([
-      Post.count({ savedBy: { $in: [req.user._id] } }).lean(),
+      Post.countDocuments({ savedBy: { $in: [req.user._id] } }).lean(),
       Post.find({ savedBy: { $in: [req.user._id] } })
         .lean()
         .skip((page - 1) * limit)

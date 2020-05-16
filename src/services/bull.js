@@ -55,7 +55,6 @@ CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
     const result = await cloudinary.uploader.rename(currentPath, newPath, { resource_type: resourceType });
     done(null, result)
   } catch (error) {
-    console.log('Exception when renaming file on Cloudinary', error);
     await Promise.all([
       File.findByIdAndDelete(fileId),
       Post.findByIdAndUpdate(postId, { $set: { media: null } }, { new: true }),

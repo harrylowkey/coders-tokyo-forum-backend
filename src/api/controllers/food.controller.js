@@ -3,10 +3,9 @@ const Utils = require('@utils');
 const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
-const { coverImageConfig, foodPhotosConfig } = require('@configVar');
 
 exports.createFoodReview = async (req, res, next) => {
-  const type = 'food'
+  const type = 'food';
   const {
     body: {
       tags,
@@ -23,12 +22,24 @@ exports.createFoodReview = async (req, res, next) => {
       type,
     });
 
-    let createdTags = []
-    if (tags) createdTags = await Utils.post.createTags(tags)
-    if (tags) newFoodBlog.tags = createdTags.map(tag => tag._id)
+    let createdTags = [];
+    if (tags) createdTags = await Utils.post.createTags(tags);
+    if (tags) newFoodBlog.tags = createdTags.map(tag => tag._id);
 
-    newFoodBlog.cover = cover._id
+    newFoodBlog.cover = cover._id;
     newFoodBlog.food = food;
+    let a = []
+    if (newFoodBlog.food.foodPhotos.length) {
+      a = newFoodBlog.food.foodPhotos.map(photo => {
+        return File.findByIdAndUpdate(
+          photo._id,
+          {
+            $set: { postId: newFoodBlog._id }
+          },
+          { new: true }
+        );
+      });
+    }
 
     const promises = [
       newFoodBlog.save(),
@@ -39,9 +50,9 @@ exports.createFoodReview = async (req, res, next) => {
         },
         { new: true }
       )
-    ]
+    ];
 
-    const [createdFoodBlog, _] = await Promise.all(promises)
+    const [createdFoodBlog, _] = await Promise.all(promises);
     const dataRes = {
       _id: createdFoodBlog._id,
       tags: createdTags,
@@ -52,19 +63,19 @@ exports.createFoodReview = async (req, res, next) => {
       type: createdFoodBlog.type,
       cover: req.body.cover,
       createdAt: createdFoodBlog.createdAt
-    }
+    };
     return res.status(200).json({
       status: 200,
       data: dataRes
     });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 
 };
 
 exports.editFoodReview = async (req, res, next) => {
-  const type = 'food'
+  const type = 'food';
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
@@ -105,7 +116,7 @@ exports.editFoodReview = async (req, res, next) => {
     }
 
     if (cover) {
-      query.cover = cover
+      query.cover = cover;
     }
 
     await Post.findByIdAndUpdate(
@@ -135,7 +146,7 @@ exports.deleteFoodReview = async (req, res, next, type) => {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean()
+    }).lean();
 
     if (!foodReview) {
       throw Boom.badRequest('Not found food blog review');
@@ -151,7 +162,7 @@ exports.deleteFoodReview = async (req, res, next, type) => {
     });
 
     if (!result.idDeletedFoodBlog) {
-      throw Boom.badRequest('Delete food blog fail')
+      throw Boom.badRequest('Delete food blog fail');
     }
 
     return res.status(200).json({
