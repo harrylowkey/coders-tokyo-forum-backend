@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer')
 const {
   BlogController, BookController, FoodController,
-  MovieController, PostController, DiscussionController
-} = require('@controllers')
+  MovieController, PostController, DiscussionController,
+  MediaController
+} = require('@controllers');
 
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
@@ -14,18 +14,31 @@ const { Blog, Book, Food,
 } = require('@validations');
 
 /** ----------- CONFIG --------------- */
-const { blogCoverConfig, audioConfig, foodPhotosConfig, videoConfig } = require('@configVar')
-const { configStorage } = require('../../config/cloudinary')
-const uploadBlog = configStorage(blogCoverConfig)
-const uploadFoodPhotos = configStorage(foodPhotosConfig)
+const { foodPhotosConfig } = require('@configVar');
+const { configStorage } = require('../../config/cloudinary');
+const uploadFoodPhotos = configStorage(foodPhotosConfig);
 
 const {
   uploadVideo,
-  uploadAudio,
-} = require('../../config/cloudinary').configMulter
+} = require('../../config/cloudinary').configMulter;
 
 /** ------------ -------------------- */
 
+router
+  .route('/discussions')
+  .post(
+    checkAccessToken,
+    Discussion.validatePOST,
+    DiscussionController.createDiscussion,
+  );
+
+router
+  .route('/discussions/:postId')
+  .put(
+    checkAccessToken,
+    Discussion.validatePUT,
+    DiscussionController.editDiscussion,
+  );
 
 router
   .route('/blogs')
@@ -33,7 +46,7 @@ router
     checkAccessToken,
     Blog.validatePOST,
     BlogController.createBlog,
-  )
+  );
 
 router
   .route('/blogs/:postId')
@@ -41,7 +54,7 @@ router
     checkAccessToken,
     Blog.validatePUT,
     BlogController.editBlog,
-  )
+  );
 
 router
   .route('/books')
@@ -49,12 +62,14 @@ router
     checkAccessToken,
     Book.validatePOST,
     BookController.createBookReview,
-  )
+  );
+router
+  .route('/books/:postId')
   .put(
     checkAccessToken,
     Book.validatePUT,
     BookController.editBookReview,
-  )
+  );
 
 router
   .route('/food')
@@ -66,7 +81,9 @@ router
     ]),
     Food.validatePOST,
     FoodController.createFoodReview
-  )
+  );
+router
+  .route('/food/:postId')
   .put(
     checkAccessToken,
     uploadFoodPhotos.fields([
@@ -75,7 +92,7 @@ router
     ]),
     Food.validatePUT,
     FoodController.editFoodReview
-  )
+  );
 
 router
   .route('/movies')
@@ -83,12 +100,14 @@ router
     checkAccessToken,
     Movie.validatePOST,
     MovieController.createMovieReview,
-  )
+  );
+router
+  .route('/movies/:postId')
   .put(
     checkAccessToken,
     Movie.validatePUT,
     MovieController.editMovieReview,
-  )
+  );
 
 router
   .route('/videos')
@@ -97,7 +116,7 @@ router
     uploadVideo.single('video'),
     Video.validatePOST,
     PostController.createVideo,
-  )
+  );
 
 router
   .route('/videos/:postId')
@@ -106,55 +125,42 @@ router
     uploadVideo.single('video'),
     Video.validatePUT,
     PostController.editVideo,
-  )
+  );
 
 router
   .route('/songs')
   .post(
     checkAccessToken,
     Audio.validatePOST,
-    PostController.createSong,
-  )
+    MediaController.createAudio,
+  );
 
 router
   .route('/songs/:postId')
   .put(
     checkAccessToken,
     Audio.validatePUT,
-    PostController.editSong,
-  )
+    MediaController.editAudio,
+  );
 router
   .route('/podcasts')
   .post(
     checkAccessToken,
     Audio.validatePOST,
-    PostController.createPodcast,
-  )
+    MediaController.createAudio,
+  );
 
 router
   .route('/podcasts/:postId')
   .put(
     checkAccessToken,
     Audio.validatePUT,
-    PostController.editPodcast,
-  )
-
-router
-  .route('/discussions')
-  .post(
-    checkAccessToken,
-    Discussion.validatePOST,
-    DiscussionController.createDiscussion,
-  )
-  .put(
-    checkAccessToken,
-    Discussion.validatePUT,
-    DiscussionController.editDiscussion,
-  )
+    MediaController.editAudio,
+  );
 
 router
   .route('/')
-  .get(PostController.getPosts)
+  .get(PostController.getPosts);
 
 router
   .route('/tags')

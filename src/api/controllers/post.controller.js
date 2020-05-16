@@ -109,7 +109,7 @@ exports.getOnePost = async (req, res, next) => {
       case 'book':
         populateQuery.push({
           path: 'authors',
-          select: 'name',
+          select: 'name type',
         });
         negativeQuery += '-url -media';
         break;
@@ -408,14 +408,6 @@ exports.getPostsByTagsName = async (req, res, next) => {
 
 /** ------------------- POST ---------------------------- */
 
-exports.createSong = (req, res, next) => {
-  MediaController.createAudio(req, res, next, 'song');
-}
-
-exports.createPodcast = (req, res, next) => {
-  MediaController.createAudio(req, res, next, 'podcast');
-}
-
 exports.createVideo = (req, res, next) => {
   MediaController.createVideo(req, res, next, 'video', req.query.isUpload);
 }
@@ -426,14 +418,6 @@ exports.createVideo = (req, res, next) => {
 
 exports.editVideo = (req, res, next) => {
   MediaController.editVideo(req, res, next, 'video', req.query.isUpload);
-}
-
-exports.editSong = (req, res, next) => {
-  MediaController.createAudio(req, res, next, 'song');
-}
-
-exports.editPodcast = (req, res, next) => {
-  MediaController.editAudio(req, res, next, 'podcast');
 }
 
 exports.deletePost = async (req, res, next) => {

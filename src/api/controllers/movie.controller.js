@@ -64,7 +64,8 @@ exports.createMovieReview = async (req, res, next) => {
   }
 };
 
-exports.editMovieReview = async (req, res, next, type) => {
+exports.editMovieReview = async (req, res, next) => {
+  const type = 'movie'
   const { topic,
     description,
     content,

@@ -65,9 +65,9 @@ exports.createBookReview = async (req, res, next) => {
 
 exports.editBookReview = async (req, res, next) => {
   const type = 'book'
-  const { topic, description, content, tags, authors, book } = req.body;
+  const { topic, description, content, tags, authors, book, cover } = req.body;
   try {
-    const book = await Post.findOne({
+    const bookToUpdate = await Post.findOne({
       _id: req.params.postId,
       user: req.user._id,
       type,
@@ -76,7 +76,7 @@ exports.editBookReview = async (req, res, next) => {
       .populate({ path: 'tags', select: '_id tagName' })
       .populate({ path: 'authors', select: '_id name type' });
 
-    if (!book) {
+    if (!bookToUpdate) {
       throw Boom.badRequest('Not found book blog reivew, edit failed');
     }
 
@@ -86,14 +86,14 @@ exports.editBookReview = async (req, res, next) => {
     if (content) query.content = content;
     
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        book,
+        bookToUpdate,
         tags,
       );
       query.tags = newTags;
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        book,
+        bookToUpdate,
         authors,
       );
       query.authors = newAuthors;

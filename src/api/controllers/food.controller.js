@@ -63,7 +63,8 @@ exports.createFoodReview = async (req, res, next) => {
 
 };
 
-exports.editFoodReview = async (req, res, next, type) => {
+exports.editFoodReview = async (req, res, next) => {
+  const type = 'food'
   try {
     const foodReview = await Post.findOne({
       _id: req.params.postId,

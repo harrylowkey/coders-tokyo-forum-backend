@@ -170,16 +170,16 @@ exports.deleteVideo = async (req, res, next, type) => {
   }
 };
 
-exports.createAudio = async (req, res, next, type) => {
+exports.createAudio = async (req, res, next) => {
   const {
-    body: { tags, authors, audio, cover },
+    body: { tags, authors, audio, cover, type },
     user,
   } = req;
   try {
     const newAudio = new Post({
       user: user._id,
       ...req.body,
-      type,
+      type: type.slice(0, type.length - 1),
     });
 
     let blogTags = []
@@ -233,13 +233,13 @@ exports.createAudio = async (req, res, next, type) => {
   }
 };
 
-exports.editAudio = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors, cover } = req.body;
+exports.editAudio = async (req, res, next) => {
+  const { topic, description, content, tags, authors, cover, type } = req.body;
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
       user: req.user._id,
-      type,
+      type: type.slice(0, type.length - 1),
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })

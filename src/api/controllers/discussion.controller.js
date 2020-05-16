@@ -43,8 +43,9 @@ exports.createDiscussion = async (req, res, next) => {
   }
 };
 
-exports.editDiscussion = async (req, res, next, type) => {
+exports.editDiscussion = async (req, res, next) => {
   const { topic, content, tags } = req.body;
+  const type = 'discussion'
 
   try {
     const discussion = await Post.findOne({
