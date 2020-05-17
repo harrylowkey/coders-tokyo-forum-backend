@@ -191,8 +191,6 @@ exports.getPosts = async (req, res, next) => {
       query: { type },
     } = req;
 
-
-
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -297,6 +295,8 @@ exports.getPosts = async (req, res, next) => {
         .sort({ createdAt: -1 }),
       Post.countDocuments(query).lean()
     ])
+
+    console.log(posts)
  
     return res.status(200).json({
       status: 200,
@@ -473,12 +473,18 @@ exports.likePost = async (req, res, next) => {
       throw Boom.badRequest('Not found post');
     }
 
+    const isLiked = post.likes.includes(user._id)
+    if (isLiked) {
+      throw Boom.conflict('You liked')
+    }
+
+
     await Post.findByIdAndUpdate(
       postId,
       {
         $addToSet: { likes: user._id },
       },
-      { new: true, upsert: true },
+      { new: true },
     )
 
     return res.status(200).json({
@@ -505,7 +511,7 @@ exports.unlikePost = async (req, res, next) => {
     await Post.findByIdAndUpdate(
       postId,
       {
-        $pull: { likes: user._id },
+        $pull: { likes: user._id.toString() },
       },
       { new: true },
     )

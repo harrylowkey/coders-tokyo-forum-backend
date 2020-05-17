@@ -51,7 +51,8 @@ let validatePUT = (req, res, next) => {
       ).required()
     }).optional(),
     audioSize: Joi.number().max(audioConfig.chunk_size),
-    type: Joi.string().optional()
+    type: Joi.string().optional(),
+    cover: Joi.object().optional()
   })
   
   let reqData = req.body;

@@ -239,7 +239,7 @@ exports.editAudio = async (req, res, next) => {
     const audio = await Post.findOne({
       _id: req.params.postId,
       user: req.user._id,
-      type: type.slice(0, type.length - 1),
+      type,
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
@@ -272,7 +272,6 @@ exports.editAudio = async (req, res, next) => {
     }
 
     if (cover) query.cover = req.body.cover._id
-    if (audio) query.media = req.body.audio._id
 
     const updatedAudio = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -294,7 +293,6 @@ exports.editAudio = async (req, res, next) => {
       data: updatedAudio,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
