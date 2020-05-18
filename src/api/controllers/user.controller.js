@@ -24,15 +24,36 @@ exports.getById = async (req, res, next) => {
   }
 };
 
+exports.getByUsername = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      username: req.params.username
+    })
+      .lean()
+      .select('-verifyCode -__v -password')
+      .populate({
+        path: 'avatar',
+        select: '-__v -user'
+      })
+
+    if (!user) throw Boom.badRequest('Not found user')
+    return res.status(200).json({
+      status: 200,
+      data: user,
+    });
+  } catch (error) {
+    return next(error)
+  }
+};
+
 exports.updateProfile = async (req, res, next) => {
-  const { username, hobbies, socialLinks, sex, age, job, description } = req.body;
+  const { hobbies, socialLinks, sex, age, job, description } = req.body;
   try {
     const user = await User.findById(req.user._id).lean();
     if (!user) {
       throw Boom.notFound('Not found user to update');
     }
     const data = {};
-    if (username) data.username = username;
     if (sex) data.sex = sex;
     if (age) data.age = age;
     if (job) data.job = job;

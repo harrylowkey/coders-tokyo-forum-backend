@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { UserController } = require('@controllers')
+const { UserController } = require('@controllers');
 const { checkAccessToken } = require('@middlewares/authorize');
 const {
   updateProfileValidate,
@@ -8,13 +8,18 @@ const {
 } = require('../validations/user');
 
 
-const { avatarConfig } = require('@configVar')
-const { configStorage } = require('../../config/cloudinary')
-const upload = configStorage(avatarConfig)
+const { avatarConfig } = require('@configVar');
+const { configStorage } = require('../../config/cloudinary');
+const upload = configStorage(avatarConfig);
 
 router
   .route('/:userId')
   .get(checkAccessToken, UserController.getById);
+
+router
+  .route('/profile/:username')
+  .get(UserController.getByUsername);
+
 router
   .route('/')
   .put(checkAccessToken,
@@ -38,18 +43,18 @@ router
 
 router
   .route('/:userId/follow')
-  .post(checkAccessToken, UserController.follow)
+  .post(checkAccessToken, UserController.follow);
 
-  router
+router
   .route('/:userId/unfollow')
-  .post(checkAccessToken, UserController.unfollow)
+  .post(checkAccessToken, UserController.unfollow);
 
-  router
+router
   .route('/:userId/followers')
-  .get(checkAccessToken, UserController.getFollowers)
+  .get(checkAccessToken, UserController.getFollowers);
 
-  router
+router
   .route('/:userId/following')
-  .get(checkAccessToken, UserController.getFollowing)
+  .get(checkAccessToken, UserController.getFollowing);
 
 module.exports = router;

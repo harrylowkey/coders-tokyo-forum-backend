@@ -182,7 +182,6 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (post, newAuthors) => {
 
     return newAuthorIds
   } catch (error) {
-    console.log(error)
     if (error._message === 'Author validation failed') {
       throw Boom.badRequest('Invalid author type')
     }

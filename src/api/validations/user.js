@@ -16,7 +16,6 @@ let uploadAvatarValidate = (req, res, next) => {
 
 let updateProfileValidate = (req, res, next) => {
   let schema = Joi.object().keys({
-    username: Joi.string().optional(),
     sex: Joi.string().optional(),
     age: Joi.number().optional(),
     job: Joi.string().optional(),
