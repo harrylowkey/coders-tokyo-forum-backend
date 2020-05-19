@@ -1,5 +1,5 @@
 const Joi = require('@hapi/joi');
-const Boom = require('@hapi/boom')
+const Boom = require('@hapi/boom');
 let signUpValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     username: Joi.string().required(),
@@ -22,14 +22,14 @@ let signUpValidate = (req, res, next) => {
         };
       }),
     code: Joi.number().required()
-  })
-  
-  const { error } = schema.validate(req.body)
+  });
+
+  const { error } = schema.validate(req.body);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
-  return next()
-}
+  return next();
+};
 
 let loginValidate = (req, res, next) => {
   let schema = Joi.object().keys({
@@ -43,14 +43,14 @@ let loginValidate = (req, res, next) => {
       }),
     password: Joi.string()
       .required()
-  })
+  });
 
-  const { error } = schema.validate(req.body)
+  const { error } = schema.validate(req.body);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
-  return next()
-}
+  return next();
+};
 
 let forgotPasswordValidate = (req, res, next) => {
   let schema = Joi.object().keys({
@@ -79,14 +79,14 @@ let forgotPasswordValidate = (req, res, next) => {
           message: 'Invalid email',
         };
       }),
-  })
+  });
 
-  const { error } = schema.validate(req.body)
+  const { error } = schema.validate(req.body);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
-  return next()
-}
+  return next();
+};
 
 let changePasswordValidate = (req, res, next) => {
   let schema = Joi.object().keys({
@@ -111,15 +111,23 @@ let changePasswordValidate = (req, res, next) => {
         };
       }),
     oldPassword: Joi.string().required(),
-    code: Joi.number().required()
-  })
+    code: Joi.number().required(),
+    email: Joi.string()
+      .regex(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
+      .required()
+      .error(() => {
+        return {
+          message: 'Invalid email',
+        };
+      }),
+  });
 
-  const { error } = schema.validate(req.body)
+  const { error } = schema.validate(req.body);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
-  return next()
-}
+  return next();
+};
 
 let emailCodeValidate = (req, res, next) => {
   let schema = Joi.object().keys({
@@ -131,14 +139,14 @@ let emailCodeValidate = (req, res, next) => {
           message: 'Invalid email',
         };
       }),
-  })
+  });
 
-  const { error } = schema.validate(req.body)
+  const { error } = schema.validate(req.body);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
-  return next()
-}
+  return next();
+};
 
 
 

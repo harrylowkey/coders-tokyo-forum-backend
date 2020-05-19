@@ -45,9 +45,6 @@ router
   .route('/upload/photo')
   .post(checkAccessToken, uploadBlogCover.single('photo'), FileController.uploadFile)
 
-//TODO route update cover
-
-//FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
 router
   .route('/upload/foodPhotos')
   .post(checkAccessToken, uploadBlogCover.array('file', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)

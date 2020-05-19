@@ -150,26 +150,22 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
   try {
-    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const { oldPassword, newPassword, confirmPassword, email, code } = req.body;
     const userId = req.user._id;
     const user = await User.findById(userId).lean()
 
-    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  req.body.email])
-    let emailCode = await Redis.getCache({
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE',  email])
+    let redisCode = await Redis.getCache({
       key: redisKey
     })
 
-    if (!emailCode) {
-      throw Boom.badRequest('Not found email code')
-    }
-
-    if (emailCode !== req.body.code) {
+    if (!redisCode || redisCode != code) {
       throw Boom.badRequest('Invalid or expired code')
     }
     
     const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
     if (!isMatchedOldPass) {
-      throw Boom.badRequest('Wrong old password, change password failed');
+      throw Boom.badRequest('Wrong old password');
     }
 
     if (newPassword !== confirmPassword) {

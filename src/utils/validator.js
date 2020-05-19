@@ -7,7 +7,7 @@ let validatePassword = (password) => {
 	let re = /((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%?=*&]).{8,30})/
 	if (!re.test(password)) {
 		error.push('');
-		throw Boom.badRequest('Password must contain at least 8 characters, a lowercase, uppercase character and contain at most 30 characters!')
+		throw Boom.badRequest('Password should contain at least 8 characters, a lowercase, uppercase character and contain at most 30 characters!')
 	}
 
 	re = /\s/

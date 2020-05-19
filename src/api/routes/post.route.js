@@ -175,7 +175,7 @@ router
   .get(paginate({ limit: 15 }), PostController.getPosts);
 
 router
-  .route('/user/saved-posts')
+  .route('/savedPosts/user')
   .get(paginate({ limit: 15 }), checkAccessToken, PostController.getSavedPosts);
 
 router

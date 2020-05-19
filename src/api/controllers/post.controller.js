@@ -296,8 +296,6 @@ exports.getPosts = async (req, res, next) => {
       Post.countDocuments(query).lean()
     ])
 
-    console.log(posts)
- 
     return res.status(200).json({
       status: 200,
       metadata: Utils.post.getmetadata((Number(req.query.page) || page), (Number(req.query.limit) || limit), postCounter),
@@ -588,63 +586,109 @@ exports.unsavePost = async (req, res, next) => {
 exports.getSavedPosts = async (req, res, next) => {
   try {
     const {
-      page,
-      limit,
+      query: { type },
     } = req;
 
-    const [postCounter, posts, counter] = await Promise.all([
-      Post.countDocuments({ savedBy: { $in: [req.user._id] } }).lean(),
-      Post.find({ savedBy: { $in: [req.user._id] } })
-        .lean()
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ createdAt: - 1 })
-        .populate({
-          path: 'savedBy',
-          select: '_id username',
-        })
-        .populate({ path: 'authors', select: '_id name type' })
-        .populate({ path: 'tags', select: '_id tagName' })
-        .populate({ path: 'likes', select: '_id username' })
-        .populate({
-          path: 'comments',
-          select: '-__v',
-          populate: {
-            path: 'user',
-            select: '_id username'
-          }
-        }),
-      Post.aggregate([
-        {
-          $match: {
-            savedBy: { $in: [mongoose.Types.ObjectId(req.user._id)] },
-          },
-        },
-        { $sort: { createdAt: -1 } },
-        { $skip: (page - 1) * limit },
-        { $limit: limit },
-        {
-          $project: {
-            comments: { $size: '$comments' },
-            likes: { $size: '$likes' },
-            saves: { $size: '$savedBy' }
-          }
-        }
-      ])
-    ])
+    if (!type) {
+      throw Boom.badRequest('Type query is required');
+    }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
+    }
 
-    const data = posts.map((post, index) => {
-      if (post._id.toString() === counter[index]._id.toString()) {
-        let metadata = { ...counter[index] }
-        return { ...post, metadata }
-      }
-      return { ...post }
-    })
+    let populateQuery = [
+      {
+        path: 'tags',
+        select: 'tagName _id',
+      },
+      {
+        path: 'likes',
+        select: 'username _id',
+      },
+      {
+        path: 'cover',
+        select: '_id secureURL',
+      },
+      {
+        path: 'comments',
+        select: '-__v',
+        populate: {
+          path: 'user',
+        }
+      },
+      {
+        path: 'user',
+        select: '_id username job createdAt description sex followers following avatar socialLinks',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
+      },
+      {
+        path: 'media',
+      },
+    ];
+
+    let negativeQuery = '-__v ';
+
+    let limit = 5
+    let page = 1
+    switch (type) {
+      case 'blog':
+        negativeQuery += '-authors -url -media';
+        populateQuery.push({ path: 'cover' });
+        break;
+      case 'book':
+        populateQuery.push({ path: 'authors', select: 'name' });
+        negativeQuery += '-url -media';
+        break;
+      case 'food':
+        negativeQuery += '-authors -media';
+        break;
+      case 'movie':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-media';
+        break;
+      case 'video':
+        negativeQuery += '-authors';
+        populateQuery.push({ path: 'cover' });
+        break;
+      case 'podcast':
+        limit = 6
+        page = 1
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+        break;
+      case 'song':
+        limit = 6
+        page = 1
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+        break;
+      case 'discussion':
+        limit = 10
+        page = 1
+        negativeQuery += '-url -media -authors';
+        break;
+    }
+
+    let query = { type, savedBy: { $in: [req.user._id] } };
+
+    const [posts, postCounter] = await Promise.all([
+      Post.find(query)
+        .lean()
+        .skip(((Number(req.query.page) || page) - 1) * (Number(req.query.limit) || limit))
+        .limit(Number(req.query.limit) || limit)
+        .populate(populateQuery)
+        .select(negativeQuery)
+        .sort({ createdAt: -1 }),
+      Post.countDocuments(query).lean()
+    ])
 
     return res.status(200).json({
       status: 200,
-      metadata: Utils.post.getmetadata(page, limit, postCounter),
-      data,
+      metadata: Utils.post.getmetadata((Number(req.query.page) || page), (Number(req.query.limit) || limit), postCounter),
+      data: posts,
     });
   } catch (error) {
     return next(error);
