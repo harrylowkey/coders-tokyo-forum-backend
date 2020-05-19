@@ -61,14 +61,14 @@ exports.register = async (req, res, next) => {
       throw Boom.conflict('Username is existed');
     }
 
-    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
-    let redisCode = await Redis.getCache({
-      key: redisKey
-    });
+    // const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
+    // let redisCode = await Redis.getCache({
+    //   key: redisKey
+    // });
 
-    if (!redisCode || redisCode != req.body.code) {
-      throw Boom.badRequest('Invalid or expired code');
-    }
+    // if (!redisCode || redisCode != req.body.code) {
+    //   throw Boom.badRequest('Invalid or expired code');
+    // }
 
     if (req.body.confirmPassword !== req.body.password) {
       throw Boom.badRequest('Confirm password is not matched');
