@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
 const mongoose = require('mongoose');
+const Redis = require('@redis');
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
@@ -314,7 +315,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
       page,
     } = req;
 
-    const [ _page, _limit] = Utils.post.standardizePageLimit5(page, limit)
+    const [_page, _limit] = Utils.post.standardizePageLimit5(page, limit);
 
     const tagIds = [];
     //case 1 tag
@@ -711,5 +712,115 @@ exports.getSavedPosts = async (req, res, next) => {
     });
   } catch (error) {
     return next(error);
+  }
+};
+
+exports.countTags = async (req, res, next) => {
+  try {
+    let limit = req.query.limit;
+    limit = Math.round(limit);
+    limit = limit < 0 ? 10 : Math.min(limit || 10, 30);
+
+    let func = async () => {
+      const tags = await Tag.find({}).lean();
+      const countTagsPromises = {};
+      tags.map(tag => {
+        countTagsPromises[tag.tagName] = Post.aggregate([
+          {
+            $match: {
+              tags: { $eq: tag._id }
+            },
+          },
+          {
+            $group: {
+              _id: tag._id,
+              total: {
+                $sum: 1
+              }
+            }
+          }
+        ]);
+      });
+      const response = await Promise.props(countTagsPromises);
+      const mapperTagNames = Object.keys(response).map(key => {
+        if (!response[key][0]) {
+          return { tagName: key, total: 0 };
+        } else {
+          return { tagName: key, total: response[key][0].total };
+        }
+      });
+      const sortTotalTagNames = mapperTagNames.sort((a, b) => (a.total > b.total) ? -1 : ((b.total > a.total) ? 1 : 0));
+      const slicedTop10Tags = sortTotalTagNames.slice(0, limit);
+      return slicedTop10Tags;
+    };
+
+    const data = await Redis.cacheExecute({
+      key: await Redis.makeKey(['tags', 'TOP_10_TAGS', 'LIMIT', limit]),
+      isJSON: true,
+      isZip: false,
+      ttl: 600, // 10 minutes
+    }, func);
+
+    return res.status(200).json({
+      status: 200,
+      data,
+    });
+
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.topPosts = async (req, res, next) => {
+  try {
+    let limit = req.query.limit;
+    limit = Math.round(limit);
+    limit = limit < 0 ? 10 : Math.min(limit || 10, 30);
+
+    const func = async () => {
+      const postTypes = ['discussion', 'blog', 'book', 'movie', 'food', 'song', 'podcast'];
+      const topPostsPromises = {};
+      postTypes.map(type => {
+        topPostsPromises[type] = Post.aggregate([
+          {
+            $match: {
+              type: { $eq: type }
+            },
+          },
+          {
+            $project: {
+              likes: { $size: '$likes' },
+              topic: 1,
+              type: 1
+            },
+          },
+          {
+            $sort: {
+              likes: -1
+            },
+          },
+          {
+            $limit: limit
+          }
+        ]);
+      });
+
+      const response = await Promise.props(topPostsPromises);
+      return response;
+    };
+
+    const data = await Redis.cacheExecute({
+      key: await Redis.makeKey(['posts', 'TOP_10_POSTS_BY_TYPE', 'LIMIT', limit]),
+      isJSON: true,
+      isZip: false,
+      ttl: 600, // 10 minutes
+    }, func);
+
+    return res.status(200).json({
+      status: 200,
+      data,
+    });
+  } catch (error) {
+    return error;
   }
 };

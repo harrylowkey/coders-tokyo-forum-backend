@@ -198,4 +198,12 @@ router
   .route('/:postId/unsave')
   .post(checkAccessToken, PostController.unsavePost);
 
+router
+  .route('/tags/statics')
+  .get(PostController.countTags);
+
+router
+  .route('/topPosts/statics')
+  .get(PostController.topPosts);
+
 module.exports = router;
