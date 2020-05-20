@@ -2,10 +2,10 @@ const Boom = require('@hapi/boom');
 const Utils = require('@utils');
 const { Post, File } = require('@models');
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { videoConfig, audioConfig } = require('@configVar');
-const { CloudinaryService } = require('@services')
-const { FILE_REFERENCE_QUEUE } = require('@bull')
+const Redis = require('@redis');
+const { videoConfig } = require('@configVar');
+const { CloudinaryService } = require('@services');
+const { FILE_REFERENCE_QUEUE } = require('@bull');
 
 exports.createVideo = async (req, res, next, type, isUpload) => {
   const {
@@ -20,7 +20,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     });
 
     // case: gán link video bên ngoài
-    let videoTags
+    let videoTags;
     if (isUpload == 'false') {
       if (tags) {
         videoTags = await Utils.post.createTags(tags);
@@ -29,26 +29,26 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     }
 
     // case: user upload video
-    let newMedia
+    let newMedia;
     if (isUpload == 'true') {
-      const video = req.file
+      const video = req.file;
       let promises = {
         uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video, '_video_', videoConfig)
-      }
+      };
 
       if (tags) {
-        promises.tagsCreated = Utils.post.createTags(tags)
+        promises.tagsCreated = Utils.post.createTags(tags);
       }
-      const result = await Promise.props(promises)
+      const result = await Promise.props(promises);
       if (result.tagsCreated) {
         newVideo.tags = result.tagsCreated.map(tag => tag._id);
       }
 
-      newMedia = result.uploadedVideo
+      newMedia = result.uploadedVideo;
       newVideo.media = result.uploadedVideo._id;
     }
 
-    let createdNewVideo = await newVideo.save()
+    let createdNewVideo = await newVideo.save();
     let dataRes = {
       _id: createdNewVideo._id,
       url: createdNewVideo.url || null,
@@ -59,7 +59,7 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
       updatedAt: createdNewVideo.updatedAt,
       tags: videoTags || [],
       media: newMedia || null
-    }
+    };
     return res.status(200).json({
       status: 200,
       data: dataRes,
@@ -79,7 +79,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
-      .populate({ path: 'media', select: 'secureURL publicId fileName' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' });
     if (!video) {
       throw Boom.badRequest('Not found video, edit video failed');
     }
@@ -104,7 +104,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     }
 
     if (isUpload == 'true') {
-      const newVideo = req.file
+      const newVideo = req.file;
       if (newVideo) {
         const uploadedVideo = await
           CloudinaryService.uploadMediaProcess(req.user, video, newVideo, '_video_', videoConfig);
@@ -127,7 +127,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
         path: 'media',
         select: '-__v'
       })
-      .select('-__v -authors')
+      .select('-__v -authors');
 
     return res.status(200).json({
       status: 200,
@@ -146,18 +146,18 @@ exports.deleteVideo = async (req, res, next, type) => {
       type,
     })
       .lean()
-      .populate({ path: 'media' })
+      .populate({ path: 'media' });
 
     if (!video) {
       throw Boom.badRequest('Not found video');
     }
 
     if (!video.url) {
-      FILE_REFERENCE_QUEUE.deleteFile.add({ file: video.media })
+      FILE_REFERENCE_QUEUE.deleteFile.add({ file: video.media });
     }
-    const isDeleted = await Post.findByIdAndDelete(video._id)
+    const isDeleted = await Post.findByIdAndDelete(video._id);
     if (!isDeleted) {
-      throw Boom.badRequest('Delete video failed')
+      throw Boom.badRequest('Delete video failed');
     }
 
     return res.status(200).json({
@@ -182,16 +182,16 @@ exports.createAudio = async (req, res, next) => {
       type: type.slice(0, type.length - 1),
     });
 
-    let blogTags = []
-    if (tags) blogTags = await Utils.post.createTags(tags)
+    let blogTags = [];
+    if (tags) blogTags = await Utils.post.createTags(tags);
 
-    let authorsCreated = await Utils.post.creatAuthors(authors)
+    let authorsCreated = await Utils.post.creatAuthors(authors);
 
     newAudio.cover = cover._id;
-    if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id)
+    if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id);
 
-    newAudio.authors = authorsCreated.map(author => author._id)
-    newAudio.media = req.body.audio
+    newAudio.authors = authorsCreated.map(author => author._id);
+    newAudio.media = req.body.audio;
 
     const promises = [
       newAudio.save(),
@@ -209,9 +209,9 @@ exports.createAudio = async (req, res, next) => {
         },
         { new: true }
       )
-    ]
+    ];
 
-    const [createdNewAudio] = await Promise.all(promises)
+    const [createdNewAudio] = await Promise.all(promises);
     let dataRes = {
       _id: createdNewAudio._id,
       topic: createdNewAudio._topic,
@@ -222,7 +222,7 @@ exports.createAudio = async (req, res, next) => {
       authors: authorsCreated,
       tags: blogTags,
       media: req.body.audio,
-    }
+    };
 
     return res.status(200).json({
       status: 200,
@@ -244,7 +244,7 @@ exports.editAudio = async (req, res, next) => {
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
       .populate({ path: 'authors', select: '_id name type' })
-      .populate({ path: 'media', select: 'secureURL publicId fileName' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' });
     if (!audio) {
       throw Boom.badRequest(`Not found ${type}, edit ${type} failed`);
     }
@@ -271,7 +271,7 @@ exports.editAudio = async (req, res, next) => {
       query.authors = newAuthors;
     }
 
-    if (cover) query.cover = req.body.cover._id
+    if (cover) query.cover = req.body.cover._id;
 
     const updatedAudio = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -305,23 +305,82 @@ exports.deleteAudio = async (req, res, next, type) => {
       type,
     })
       .lean()
-      .populate({ path: 'media' })
+      .populate({ path: 'media' });
 
     if (!audio) {
       throw Boom.badRequest('Not found audio');
     }
 
-    FILE_REFERENCE_QUEUE.deleteFile.add({ file: audio.media })
-    const isDeleted = await Post.findByIdAndDelete(audio._id)
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: audio.media });
+    const isDeleted = await Post.findByIdAndDelete(audio._id);
 
     if (!isDeleted) {
-      throw Boom.badRequest(`Delete ${type} failed`)
+      throw Boom.badRequest(`Delete ${type} failed`);
     }
 
     return res.status(200).json({
       status: 200,
       message: `Delete ${type} successfully`,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.trendingAudio = async (req, res, next) => {
+  try {
+    const func = async () => {
+      const trendingAudios = await Post.aggregate([
+        {
+          $match: {
+            type: { $in: ['song', 'podcast'] }
+          },
+        },
+        {
+          $project: {
+            topic: 1,
+            type: 1,
+            media: 1,
+            authors: 1,
+            cover: 1
+          },
+        },
+        { $lookup: { from: 'files', localField: 'cover', foreignField: '_id', as: 'cover' } },
+        { $lookup: { from: 'files', localField: 'media', foreignField: '_id', as: 'media' } },
+        {
+          $lookup:
+          {
+            from: "authors",
+            localField: "authors",
+            foreignField: "_id",
+            as: "authors"
+          }
+        },
+        {
+          $sort: {
+            likes: -1
+          },
+        },
+        {
+          $limit: 18
+        }
+      ]);
+
+      return trendingAudios;
+    };
+
+    const data = await Redis.cacheExecute({
+      key: await Redis.makeKey(['posts', 'TRENDING_AUDIOS']),
+      isJSON: true,
+      isZip: false,
+      ttl: 600, // 10 minutes
+    }, func);
+
+    return res.status(200).json({
+      status: 200,
+      data,
+    });
+
   } catch (error) {
     return next(error);
   }

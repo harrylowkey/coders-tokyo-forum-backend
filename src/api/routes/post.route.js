@@ -206,4 +206,8 @@ router
   .route('/topPosts/statics')
   .get(PostController.topPosts);
 
+router
+  .route('/audios/trending')
+  .get(MediaController.trendingAudio);
+
 module.exports = router;
