@@ -1,14 +1,14 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 const BlogController = require('./blog.controller');
 const BookController = require('./book.controller');
 const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
-const { Post, User, Tag } = require('@models')
-const Utils = require('@utils')
+const { Post, User, Tag } = require('@models');
+const Utils = require('@utils');
 const types = [
   'discussion',
   'blog',
@@ -28,7 +28,7 @@ exports.getOnePost = async (req, res, next) => {
       query: { type, limitComment, pageComment },
     } = req;
 
-    const [_pageComment, _limitComment] = Utils.post.standardizePageLimitComment5(pageComment, limitComment)
+    const [_pageComment, _limitComment] = Utils.post.standardizePageLimitComment5(pageComment, limitComment);
     if (!type) {
       throw Boom.badRequest('Type query is required');
     }
@@ -162,7 +162,7 @@ exports.getOnePost = async (req, res, next) => {
           }
         }
       ])
-    ])
+    ]);
 
     if (!post) {
       throw Boom.badRequest('Not found post');
@@ -173,7 +173,7 @@ exports.getOnePost = async (req, res, next) => {
       comments: counter[0].comments,
       saves: counter[0].saves,
       comment: Utils.post.getmetadata(_pageComment, _limitComment, counter[0].comments)
-    }
+    };
 
     return res.status(200).json({
       status: 200,
@@ -233,8 +233,8 @@ exports.getPosts = async (req, res, next) => {
 
     let negativeQuery = '-__v ';
 
-    let limit = 5
-    let page = 1
+    let limit = 5;
+    let page = 1;
     switch (type) {
       case 'blog':
         negativeQuery += '-authors -url -media';
@@ -256,20 +256,20 @@ exports.getPosts = async (req, res, next) => {
         populateQuery.push({ path: 'cover' });
         break;
       case 'podcast':
-        limit = 6
-        page = 1
+        limit = 6;
+        page = 1;
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'song':
-        limit = 6
-        page = 1
+        limit = 6;
+        page = 1;
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'discussion':
-        limit = 10
-        page = 1
+        limit = 10;
+        page = 1;
         negativeQuery += '-url -media -authors';
         break;
     }
@@ -294,7 +294,7 @@ exports.getPosts = async (req, res, next) => {
         .select(negativeQuery)
         .sort({ createdAt: -1 }),
       Post.countDocuments(query).lean()
-    ])
+    ]);
 
     return res.status(200).json({
       status: 200,
@@ -314,11 +314,12 @@ exports.getPostsByTagsName = async (req, res, next) => {
       page,
     } = req;
 
+    const [ _page, _limit] = Utils.post.standardizePageLimit5(page, limit)
 
     const tagIds = [];
     //case 1 tag
     if (typeof tag === 'string') {
-      const existedTag = await Tag.findOne({ tagName: tag })
+      const existedTag = await Tag.findOne({ tagName: tag });
       if (!existedTag) {
         return res.status(200).json({
           status: 200,
@@ -326,49 +327,68 @@ exports.getPostsByTagsName = async (req, res, next) => {
           data: [],
         });
       }
-      tagIds.push(existedTag._id)
+      tagIds.push(existedTag._id);
     }
 
     // case >= 2 tags
     if (typeof tag === 'object') {
-      const promises = []
+      const promises = [];
       tag.map(tag => {
-        promises.push(Tag.findOne({ tagName: tag }))
-      })
-      const tags = await Promise.all(promises)
+        promises.push(Tag.findOne({ tagName: tag }));
+      });
+      const tags = await Promise.all(promises);
       tags.map(tag => {
         if (tag && tag.tagName) {
-          tagIds.push(tag._id)
+          tagIds.push(tag._id);
         }
-      })
+      });
     }
 
     const [posts, postCounter, counter] = await Promise.all([
       Post.find({
-        tags: { $in: tagIds }
+        tags: { $all: tagIds }
       })
         .lean()
-        .skip((page - 1) * limit)
-        .limit(limit)
+        .skip((_page - 1) * _limit)
+        .limit(_limit)
         .sort({ createdAt: -1 })
-        .populate({ path: 'authors', select: '_id name type' })
-        .populate({ path: 'tags', select: '_id tagName' })
-        .populate({ path: 'likes', select: '_id username' })
-        .populate({
-          path: 'comments',
-          select: '-__v',
-          populate: {
+        .populate([
+          {
+            path: 'cover',
+            select: '_id secureURL',
+          },
+          {
+            path: 'authors', select: '_id name type'
+          },
+          { path: 'tags', select: '_id tagName' },
+          { path: 'likes', select: '_id username' },
+          {
+            path: 'comments',
+            select: '-__v',
+            populate: {
+              path: 'user',
+              select: '_id username'
+            }
+          },
+          {
             path: 'user',
-            select: '_id username'
-          }
-        }),
+            select: '_id username job createdAt description sex followers following avatar socialLinks',
+            populate: {
+              path: 'avatar',
+              select: '_id secureURL'
+            }
+          },
+          {
+            path: 'media',
+          },
+        ]),
       Post.countDocuments({
-        tags: { $in: tagIds }
+        tags: { $all: tagIds }
       }).lean(),
       Post.aggregate([
         {
           $match: {
-            tags: { $in: tagIds }
+            tags: { $all: tagIds }
           },
         },
         { $sort: { createdAt: -1 } },
@@ -382,15 +402,15 @@ exports.getPostsByTagsName = async (req, res, next) => {
           }
         }
       ])
-    ])
+    ]);
 
     const data = posts.map((post, index) => {
       if (post._id.toString() === counter[index]._id.toString()) {
-        let metadata = { ...counter[index] }
-        return { ...post, metadata }
+        let metadata = { ...counter[index] };
+        return { ...post, metadata };
       }
-      return { ...post }
-    })
+      return { ...post };
+    });
 
     return res.status(200).json({
       status: 200,
@@ -398,7 +418,6 @@ exports.getPostsByTagsName = async (req, res, next) => {
       data,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -408,7 +427,7 @@ exports.getPostsByTagsName = async (req, res, next) => {
 
 exports.createVideo = (req, res, next) => {
   MediaController.createVideo(req, res, next, 'video', req.query.isUpload);
-}
+};
 
 /** ------------------ PUT ---------------------------------- */
 
@@ -416,7 +435,7 @@ exports.createVideo = (req, res, next) => {
 
 exports.editVideo = (req, res, next) => {
   MediaController.editVideo(req, res, next, 'video', req.query.isUpload);
-}
+};
 
 exports.deletePost = async (req, res, next) => {
   try {
@@ -471,9 +490,9 @@ exports.likePost = async (req, res, next) => {
       throw Boom.badRequest('Not found post');
     }
 
-    const isLiked = post.likes.includes(user._id)
+    const isLiked = post.likes.includes(user._id);
     if (isLiked) {
-      throw Boom.conflict('You liked')
+      throw Boom.conflict('You liked');
     }
 
 
@@ -483,7 +502,7 @@ exports.likePost = async (req, res, next) => {
         $addToSet: { likes: user._id },
       },
       { new: true },
-    )
+    );
 
     return res.status(200).json({
       status: 200,
@@ -503,7 +522,7 @@ exports.unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findById(postId).lean();
     if (!post) {
-      throw Boom.badRequest('Not found post')
+      throw Boom.badRequest('Not found post');
     }
 
     await Post.findByIdAndUpdate(
@@ -512,7 +531,7 @@ exports.unlikePost = async (req, res, next) => {
         $pull: { likes: user._id.toString() },
       },
       { new: true },
-    )
+    );
 
     return res.status(200).json({
       status: 200,
@@ -631,8 +650,8 @@ exports.getSavedPosts = async (req, res, next) => {
 
     let negativeQuery = '-__v ';
 
-    let limit = 5
-    let page = 1
+    let limit = 5;
+    let page = 1;
     switch (type) {
       case 'blog':
         negativeQuery += '-authors -url -media';
@@ -654,20 +673,20 @@ exports.getSavedPosts = async (req, res, next) => {
         populateQuery.push({ path: 'cover' });
         break;
       case 'podcast':
-        limit = 6
-        page = 1
+        limit = 6;
+        page = 1;
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'song':
-        limit = 6
-        page = 1
+        limit = 6;
+        page = 1;
         populateQuery.push({ path: 'authors', select: 'name type' });
         negativeQuery += '-url';
         break;
       case 'discussion':
-        limit = 10
-        page = 1
+        limit = 10;
+        page = 1;
         negativeQuery += '-url -media -authors';
         break;
     }
@@ -683,7 +702,7 @@ exports.getSavedPosts = async (req, res, next) => {
         .select(negativeQuery)
         .sort({ createdAt: -1 }),
       Post.countDocuments(query).lean()
-    ])
+    ]);
 
     return res.status(200).json({
       status: 200,

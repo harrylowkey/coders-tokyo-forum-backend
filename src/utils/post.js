@@ -206,6 +206,14 @@ exports.standardizePageLimit20 = (page = 0, limit = 20) => {
   return [page, limit]
 }
 
+exports.standardizePageLimit5 = (page = 0, limit = 5) => {
+  page = Math.round(page)
+  limit = Math.round(limit)
+  page = Math.max(0, page || 1)
+  limit = limit < 0 ? 5 : Math.min(limit || 5, 100)
+  return [page, limit]
+}
+
 exports.standardizePageLimitComment5 = (page = 0, limit = 5) => {
   page = Math.round(page)
   limit = Math.round(limit)
