@@ -62,31 +62,43 @@ exports.getOnePost = async (req, res, next) => {
           limit: _limitComment,
           skip: (_pageComment - 1) * _limitComment
         },
-        populate: {
-          path: 'user',
-          select: '_id username'
-        },
-        populate: {
-          path: 'childComments',
-          select: 'content createdAt parentId',
-          options: {
-            sort: { createdAt: -1 }
-          },
-          populate: [
-            {
-              path: 'replyToComment',
-              select: 'user',
-              populate: {
-                path: 'user',
-                select: 'username job'
-              }
-            },
-            {
-              path: 'user',
-              select: 'username'
+        populate: [
+          {
+            path: 'user',
+            select: '_id username job avatar',
+            populate: {
+              path: 'avatar',
+              select: '_id secureURL'
             }
-          ]
-        },
+          },
+          {
+            path: 'childComments',
+            select: 'content createdAt parentId',
+            options: {
+              sort: { createdAt: -1 }
+            },
+            populate: [
+              {
+                path: 'replyToComment',
+                select: 'user',
+                populate: [
+                  {
+                    path: 'user',
+                    select: 'username job'
+                  }
+                ]
+              },
+              {
+                path: 'user',
+                select: '_id username job avatar',
+                populate: {
+                  path: 'avatar',
+                  select: '_id secureURL'
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         path: 'user',

@@ -107,8 +107,8 @@ exports.threadReplyComment = async (req, res, next) => {
     const { commentId, parentId } = req.params;
     const { content } = req.body;
 
-    const parentComment = await Comment.findById(parentId).lean()
-    const comment = await  Comment.findById(commentId).lean()
+    const parentComment = await Comment.findById(parentId).lean();
+    const comment = await Comment.findById(commentId).lean();
 
     if (!parentComment || !comment) {
       throw Boom.badRequest("Not found thread or comment to reply");
@@ -241,51 +241,90 @@ exports.deleteComment = async (req, res, next) => {
   }
 };
 
-exports.getComments = async (req, res, next) => {
+exports.loadmoreComments = async (req, res, next) => {
   try {
     const {
       query: { page, limit },
-      params: { commentId }
+      params: { postId }
     } = req;
-
     const [_page, _limit] = Utils.post.standardizePageLimitComment5(page, limit);
-    console.log(_page, _limit);
 
-    const [comment, counter] = await Promise.all([
-      Comment.findById(commentId)
+    const post = await Post.findById(postId).lean();
+    if (!post) throw Boom.badRequest('Not found post');
+
+    const [comments, counter] = await Promise.all([
+      Post.findById(postId)
         .lean()
+        .select('comments')
         .populate({
-          path: 'childComments',
+          path: 'comments',
           options: {
             sort: { createdAt: -1 },
             limit: _limit,
             skip: (_page - 1) * _limit
-          }
+          },
+          populate: [
+            {
+              path: 'user',
+              select: '_id username job avatar',
+              populate: {
+                path: 'avatar',
+                select: '_id secureURL'
+              }
+            },
+            {
+              path: 'childComments',
+              select: 'content createdAt parentId',
+              options: {
+                sort: { createdAt: -1 }
+              },
+              populate: [
+                {
+                  path: 'replyToComment',
+                  select: 'user',
+                  populate: [
+                    {
+                      path: 'user',
+                      select: 'username job'
+                    }
+                  ]
+                },
+                {
+                  path: 'user',
+                  select: '_id username job avatar',
+                  populate: {
+                    path: 'avatar',
+                    select: '_id secureURL'
+                  }
+                }
+              ]
+            }
+          ]
         }),
-      Comment.aggregate([
+      Post.aggregate([
         {
           $match: {
-            _id: mongoose.Types.ObjectId(commentId),
+            _id: mongoose.Types.ObjectId(postId),
           },
         },
         {
           $project: {
-            childComments: { $size: '$childComments' },
+            comments: { $size: '$comments' },
           }
         }
       ])
     ]);
 
-    if (!comment) {
-      throw Boom.badRequest('Not found comment');
+    if (!post) {
+      throw Boom.badRequest('Not found post');
     }
 
     return res
       .status(200)
       .json({
         status: 200,
-        metadata: Utils.post.getmetadata(_page, _limit, counter[0].childComments),
-        data: comment.childComments
+        metadata: Utils.post.getmetadata(_page, _limit, counter[0].comments),
+        data: comments
       });
 
   } catch (error) {
