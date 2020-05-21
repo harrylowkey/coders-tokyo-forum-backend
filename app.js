@@ -18,7 +18,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 const Arena = require('bull-arena');
 const QUEUES = require('./src/config/queues');
-const redis = require('./src/config/redis')
+const socket = require('@socket')
 
 app.use(cors())
 
@@ -26,7 +26,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, { explore
 
 mongoDB.connect();
 cloudinary.config();
-redis.config(redisConfig)
+socket.start(app)
 
 app.use(cookieParser());
 app.use(bodyParser.json({limit: '50mb'}));

@@ -138,12 +138,22 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
-  let { newPassword, confirmPassword, emailCode, email } = req.body;
+  let { newPassword, confirmPassword, code, email } = req.body;
   try {
     email = email.trim().toLowerCase();
     let user = await User.findOne({ email }).lean();
+
     if (!user) {
-      throw Boom.badRequest('Not found user');
+      throw Boom.badRequest('Not found email');
+    }
+
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
+    let redisCode = await Redis.getCache({
+      key: redisKey
+    });
+
+    if (!redisCode || redisCode != code) {
+      throw Boom.badRequest('Invalid or expired code');
     }
 
     if (newPassword !== confirmPassword) {

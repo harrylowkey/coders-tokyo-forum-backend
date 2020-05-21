@@ -1,20 +1,22 @@
 const Boom = require('@hapi/boom');
-const { Comment, Post } = require('@models')
-const Utils = require('@utils')
-const mongoose = require('mongoose')
+const { Comment, Post } = require('@models');
+const Utils = require('@utils');
+const mongoose = require('mongoose');
+const configVar = require('@configVar');
+const redis = require('@redis').redisInstance;
 
 exports.createComment = async (req, res, next) => {
   try {
-    const { content } = req.body
-    const { postId } = req.params
+    const { content } = req.body;
+    const { postId } = req.params;
 
     const user = req.user;
     if (!user) {
-      throw Boom.badRequest('Please login to comment')
+      throw Boom.badRequest('Please login to comment');
     }
-    const post = await Post.findById(postId)
+    const post = await Post.findById(postId);
     if (!post) {
-      throw Boom.badRequest('Not found post')
+      throw Boom.badRequest('Not found post');
     }
 
     const data = {
@@ -23,9 +25,9 @@ exports.createComment = async (req, res, next) => {
       user: user._id,
       parentId: null,
       replyToComment: null
-    }
+    };
 
-    const comment = new Comment(data)
+    const comment = new Comment(data);
     let promises = [
       Post.findByIdAndUpdate(
         postId,
@@ -35,42 +37,45 @@ exports.createComment = async (req, res, next) => {
         { new: true },
       ),
       comment.save()
-    ]
+    ];
 
-    const [_, savedComment] = await Promise.all(promises)
+    const [_, savedComment] = await Promise.all(promises);
 
     if (!savedComment) {
-      throw Boom.badRequest('Make comment failed')
+      throw Boom.badRequest('Make comment failed');
     }
+
+    redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify(data));
 
     return res
       .status(200)
-      .json({ status: 200, data: savedComment })
+      .json({ status: 200, data: savedComment });
 
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.replyComment = async (req, res, next) => {
   try {
     const user = req.user;
-    const { commentId } = req.params
-    const { content } = req.body
+    const { commentId } = req.params;
+    const { content } = req.body;
 
-    const parentComment = await Comment.findById(commentId).lean()
+    const parentComment = await Comment.findById(commentId).lean();
     if (!parentComment) {
-      throw Boom.badRequest('Not found comment to reply')
+      throw Boom.badRequest('Not found comment to reply');
     }
 
     const data = {
+      postId: parentComment.postId,
       content,
       user: user._id,
       parentId: parentComment._id,
       replyToComment: parentComment._id
-    }
+    };
 
-    const comment = new Comment(data)
+    const comment = new Comment(data);
 
     const promises = [
       comment.save(),
@@ -79,38 +84,44 @@ exports.replyComment = async (req, res, next) => {
         { $push: { childComments: comment._id } },
         { new: true }
       )
-    ]
+    ];
 
-    const [_, newComment] = await Promise.all(promises)
+    const [_, newComment] = await Promise.all(promises);
+
+    redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify({
+      ...data,
+      postId: parentComment.postId
+    }));
     return res
       .status(200)
-      .json({ status: 200, data: comment })
+      .json({ status: 200, data: comment });
 
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.threadReplyComment = async (req, res, next) => {
   try {
     const user = req.user;
-    const { commentId, parentId } = req.params
-    const { content } = req.body
+    const { commentId, parentId } = req.params;
+    const { content } = req.body;
 
-    const [parentComment, comment] = [Comment.findById(parentId).lean(), Comment.findById(commentId).lean()]
+    const parentComment = await Comment.findById(parentId).lean()
+    const comment = await  Comment.findById(commentId).lean()
 
     if (!parentComment || !comment) {
-      throw Boom.badRequest("Not found thread or comment to reply")
+      throw Boom.badRequest("Not found thread or comment to reply");
     }
-
     const data = {
+      postId: parentComment.postId,
       content,
       user: user._id,
       parentId: parentId,
       replyToComment: commentId
-    }
+    };
 
-    const newComment = new Comment(data)
+    const newComment = new Comment(data);
 
     const promises = [
       newComment.save(),
@@ -119,26 +130,32 @@ exports.threadReplyComment = async (req, res, next) => {
         { $push: { childComments: newComment._id } },
         { new: true }
       )
-    ]
+    ];
 
-    const [_, createdComment] = await Promise.all(promises)
+    const [_, createdComment] = await Promise.all(promises);
+
+    redis.publish(configVar.SOCKET_THREAD_NEW_REPLY_COMMENT, JSON.stringify({
+      ...data,
+      postId: parentComment.postId
+    }));
+
     return res
       .status(200)
-      .json({ status: 200, data: newComment })
+      .json({ status: 200, data: newComment });
 
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.editComment = async (req, res, next) => {
   try {
     const comment = await Comment.findOne({
       _id: req.params.commentId,
       user: req.user._id,
-    })
+    });
     if (!comment) {
-      throw Boom.badRequest('Not found comment')
+      throw Boom.badRequest('Not found comment');
     }
 
     const updatedComment = await Comment.findByIdAndUpdate(
@@ -147,24 +164,28 @@ exports.editComment = async (req, res, next) => {
         $set: { content: req.body.content }
       },
       { new: true }
-    )
+    );
 
     if (!updatedComment) {
-      throw Boom.badRequest('Edit comment failed')
+      throw Boom.badRequest('Edit comment failed');
     }
+
+    redis.publish(configVar.SOCKET_EDIT_COMMENT, JSON.stringify({
+      ...data,
+      postId: comment.postId
+    }));
 
     return res
       .status(200)
       .json({ status: 200, data: updatedComment });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.deleteComment = async (req, res, next) => {
   try {
-    console.log('here')
-    const { commentId } = req.params
+    const { commentId } = req.params;
     const comment = await Comment.findById(commentId)
       .lean()
       .populate({
@@ -174,9 +195,9 @@ exports.deleteComment = async (req, res, next) => {
       .populate({
         path: 'parentId',
         select: '_id'
-      })
+      });
     if (!comment) {
-      throw Boom.badRequest('Not found comment')
+      throw Boom.badRequest('Not found comment');
     }
 
     let promises = [
@@ -188,7 +209,7 @@ exports.deleteComment = async (req, res, next) => {
         { new: true },
       ),
       Comment.findByIdAndDelete(commentId).lean(),
-    ]
+    ];
 
     if (comment.parentId && comment.parentId._id) {
       promises.push(
@@ -199,31 +220,36 @@ exports.deleteComment = async (req, res, next) => {
           },
           { new: true },
         ),
-      )
+      );
     }
-    const [deleteInPost, deletedComment] = await Promise.all(promises)
+    const [deleteInPost, deletedComment] = await Promise.all(promises);
 
     if (!deletedComment || !deleteInPost) {
-      throw Boom.badRequest('Delete comment failed')
+      throw Boom.badRequest('Delete comment failed');
     }
+
+    redis.publish(configVar.SOCKET_DELETE_COMMENT, JSON.stringify({
+      ...data,
+      postId: comment.postId
+    }));
 
     return res
       .status(200)
       .json({ status: 200, message: 'Delete comment success' });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.getComments = async (req, res, next) => {
   try {
     const {
       query: { page, limit },
       params: { commentId }
-    } = req
+    } = req;
 
-    const [_page, _limit] = Utils.post.standardizePageLimitComment5(page, limit)
-    console.log(_page, _limit)
+    const [_page, _limit] = Utils.post.standardizePageLimitComment5(page, limit);
+    console.log(_page, _limit);
 
     const [comment, counter] = await Promise.all([
       Comment.findById(commentId)
@@ -248,10 +274,10 @@ exports.getComments = async (req, res, next) => {
           }
         }
       ])
-    ])
+    ]);
 
     if (!comment) {
-      throw Boom.badRequest('Not found comment')
+      throw Boom.badRequest('Not found comment');
     }
 
     return res
@@ -260,10 +286,10 @@ exports.getComments = async (req, res, next) => {
         status: 200,
         metadata: Utils.post.getmetadata(_page, _limit, counter[0].childComments),
         data: comment.childComments
-      })
+      });
 
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 

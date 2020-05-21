@@ -8,6 +8,7 @@ const generateToken = (user, option) => {
   let ttl = option.ttl || 7200; // 1hour default
   let claims = {
     id: user._id,
+    username: user.username,
     email: user.email,
   };
   return jwt.sign(claims, jwt_secret + salt, {

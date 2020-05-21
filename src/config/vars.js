@@ -1,11 +1,12 @@
-const path = require('path')
-let mode = process.env.NODE_ENV || 'local'
-let _path = `${path.join(__dirname, '../../.env')}.${mode}`
+const path = require('path');
+let mode = process.env.NODE_ENV || 'local';
+let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
 
-require('dotenv').config({ path: _path })
+require('dotenv').config({ path: _path });
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
   port: process.env.PORT,
+  socket_port: process.env.PORT_SOCKET,
   admin_port: process.env.ADMIN_PORT,
   jwt_secret: process.env.JWT_SECRET,
   prefix: process.env.PREFIX,
@@ -96,7 +97,7 @@ module.exports = {
         },
         prefix: '@@user_',
       },
-    } ,
+    },
     CLOUDINARY_QUEUE: {
       name: 'cloudinary',
       options: {
@@ -116,7 +117,7 @@ module.exports = {
         },
         prefix: '@@fileReference_',
       },
-    } 
+    }
   },
   redisConfig: {
     host: process.env.REDIS_HOST,
@@ -144,4 +145,12 @@ module.exports = {
   DEFAULT_AVATAR_GIRL_4: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965754/default_avatar_girl_4.png',
   DEFAULT_AVATAR_UNKNOWN_1: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965648/default_avatar_unknow_1.png',
   DEFAULT_AVATAR_UNKNOWN_2: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965594/default_avatar_unknown_2.png',
+  SOCKET_USER_CONNECTIONS: 'USER_CONNECTIONS',
+  SOCKET_ONLINE_MEMBERS: 'ONLINE_MEMBERS',
+  SOCKET_NEW_COMMENT: 'NEW_COMMENT',
+  SOCKET_NEW_REPLY_COMMENT: 'NEW_REPLY_COMMENT',
+  SOCKET_THREAD_NEW_REPLY_COMMENT: 'THREAD_NEW_REPLY_COMMENT',
+  SOCKET_DELETE_COMMENT: 'DELETE_COMMENT',
+  SOCKET_EDIT_COMMENT: 'EDIT_COMMENT',
+  SOCKET_LOAD_MORE_COMMENTS: 'LOAD_MORE_COMMENTS'
 };

@@ -77,7 +77,7 @@ let forgotPasswordValidate = (req, res, next) => {
           message: 'Password must include lower, uppper characters and number',
         };
       }),
-    emailCode: Joi.number().required(),
+    code: Joi.number().required(),
     email: Joi.string()
       .regex(/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
       .required()
