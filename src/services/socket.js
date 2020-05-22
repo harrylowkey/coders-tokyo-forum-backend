@@ -60,6 +60,7 @@ let start = () => {
     io.emit(configVar.SOCKET_USER_CONNECTIONS, { connections: counter, online: Object.keys(app.storage.userIdAndSocketId).length });
 
     socket.on('auth', (token) => {
+      if (!token) return
       socketAuth(socket, token);
       io.emit(configVar.SOCKET_USER_CONNECTIONS, { connections: counter, online: Object.keys(app.storage.userIdAndSocketId).length });
     });

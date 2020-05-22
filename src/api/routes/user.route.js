@@ -51,10 +51,10 @@ router
 
 router
   .route('/:userId/followers')
-  .get(checkAccessToken, UserController.getFollowers);
+  .get(UserController.getFollowers);
 
 router
   .route('/:userId/following')
-  .get(checkAccessToken, UserController.getFollowing);
+  .get(UserController.getFollowing);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const { Comment, Post } = require('@models');
+const { Comment, Post, User } = require('@models');
 const Utils = require('@utils');
 const mongoose = require('mongoose');
 const configVar = require('@configVar');
@@ -10,7 +10,11 @@ exports.createComment = async (req, res, next) => {
     const { content } = req.body;
     const { postId } = req.params;
 
-    const user = req.user;
+    const userId = req.user._id;
+    const user = await User.findById(userId).lean().populate({
+      path: 'avatar',
+      select: '_id secureURL'
+    }).select('_id username avatar');
     if (!user) {
       throw Boom.badRequest('Please login to comment');
     }
@@ -22,7 +26,7 @@ exports.createComment = async (req, res, next) => {
     const data = {
       postId,
       content,
-      user: user._id,
+      user: userId,
       parentId: null,
       replyToComment: null
     };
@@ -44,8 +48,18 @@ exports.createComment = async (req, res, next) => {
     if (!savedComment) {
       throw Boom.badRequest('Make comment failed');
     }
-
-    redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify(data));
+    const dataSocket = {
+      _id: savedComment._id,
+      childComments: [],
+      content: savedComment.content,
+      createdAt: savedComment.createdAt,
+      parentId: null,
+      replyToComment: null,
+      postId,
+      user,
+      type: 'comment'
+    };
+    redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify(dataSocket));
 
     return res
       .status(200)
@@ -58,11 +72,18 @@ exports.createComment = async (req, res, next) => {
 
 exports.replyComment = async (req, res, next) => {
   try {
-    const user = req.user;
+    const userId = req.user._id;
+    const user = await User.findById(userId).lean().populate({
+      path: 'avatar',
+      select: '_id secureURL'
+    }).select('_id username avatar');
     const { commentId } = req.params;
     const { content } = req.body;
 
-    const parentComment = await Comment.findById(commentId).lean();
+    const parentComment = await Comment.findById(commentId).lean().populate({
+      path: 'user',
+      select: '_id username createdAt',
+    });
     if (!parentComment) {
       throw Boom.badRequest('Not found comment to reply');
     }
@@ -70,9 +91,9 @@ exports.replyComment = async (req, res, next) => {
     const data = {
       postId: parentComment.postId,
       content,
-      user: user._id,
+      user: userId,
       parentId: parentComment._id,
-      replyToComment: parentComment._id
+      replyToComment: parentComment._id,
     };
 
     const comment = new Comment(data);
@@ -86,15 +107,28 @@ exports.replyComment = async (req, res, next) => {
       )
     ];
 
-    const [_, newComment] = await Promise.all(promises);
+    const [newComment] = await Promise.all(promises);
+
+    let dataRes = {
+      _id: newComment._id,
+      childComments: [],
+      postId: newComment.postId,
+      parentId: newComment.parentId,
+      replyToComment: parentComment,
+      content: newComment.content,
+      user,
+      createdAt: newComment.createdAt,
+      type: 'replyComment'
+    };
 
     redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify({
-      ...data,
+      ...dataRes,
       postId: parentComment.postId
     }));
+
     return res
       .status(200)
-      .json({ status: 200, data: comment });
+      .json({ status: 200, data: dataRes });
 
   } catch (error) {
     return next(error);
@@ -103,12 +137,19 @@ exports.replyComment = async (req, res, next) => {
 
 exports.threadReplyComment = async (req, res, next) => {
   try {
-    const user = req.user;
+    const userId = req.user._id;
+    const user = await User.findById(userId).lean().populate({
+      path: 'avatar',
+      select: '_id secureURL'
+    }).select('_id username avatar');
     const { commentId, parentId } = req.params;
     const { content } = req.body;
 
     const parentComment = await Comment.findById(parentId).lean();
-    const comment = await Comment.findById(commentId).lean();
+    const comment = await Comment.findById(commentId).lean().populate({
+      path: 'user',
+      select: '_id username createdAt',
+    });
 
     if (!parentComment || !comment) {
       throw Boom.badRequest("Not found thread or comment to reply");
@@ -116,7 +157,7 @@ exports.threadReplyComment = async (req, res, next) => {
     const data = {
       postId: parentComment.postId,
       content,
-      user: user._id,
+      user: userId,
       parentId: parentId,
       replyToComment: commentId
     };
@@ -132,16 +173,29 @@ exports.threadReplyComment = async (req, res, next) => {
       )
     ];
 
-    const [_, createdComment] = await Promise.all(promises);
+    const [createdComment, _] = await Promise.all(promises);
 
-    redis.publish(configVar.SOCKET_THREAD_NEW_REPLY_COMMENT, JSON.stringify({
-      ...data,
+    let dataRes = {
+      _id: createdComment._id,
+      childComments: [],
+      postId: createdComment.postId,
+      parentId: createdComment.parentId,
+      thread: parentComment,
+      replyToComment: comment,
+      content: createdComment.content,
+      user,
+      createdAt: createdComment.createdAt,
+      type: 'threadReplyComment'
+    };
+
+    redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify({
+      ...dataRes,
       postId: parentComment.postId
     }));
 
     return res
       .status(200)
-      .json({ status: 200, data: newComment });
+      .json({ status: 200, data: dataRes });
 
   } catch (error) {
     return next(error);
@@ -228,10 +282,20 @@ exports.deleteComment = async (req, res, next) => {
       throw Boom.badRequest('Delete comment failed');
     }
 
-    redis.publish(configVar.SOCKET_DELETE_COMMENT, JSON.stringify({
-      ...data,
-      postId: comment.postId
-    }));
+    if (comment.parentId && comment.parentId._id) {
+      redis.publish(configVar.SOCKET_DELETE_COMMENT, JSON.stringify({
+        commentId,
+        parentId: comment.parentId._id,
+        postId: comment.postId._id,
+        type: 'replyComment'
+      }));
+    } else {
+      redis.publish(configVar.SOCKET_DELETE_COMMENT, JSON.stringify({
+        commentId,
+        postId: comment.postId._id,
+        type: 'comment'
+      }));
+    }
 
     return res
       .status(200)

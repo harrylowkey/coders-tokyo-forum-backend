@@ -5,7 +5,7 @@ const { jwt_secret, expired_time_token, REDIS_EXPIRE_TOKEN_KEY } = require('@con
 const generateToken = (user, option) => {
   option = option || {};
   let salt = option.salt || '';
-  let ttl = option.ttl || 7200; // 1hour default
+  let ttl = option.ttl || 7200; // 2hour default
   let claims = {
     id: user._id,
     username: user.username,

@@ -1,8 +1,8 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
 const User = require('@models').User;
-const { CloudinaryService } = require('@services')
-const { CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE } = require('@bull')
+const { CloudinaryService } = require('@services');
+const { CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE } = require('@bull');
 
 exports.getById = async (req, res, next) => {
   try {
@@ -12,15 +12,15 @@ exports.getById = async (req, res, next) => {
       .populate({
         path: 'avatar',
         select: '-__v -user'
-      })
+      });
 
-    if (!user) throw Boom.badRequest('Not found user')
+    if (!user) throw Boom.badRequest('Not found user');
     return res.status(200).json({
       status: 200,
       data: user,
     });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 };
 
@@ -34,15 +34,15 @@ exports.getByUsername = async (req, res, next) => {
       .populate({
         path: 'avatar',
         select: '-__v -user'
-      })
+      });
 
-    if (!user) throw Boom.badRequest('Not found user')
+    if (!user) throw Boom.badRequest('Not found user');
     return res.status(200).json({
       status: 200,
       data: user,
     });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 };
 
@@ -59,7 +59,7 @@ exports.updateProfile = async (req, res, next) => {
     if (job) data.job = job;
     if (hobbies) data.hobbies = hobbies;
     if (socialLinks) data.socialLinks = socialLinks;
-    if (description) data.description = description
+    if (description) data.description = description;
     const result = await User.findByIdAndUpdate(
       req.user._id,
       { $set: data },
@@ -69,7 +69,7 @@ exports.updateProfile = async (req, res, next) => {
       .select('-__v -password -verifyCode');
 
     if (!result) {
-      throw Boom.badRequest('Update profile failed')
+      throw Boom.badRequest('Update profile failed');
     }
 
     return res.status(200).json({
@@ -78,7 +78,7 @@ exports.updateProfile = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 };
 
@@ -110,18 +110,18 @@ exports.updateProfile = async (req, res, next) => {
  */
 exports.uploadAvatar = async (req, res, next) => {
   try {
-    const { avatar } = req.body
+    const { avatar } = req.body;
     const user = await User.findById(req.user._id)
       .lean()
       .populate({
         path: 'avatar'
-      })
+      });
     if (!user) {
-      throw Boom.badRequest('Not found user')
+      throw Boom.badRequest('Not found user');
     }
 
     if (user.avatar.publicId) {
-      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: user.avatar.publicId })
+      CLOUDINARY_QUEUE.deleteAsset.add({ publicId: user.avatar.publicId });
     }
 
     const updatedAvatar = await User.findByIdAndUpdate(
@@ -130,7 +130,7 @@ exports.uploadAvatar = async (req, res, next) => {
         $set: { avatar },
       },
       { new: true },
-    )
+    );
 
     if (!updatedAvatar) {
       throw Boom.badRequest('Upload avatar failed');
@@ -157,17 +157,17 @@ exports.deleteFile = async (req, res, next) => {
       .lean()
       .populate({
         path: 'avatar'
-      })
+      });
     if (!user) {
-      throw Boom.badRequest('Not found user')
+      throw Boom.badRequest('Not found user');
     }
-    const avatar = user.avatar
+    const avatar = user.avatar;
     if (!avatar) {
-      throw Boom.badRequest('Deleted avatar failed, not found avatar')
+      throw Boom.badRequest('Deleted avatar failed, not found avatar');
     }
 
-    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: avatar.publicId })
-    FILE_REFERENCE_QUEUE.deleteFile.add({ avatar })
+    CLOUDINARY_QUEUE.deleteAsset.add({ publicId: avatar.publicId });
+    FILE_REFERENCE_QUEUE.deleteFile.add({ avatar });
 
     const deletedAva = await User.findByIdAndUpdate(
       req.user._id,
@@ -175,10 +175,10 @@ exports.deleteFile = async (req, res, next) => {
         $set: { avatar: null }
       },
       { new: true }
-    )
+    );
 
     if (!deletedAva) {
-      throw Boom.badRequest('Deleted avatar failed')
+      throw Boom.badRequest('Deleted avatar failed');
     }
 
     return res.status(200).json({
@@ -197,28 +197,28 @@ exports.getByUsername = async (req, res, next) => {
       .populate({
         path: 'avatar',
         select: '-__v -user'
-      })
-    if (!user) throw Boom.badRequest('Not found user')
+      });
+    if (!user) throw Boom.badRequest('Not found user');
     return res.status(200).json({
       status: 200,
       data: user
-    })
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 
 exports.follow = async (req, res, next) => {
   try {
-    const user = req.user
-    const userToFollow = await User.findById(req.params.userId).lean()
+    const user = req.user;
+    const userToFollow = await User.findById(req.params.userId).lean();
     if (!userToFollow) {
-      throw Boom.badRequest('Not found user to follow')
+      throw Boom.badRequest('Not found user to follow');
     }
 
     if (user._id.toString() === userToFollow._id.toString()) {
-      throw Boom.badRequest('Can not follow yourself')
+      throw Boom.badRequest('Can not follow yourself');
     }
 
     const [updateFollwing, updateFollowers] = await Promise.all([
@@ -234,31 +234,31 @@ exports.follow = async (req, res, next) => {
         },
         { new: true },
       )
-    ])
-    
+    ]);
+
     if (!updateFollowers || !updateFollwing) {
-      throw Boom.badRequest('Follow failed')
+      throw Boom.badRequest('Follow failed');
     }
 
     return res.status(200).json({
       status: 200,
       message: 'Follow success'
-    }) 
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.unfollow = async (req, res, next) => {
   try {
-    const user = req.user
-    const userToUnfollow = await User.findById(req.params.userId).lean()
+    const user = req.user;
+    const userToUnfollow = await User.findById(req.params.userId).lean();
     if (!userToUnfollow) {
-      throw Boom.badRequest('Not found user to unfollow')
+      throw Boom.badRequest('Not found user to unfollow');
     }
 
     if (user._id.toString() === userToUnfollow._id.toString()) {
-      throw Boom.badRequest('Can not unfollow yourself')
+      throw Boom.badRequest('Can not unfollow yourself');
     }
 
     const [updateFollwing, updateFollowers] = await Promise.all([
@@ -274,55 +274,63 @@ exports.unfollow = async (req, res, next) => {
         },
         { new: true },
       )
-    ])
+    ]);
 
     if (!updateFollowers || !updateFollwing) {
-      throw Boom.badRequest('Follow failed')
+      throw Boom.badRequest('Follow failed');
     }
 
     return res.status(200).json({
       status: 200,
       message: 'Unfollow success'
-    }) 
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.getFollowers = async (req, res, next) => {
   try {
-    const user = req._user
-    const followers = await User.findById(user._id)
+    const userId = req.params.userId;
+    const user = await User.findById(userId)
       .lean()
       .populate({
         path: 'followers',
-        select: '_id username'
-      })
+        select: '_id username avatar',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
+      });
 
     return res.status(200).json({
       status: 200,
-      data: followers
-    }) 
+      data: user.followers
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
 
 exports.getFollowing = async (req, res, next) => {
   try {
-    const user = req._user
-    const following = await User.findById(user._id)
+    const userId = req.params.userId;
+    const user = await User.findById(userId)
       .lean()
       .populate({
-        path: 'followers',
-        select: '_id username'
-      })
+        path: 'following',
+        select: '_id username avatar',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
+      });
 
     return res.status(200).json({
       status: 200,
-      data: following
-    }) 
+      data: user.following
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-}
+};
