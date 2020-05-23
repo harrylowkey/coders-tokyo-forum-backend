@@ -1,4 +1,4 @@
-FROM node:13.14.0
+FROM node:10.16.0
 
 ENV HOME=/home/node
 
