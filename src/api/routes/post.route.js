@@ -210,4 +210,8 @@ router
   .route('/audios/trending')
   .get(MediaController.trendingAudio);
 
+router
+  .route('/recommend/users/:userId')
+  .get(paginate({ limit: 3 }), PostController.getRecommendPosts);
+
 module.exports = router;

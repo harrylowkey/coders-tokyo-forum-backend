@@ -47,7 +47,6 @@ redisSub.subscribe(configVar.SOCKET_EDIT_COMMENT)
 
 redisSub.on('message', (channel, message) => {
   message = JSON.parse(message)
-  console.log(message, channel + '_POST_ID_' + message.postId)
   io.emit(`${channel}_POST_ID_${message.postId}`, message)
 });
 

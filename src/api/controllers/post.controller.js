@@ -198,6 +198,112 @@ exports.getOnePost = async (req, res, next) => {
   }
 };
 
+exports.getRecommendPosts = async (req, res, next) => {
+  try {
+    const {
+      query: { type },
+    } = req;
+
+    if (!type) {
+      throw Boom.badRequest('Type query is required');
+    }
+    if (!types.includes(type)) {
+      throw Boom.badRequest(`This ${type} type is not supported yet`);
+    }
+
+    let populateQuery = [
+      {
+        path: 'tags',
+        select: 'tagName _id',
+      },
+      {
+        path: 'likes',
+        select: 'username _id',
+      },
+      {
+        path: 'cover',
+        select: '_id secureURL',
+      },
+      {
+        path: 'comments',
+        select: '-__v',
+        populate: {
+          path: 'user',
+        }
+      },
+      {
+        path: 'user',
+        select: '_id username job createdAt description sex followers following avatar socialLinks',
+        populate: {
+          path: 'avatar',
+          select: '_id secureURL'
+        }
+      },
+      {
+        path: 'media',
+      },
+    ];
+
+    let negativeQuery = '-__v ';
+
+    let limit = 3;
+    switch (type) {
+      case 'blog':
+        negativeQuery += '-authors -url -media';
+        populateQuery.push({ path: 'cover' });
+        break;
+      case 'book':
+        populateQuery.push({ path: 'authors', select: 'name' });
+        negativeQuery += '-url -media';
+        break;
+      case 'food':
+        negativeQuery += '-authors -media';
+        break;
+      case 'movie':
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-media';
+        break;
+      case 'video':
+        negativeQuery += '-authors';
+        populateQuery.push({ path: 'cover' });
+        break;
+      case 'podcast':
+        limit = 4;
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+        break;
+      case 'song':
+        limit = 4;
+        populateQuery.push({ path: 'authors', select: 'name type' });
+        negativeQuery += '-url';
+        break;
+      case 'discussion':
+        negativeQuery += '-url -media -authors';
+        break;
+    }
+console.log(req.query.postId)
+    let query = { 
+      type, 
+      user: req.params.userId,
+      _id: { $ne: req.query.postId }
+    };
+
+    const posts = await Post.find(query)
+      .lean()
+      .limit(limit)
+      .populate(populateQuery)
+      .select(negativeQuery)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      status: 200,
+      data: posts,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.getPosts = async (req, res, next) => {
   try {
     const {
