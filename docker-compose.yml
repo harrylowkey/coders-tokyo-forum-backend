@@ -1,14 +1,43 @@
 version: '3'
 services:
   api:
-    build: .
+    image: hongquangraem/forum-nodejs:05232020.prod.3
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=${NODE_ENV}
     restart: always
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "100M"
-        max-file: "3"
+        max-size: '100M'
+        max-file: '3'
+  mongo:
+    image: bitnami/mongodb:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./mongodo-data/:/data/
+    hostname: mongo
+    restart: always
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100M'
+        max-file: '3'
+  redis:
+    image: bitnami/redis:4.0.14
+    environment:
+      - REDIS_PASSWORD=coderx-forumqwertyzxcvb
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis-data/:/data/
+    hostname: redis
+    restart: always
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100M'
+        max-file: '3'
+      

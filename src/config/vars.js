@@ -1,6 +1,7 @@
 const path = require('path');
 let mode = process.env.NODE_ENV || 'local';
 let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
+console.log('************NODE_ENV******', _path)
 
 require('dotenv').config({ path: _path });
 module.exports = {
