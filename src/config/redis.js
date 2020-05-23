@@ -1,7 +1,6 @@
 let Redis = require('ioredis');
 let zlib = require('zlib');
 const configVar = require('@configVar');
-
 let redis = new Redis(configVar.redis_uri);
 
 let redisPrefix = configVar.redisPrefix || 'CodersX-Forum';;
