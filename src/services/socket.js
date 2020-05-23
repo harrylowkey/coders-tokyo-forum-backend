@@ -4,7 +4,7 @@ var io = require('socket.io')(http);
 const configVar = require('@configVar');
 const jwt = require('jsonwebtoken');
 const Redis = require('ioredis');
-const redisSub = new Redis()
+const redisSub = new Redis(configVar.redis_uri)
 
 let counter = 0;
 const port = configVar.socket_port || 8888;
