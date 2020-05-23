@@ -3,11 +3,13 @@ const httpStatus = require('http-status');
 const bcrypt = require('bcrypt');
 const Utils = require('@utils');
 const User = require('@models').User;
-const Redis = require('@redis')
-const Promise = require('bluebird');
+const File = require('@models').File;
+const Redis = require('@redis');
 const { REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 const { EMAIL_QUEUE } = require('@bull');
-const { MailerService } = require('@services')
+const { MailerService } = require('@services');
+const configVar = require('@configVar');
+
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -43,24 +45,55 @@ exports.login = async (req, res, next) => {
 };
 
 exports.register = async (req, res, next) => {
-  const isExistingEmail = await User.findOne({ email: req.body.email });
   try {
+    const isExistingEmail = await User.findOne({ email: req.body.email });
     if (isExistingEmail) throw Boom.conflict('Email already existed');
 
-    await Utils.validator.validatePassword(req.body.password)
-    const newUser = await User.create(req.body)
+    if (req.body.username.length > 20) {
+      throw Boom.badRequest('Username should be less than 20 characters');
+    }
 
-    if (!newUser) throw Boom.badRequest('Sign up failed')
+    if (req.body.username.indexOf(' ') >= 0) {
+      throw Boom.badRequest('Username should not have blank space');
+    }
+    const isExistingUsername = await User.findOne({ username: req.body.username });
+    if (isExistingUsername) {
+      throw Boom.conflict('Username is existed');
+    }
+
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
+    let redisCode = await Redis.getCache({
+      key: redisKey
+    });
+
+    if (!redisCode || redisCode != req.body.code) {
+      throw Boom.badRequest('Invalid or expired code');
+    }
+
+    if (req.body.confirmPassword !== req.body.password) {
+      throw Boom.badRequest('Confirm password is not matched');
+    }
+
+    await Utils.validator.validatePassword(req.body.password);
+
+    const userIntance = await new User(req.body);
+
+    let sex = req.body.sex || 'Unknown';
+    userIntance.avatar = await genDefaultAvatar(sex, userIntance._id);
+
+    const newUser = await userIntance.save();
+
+    if (!newUser) throw Boom.badRequest('Sign up failed');
     newUser.password = undefined;
     newUser.__v = undefined;
 
     let mailData = {
       to: req.body.email,
       name: req.body.username,
-    }
-    EMAIL_QUEUE.sendWelcomeEmail.add(mailData)
-    MailerService.sendEmail(mailData, 'SIGN_UP')
-    
+    };
+    EMAIL_QUEUE.sendWelcomeEmail.add(mailData);
+    MailerService.sendEmail(mailData, 'SIGN_UP');
+
     return res.status(httpStatus.OK).json({
       status: 200,
       message: 'Register successfully',
@@ -73,15 +106,12 @@ exports.register = async (req, res, next) => {
 exports.sendEmailVerifyCode = async (req, res, next) => {
   const { email } = req.body;
   try {
-    const user = await User.findOne({ email }).lean();
-    if (!user) throw Boom.badRequest('Not found user');
-
-    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email])
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email]);
     let emailCode = await Redis.getCache({
       key: redisKey
-    })
+    });
 
-    if (emailCode) throw Boom.badRequest('Please wait 5 minutes!')
+    if (emailCode) throw Boom.badRequest('Please wait 5 minutes!');
 
     const verifyCode = Math.floor(Math.random() * (99999 - 10000)) + 100000;
     await Redis.setCache({
@@ -90,14 +120,14 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
       isJSON: false,
       isZip: false,
       ttl: 5 * 60
-    })
+    });
 
     let mailData = {
       to: email,
       verifyCode
-    }
+    };
 
-    EMAIL_QUEUE.sendEmailCode.add(mailData)
+    EMAIL_QUEUE.sendEmailCode.add(mailData);
     return res.status(200).json({
       status: 200,
       message: 'Send email verify code successfully',
@@ -108,26 +138,32 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
-  let { newPassword, confirmPassword, emailCode, email } = req.body;
+  let { newPassword, confirmPassword, code, email } = req.body;
   try {
-    email = email.trim().toLowerCase()
-    let user = await User.findOne({ email }).lean()
+    email = email.trim().toLowerCase();
+    let user = await User.findOne({ email }).lean();
+
     if (!user) {
-      throw Boom.badRequest('Not found user')
+      throw Boom.badRequest('Not found email');
     }
 
-    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
-    if (!checkVerifyCode)
-      throw Boom.badRequest('The email code is invalid or expired')
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
+    let redisCode = await Redis.getCache({
+      key: redisKey
+    });
+
+    if (!redisCode || redisCode != code) {
+      throw Boom.badRequest('Invalid or expired code');
+    }
 
     if (newPassword !== confirmPassword) {
       throw Boom.badRequest(`Confirm password isn't matched`);
     }
 
-    Utils.validator.validatePassword(newPassword)
+    Utils.validator.validatePassword(newPassword);
 
     const hashPassword = bcrypt.hashSync(newPassword, 10);
-    await User.findByIdAndUpdate( 
+    await User.findByIdAndUpdate(
       user._id,
       {
         $set: { password: hashPassword }
@@ -145,24 +181,29 @@ exports.forgotPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
   try {
-    const { oldPassword, newPassword, confirmPassword, emailCode } = req.body;
+    const { oldPassword, newPassword, confirmPassword, email, code } = req.body;
     const userId = req.user._id;
-    const user = await User.findById(userId).lean()
+    const user = await User.findById(userId).lean();
 
-    let checkVerifyCode = await Utils.email.checkCodeByEmail(user.email, emailCode)
-    if (!checkVerifyCode)
-      throw Boom.badRequest('The email code is invalid or expired')
-    
+    const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email]);
+    let redisCode = await Redis.getCache({
+      key: redisKey
+    });
+
+    if (!redisCode || redisCode != code) {
+      throw Boom.badRequest('Invalid or expired code');
+    }
+
     const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
     if (!isMatchedOldPass) {
-      throw Boom.badRequest('Wrong old password, change password failed');
+      throw Boom.badRequest('Wrong old password');
     }
 
     if (newPassword !== confirmPassword) {
       throw Boom.badRequest('Confirm password is wrong');
     }
 
-    Utils.validator.validatePassword(newPassword)
+    Utils.validator.validatePassword(newPassword);
 
     const hashPassword = bcrypt.hashSync(newPassword, 10);
     await User.findByIdAndUpdate(
@@ -175,13 +216,13 @@ exports.changePassword = async (req, res, next) => {
       { new: true },
     );
 
-    const expireTokenKey = await Redis.makeKey([REDIS_EXPIRE_TOKEN_KEY, user._id])
+    const expireTokenKey = await Redis.makeKey([REDIS_EXPIRE_TOKEN_KEY, user._id]);
     await Redis.setCache({
       key: expireTokenKey,
       value: Math.floor(Date.now() / 1000),
       isJSON: false,
       isZip: false,
-    })
+    });
 
     return res
       .status(200)
@@ -189,4 +230,44 @@ exports.changePassword = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+};
+
+const genDefaultAvatar = async (sex, userId) => {
+  let min;
+  let max;
+  switch (sex) {
+    case 'Unknown':
+      min = 1;
+      max = 2;
+      break;
+    case 'Male':
+      min = 1;
+      max = 7;
+      break;
+    case 'Female':
+      min = 1;
+      max = 4;
+    default:
+      break;
+  }
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+  let secureURL = '';
+  if (sex === 'Unknown') {
+    secureURL = configVar[`DEFAULT_AVATAR_UNKNOWN_${randomNumber}`];
+  }
+
+  if (sex === 'Male') {
+    secureURL = configVar[`DEFAULT_AVATAR_BOY_${randomNumber}`];
+  }
+
+  if (sex === 'Female') {
+    secureURL = configVar[`DEFAULT_AVATAR_GIRL_${randomNumber}`];
+  }
+
+  let avatar = await new File({
+    secureURL,
+    user: userId
+  }).save();
+
+  return avatar;
 };

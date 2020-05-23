@@ -1,11 +1,12 @@
-const path = require('path')
-let mode = process.env.NODE_ENV || 'local'
-let _path = `${path.join(__dirname, '../../.env')}.${mode}`
+const path = require('path');
+let mode = process.env.NODE_ENV || 'local';
+let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
 
-require('dotenv').config({ path: _path })
+require('dotenv').config({ path: _path });
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
   port: process.env.PORT,
+  socket_port: process.env.PORT_SOCKET,
   admin_port: process.env.ADMIN_PORT,
   jwt_secret: process.env.JWT_SECRET,
   prefix: process.env.PREFIX,
@@ -35,12 +36,6 @@ module.exports = {
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
     chunk_size: 6000000, //6mb
-    transformation: [
-      {
-        width: 1080,
-        height: 730,
-      },
-    ],
   },
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',
@@ -54,11 +49,7 @@ module.exports = {
       {
         width: 400,
         height: 400,
-        gravity: 'face',
-        radius: 'max',
-        crop: 'crop',
-      },
-      { width: 200, crop: 'scale' },
+      }
     ],
   },
   foodPhotosConfig: {
@@ -72,10 +63,19 @@ module.exports = {
     // async: true,
     transformation: [
       {
-        width: 760,
-        height: 760,
+        width: 960,
+        height: 960,
       },
     ],
+  },
+  photoConfig: {
+    folder: 'Coders-Tokyo-Forum/posts',
+    use_filename: false,
+    unique_filename: true,
+    resource_type: 'image',
+    allowedFormats: ['jpg', 'png', 'jpeg'],
+    chunk_size: 6000000, //6mb,
+    maxPhotos: 10,
   },
   QUEUES: {
     EMAIL_QUEUE: {
@@ -97,7 +97,7 @@ module.exports = {
         },
         prefix: '@@user_',
       },
-    } ,
+    },
     CLOUDINARY_QUEUE: {
       name: 'cloudinary',
       options: {
@@ -117,7 +117,7 @@ module.exports = {
         },
         prefix: '@@fileReference_',
       },
-    } 
+    }
   },
   redisConfig: {
     host: process.env.REDIS_HOST,
@@ -131,5 +131,24 @@ module.exports = {
     basePath: '/arena',
     disableListen: false,
   },
-  REDIS_EXPIRE_TOKEN_KEY: 'BLACKLIST_TOKEN'
+  REDIS_EXPIRE_TOKEN_KEY: 'BLACKLIST_TOKEN',
+  DEFAULT_AVATAR_BOY_1: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965814/default_avatar_boy.png',
+  DEFAULT_AVATAR_BOY_2: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965840/default_avatar_boy_2.png',
+  DEFAULT_AVATAR_BOY_3: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965728/default_avatar_boy_3.png',
+  DEFAULT_AVATAR_BOY_4: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965772/default_avatar_boy_4.png',
+  DEFAULT_AVATAR_BOY_5: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965573/default_avatar_boy_5.png',
+  DEFAULT_AVATAR_BOY_6: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965559/default_avatar_boy_6.png',
+  DEFAULT_AVATAR_BOY_7: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965495/default_avatar_boy_7.png',
+  DEFAULT_AVATAR_GIRL_1: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965680/default_avatar_girl.png',
+  DEFAULT_AVATAR_GIRL_2: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965714/default_avatar_girl_2.png',
+  DEFAULT_AVATAR_GIRL_3: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965791/default_avatar_girl_3.png',
+  DEFAULT_AVATAR_GIRL_4: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965754/default_avatar_girl_4.png',
+  DEFAULT_AVATAR_UNKNOWN_1: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965648/default_avatar_unknow_1.png',
+  DEFAULT_AVATAR_UNKNOWN_2: 'https://res.cloudinary.com/hongquangraem/image/upload/v1586965594/default_avatar_unknown_2.png',
+  SOCKET_USER_CONNECTIONS: 'USER_CONNECTIONS',
+  SOCKET_ONLINE_MEMBERS: 'ONLINE_MEMBERS',
+  SOCKET_NEW_COMMENT: 'NEW_COMMENT',
+  SOCKET_DELETE_COMMENT: 'DELETE_COMMENT',
+  SOCKET_EDIT_COMMENT: 'EDIT_COMMENT',
+  SOCKET_LOAD_MORE_COMMENTS: 'LOAD_MORE_COMMENTS'
 };

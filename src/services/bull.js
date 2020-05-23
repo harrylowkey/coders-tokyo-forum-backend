@@ -21,7 +21,8 @@ const EMAIL_QUEUE = {
 EMAIL_QUEUE.sendWelcomeEmail.process(async (job, done) => {
   try {
     const { data } = job;
-    MailerService.sendEmail(data, 'SIGN_UP')
+    const result = await MailerService.sendEmail(data, 'SIGN_UP')
+    done(null, result)
   } catch (e) {
     console.log('Exception when sending welcome email queue', e);
     done(e, null);
@@ -31,7 +32,8 @@ EMAIL_QUEUE.sendWelcomeEmail.process(async (job, done) => {
 EMAIL_QUEUE.sendEmailCode.process(async (job, done) => {
   try {
     const { data } = job;
-    await MailerService.sendEmail(data, 'VERIFY_CODE');
+    const result = await MailerService.sendEmail(data, 'VERIFY_CODE');
+    done(null, result)
   } catch (e) {
     console.log('Exception when sending verify email queue', e);
     done(e, null);
@@ -55,7 +57,6 @@ CLOUDINARY_QUEUE.renameFile.process(async (job, done) => {
     const result = await cloudinary.uploader.rename(currentPath, newPath, { resource_type: resourceType });
     done(null, result)
   } catch (error) {
-    console.log('Exception when renaming file on Cloudinary', error);
     await Promise.all([
       File.findByIdAndDelete(fileId),
       Post.findByIdAndUpdate(postId, { $set: { media: null } }, { new: true }),

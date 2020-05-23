@@ -5,7 +5,8 @@ const { blogCoverConfig,
         audioConfig, 
         foodPhotosConfig, 
         videoConfig,
-        avatarConfig
+        avatarConfig,
+        photoConfig
       } = require('@configVar')
 
 exports.config = () => {
@@ -44,10 +45,14 @@ const uploadBlogCover = multer({ storage: blogCoverStorage })
 const avatarStorage = multer.diskStorage(avatarConfig)
 const uploadAvatar = multer({ storage: avatarStorage })
 
+const photoStorage = multer.diskStorage(photoConfig)
+const uploadPhoto = multer({ storage: photoStorage })
+
 exports.configMulter = {
   uploadVideo,
   uploadAudio,
   uploadFood,
   uploadAvatar,
-  uploadBlogCover
+  uploadBlogCover,
+  uploadPhoto
 }

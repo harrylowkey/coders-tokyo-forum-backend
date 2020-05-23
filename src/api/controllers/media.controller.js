@@ -2,10 +2,10 @@ const Boom = require('@hapi/boom');
 const Utils = require('@utils');
 const { Post, File } = require('@models');
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { videoConfig, audioConfig } = require('@configVar');
-const { CloudinaryService } = require('@services')
-const { FILE_REFERENCE_QUEUE } = require('@bull')
+const Redis = require('@redis');
+const { videoConfig } = require('@configVar');
+const { CloudinaryService } = require('@services');
+const { FILE_REFERENCE_QUEUE } = require('@bull');
 
 exports.createVideo = async (req, res, next, type, isUpload) => {
   const {
@@ -14,13 +14,13 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
   } = req;
   try {
     const newVideo = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
 
     // case: gán link video bên ngoài
-    let videoTags
+    let videoTags;
     if (isUpload == 'false') {
       if (tags) {
         videoTags = await Utils.post.createTags(tags);
@@ -29,26 +29,26 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
     }
 
     // case: user upload video
-    let newMedia
+    let newMedia;
     if (isUpload == 'true') {
-      const video = req.file
+      const video = req.file;
       let promises = {
         uploadedVideo: CloudinaryService.uploadMediaProcess(req.user, newVideo, video, '_video_', videoConfig)
-      }
+      };
 
       if (tags) {
-        promises.tagsCreated = Utils.post.createTags(tags)
+        promises.tagsCreated = Utils.post.createTags(tags);
       }
-      const result = await Promise.props(promises)
+      const result = await Promise.props(promises);
       if (result.tagsCreated) {
         newVideo.tags = result.tagsCreated.map(tag => tag._id);
       }
 
-      newMedia = result.uploadedVideo
+      newMedia = result.uploadedVideo;
       newVideo.media = result.uploadedVideo._id;
     }
 
-    let createdNewVideo = await newVideo.save()
+    let createdNewVideo = await newVideo.save();
     let dataRes = {
       _id: createdNewVideo._id,
       url: createdNewVideo.url || null,
@@ -59,13 +59,12 @@ exports.createVideo = async (req, res, next, type, isUpload) => {
       updatedAt: createdNewVideo.updatedAt,
       tags: videoTags || [],
       media: newMedia || null
-    }
+    };
     return res.status(200).json({
       status: 200,
       data: dataRes,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -75,12 +74,12 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
-      .populate({ path: 'media', select: 'secureURL publicId fileName' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' });
     if (!video) {
       throw Boom.badRequest('Not found video, edit video failed');
     }
@@ -105,7 +104,7 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
     }
 
     if (isUpload == 'true') {
-      const newVideo = req.file
+      const newVideo = req.file;
       if (newVideo) {
         const uploadedVideo = await
           CloudinaryService.uploadMediaProcess(req.user, video, newVideo, '_video_', videoConfig);
@@ -128,14 +127,13 @@ exports.editVideo = async (req, res, next, type, isUpload) => {
         path: 'media',
         select: '-__v'
       })
-      .select('-__v -authors')
+      .select('-__v -authors');
 
     return res.status(200).json({
       status: 200,
       data: updatedVideo,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -144,22 +142,22 @@ exports.deleteVideo = async (req, res, next, type) => {
   try {
     const video = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
-      .populate({ path: 'media' })
+      .populate({ path: 'media' });
 
     if (!video) {
       throw Boom.badRequest('Not found video');
     }
 
     if (!video.url) {
-      FILE_REFERENCE_QUEUE.deleteFile.add({ file: video.media })
+      FILE_REFERENCE_QUEUE.deleteFile.add({ file: video.media });
     }
-    const isDeleted = await Post.findByIdAndDelete(video._id)
+    const isDeleted = await Post.findByIdAndDelete(video._id);
     if (!isDeleted) {
-      throw Boom.badRequest('Delete video failed')
+      throw Boom.badRequest('Delete video failed');
     }
 
     return res.status(200).json({
@@ -172,34 +170,48 @@ exports.deleteVideo = async (req, res, next, type) => {
   }
 };
 
-exports.createAudio = async (req, res, next, type) => {
+exports.createAudio = async (req, res, next) => {
   const {
-    body: { tags, authors },
+    body: { tags, authors, audio, cover, type },
     user,
   } = req;
   try {
     const newAudio = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
-      type,
+      type: type.slice(0, type.length - 1),
     });
 
-    const audio = req.file
-    let promises = {
-      uploadedAudio: CloudinaryService.uploadMediaProcess(req.user, newAudio, audio, `_${type}_`, audioConfig),
-      authorsCreated: Utils.post.creatAuthors(authors)
-    }
+    let blogTags = [];
+    if (tags) blogTags = await Utils.post.createTags(tags);
 
-    if (tags) {
-      promises.tagsCreated = Utils.post.createTags(tags)
-    }
+    let authorsCreated = await Utils.post.creatAuthors(authors);
 
-    const data = await Promise.props(promises);
-    if (data.tagsCreated) newAudio.tags = data.tagsCreated.map(tag => tag._id)
-    if (data.authorsCreated) newAudio.authors = data.authorsCreated.map(author => author._id)
-    newAudio.media = data.uploadedAudio;
+    newAudio.cover = cover._id;
+    if (blogTags.length) newAudio.tags = blogTags.map(tag => tag._id);
 
-    const createdNewAudio = await newAudio.save()
+    newAudio.authors = authorsCreated.map(author => author._id);
+    newAudio.media = req.body.audio;
+
+    const promises = [
+      newAudio.save(),
+      File.findByIdAndUpdate(
+        cover._id,
+        {
+          $set: { postId: newAudio._id }
+        },
+        { new: true }
+      ),
+      File.findByIdAndUpdate(
+        audio._id,
+        {
+          $set: { postId: newAudio._id }
+        },
+        { new: true }
+      )
+    ];
+
+    const [createdNewAudio] = await Promise.all(promises);
     let dataRes = {
       _id: createdNewAudio._id,
       topic: createdNewAudio._topic,
@@ -207,32 +219,32 @@ exports.createAudio = async (req, res, next, type) => {
       content: createdNewAudio.content,
       type: createdNewAudio.type,
       updatedAt: createdNewAudio.updatedAt,
-      tags: data.tagsCreated || [],
-      media: data.uploadedAudio,
-    }
+      authors: authorsCreated,
+      tags: blogTags,
+      media: req.body.audio,
+    };
 
     return res.status(200).json({
       status: 200,
       data: dataRes,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
 
-exports.editAudio = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors } = req.body;
+exports.editAudio = async (req, res, next) => {
+  const { topic, description, content, tags, authors, cover, type } = req.body;
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
       .populate({ path: 'authors', select: '_id name type' })
-      .populate({ path: 'media', select: 'secureURL publicId fileName' })
+      .populate({ path: 'media', select: 'secureURL publicId fileName' });
     if (!audio) {
       throw Boom.badRequest(`Not found ${type}, edit ${type} failed`);
     }
@@ -259,13 +271,7 @@ exports.editAudio = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    const newAudio = req.file
-    if (newAudio) {
-      const uploadedAudio = await
-        CloudinaryService.uploadMediaProcess(req.user, audio, newAudio, `_${type}_`, audioConfig);
-
-      query.media = uploadedAudio._id;
-    }
+    if (cover) query.cover = req.body.cover._id;
 
     const updatedAudio = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -287,7 +293,6 @@ exports.editAudio = async (req, res, next, type) => {
       data: updatedAudio,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -296,27 +301,86 @@ exports.deleteAudio = async (req, res, next, type) => {
   try {
     const audio = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
-      .populate({ path: 'media' })
+      .populate({ path: 'media' });
 
     if (!audio) {
       throw Boom.badRequest('Not found audio');
     }
 
-    FILE_REFERENCE_QUEUE.deleteFile.add({ file: audio.media })
-    const isDeleted = await Post.findByIdAndDelete(audio._id)
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: audio.media });
+    const isDeleted = await Post.findByIdAndDelete(audio._id);
 
     if (!isDeleted) {
-      throw Boom.badRequest(`Delete ${type} failed`)
+      throw Boom.badRequest(`Delete ${type} failed`);
     }
 
     return res.status(200).json({
       status: 200,
       message: `Delete ${type} successfully`,
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.trendingAudio = async (req, res, next) => {
+  try {
+    const func = async () => {
+      const trendingAudios = await Post.aggregate([
+        {
+          $match: {
+            type: { $in: ['song', 'podcast'] }
+          },
+        },
+        {
+          $project: {
+            topic: 1,
+            type: 1,
+            media: 1,
+            authors: 1,
+            cover: 1
+          },
+        },
+        { $lookup: { from: 'files', localField: 'cover', foreignField: '_id', as: 'cover' } },
+        { $lookup: { from: 'files', localField: 'media', foreignField: '_id', as: 'media' } },
+        {
+          $lookup:
+          {
+            from: "authors",
+            localField: "authors",
+            foreignField: "_id",
+            as: "authors"
+          }
+        },
+        {
+          $sort: {
+            likes: -1
+          },
+        },
+        {
+          $limit: 18
+        }
+      ]);
+
+      return trendingAudios;
+    };
+
+    const data = await Redis.cacheExecute({
+      key: await Redis.makeKey(['posts', 'TRENDING_AUDIOS']),
+      isJSON: true,
+      isZip: false,
+      ttl: 600, // 10 minutes
+    }, func);
+
+    return res.status(200).json({
+      status: 200,
+      data,
+    });
+
   } catch (error) {
     return next(error);
   }

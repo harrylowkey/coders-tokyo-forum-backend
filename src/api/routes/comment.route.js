@@ -9,8 +9,8 @@ const {
 const router = express.Router();
 
 router
-  .route('/:commentId')
-  .get(paginate({ limit: 5 }), CommentController.getComments);
+  .route('/loadmore/:postId')
+  .get(paginate({ limit: 5 }), CommentController.loadmoreComments);
 
 router
   .route('/:postId')
@@ -18,6 +18,22 @@ router
     checkAccessToken,
     commentValidate,
     CommentController.createComment,
+  );
+
+router
+  .route('/reply/:commentId')
+  .post(
+    checkAccessToken,
+    commentValidate,
+    CommentController.replyComment,
+  );
+
+  router
+  .route('/thread/reply/:parentId/:commentId')
+  .post(
+    checkAccessToken,
+    commentValidate,
+    CommentController.threadReplyComment,
   );
 
   router

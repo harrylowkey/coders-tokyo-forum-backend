@@ -11,8 +11,8 @@ const { checkAccessToken } = require('@middlewares/authorize');
 
 const router = express.Router();
 
-router.route('/register').post(signUpValidate, AuthController.register);
-router.route('/login').post(loginValidate, AuthController.login);
+router.route('/signup').post(signUpValidate, AuthController.register);
+router.route('/signin').post(loginValidate, AuthController.login);
 router
   .route('/forgot-password')
   .put(forgotPasswordValidate, AuthController.forgotPassword);

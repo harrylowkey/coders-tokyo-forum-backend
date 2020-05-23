@@ -5,7 +5,7 @@ const Boom = require('@hapi/boom')
 let createPostValidate = (req, res, next) => {
   let schema = Joi.object().keys({
     topic: Joi.string().required(),
-    description: Joi.string().required(),
+    description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
     type: Joi.string().valid(
       'song',
@@ -17,7 +17,7 @@ let createPostValidate = (req, res, next) => {
       'podcast',
       'discussion'
     ).required(),
-    tags: Joi.array().items(Joi.string().required()).optional(),
+    tags: Joi.array().items(Joi.string()).optional(),
     authors: Joi.array().items({
       name: Joi.string().required(),
       type: Joi.string().valid(
@@ -72,7 +72,6 @@ let createPostValidate = (req, res, next) => {
     })
   })
 
-  console.log(req.body, req.files)
   req.files = JSON.parse(JSON.stringify(req.files))
   req.body = JSON.parse(JSON.stringify(req.body))
 
@@ -98,6 +97,21 @@ let createPostValidate = (req, res, next) => {
   return next()
 }
 
+let validateGetPost = (req, res, next) => {
+  let schema = Joi.object().keys({
+    postId: Joi.string().length(24)
+  })
+
+  req.params = JSON.parse(JSON.stringify(req.params))
+  const { error } = schema.validate(req.params)
+  if (error) {
+    throw Boom.badRequest(error.message)
+  }
+
+  return next()
+}
+
 module.exports = {
   createPostValidate,
+  validateGetPost
 };

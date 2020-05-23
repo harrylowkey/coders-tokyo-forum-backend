@@ -1,63 +1,75 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer')
 const {
   BlogController, BookController, FoodController,
-  MovieController, PostController, DiscussionController
-} = require('@controllers')
+  MovieController, PostController, DiscussionController,
+  MediaController
+} = require('@controllers');
 
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
 const { Blog, Book, Food,
-  Movie, Video, Audio, Discussion
+  Movie, Video, Audio, Discussion,
+  Post
 } = require('@validations');
 
 /** ----------- CONFIG --------------- */
-const { blogCoverConfig, audioConfig, foodPhotosConfig, videoConfig } = require('@configVar')
-const { configStorage } = require('../../config/cloudinary')
-const uploadBlog = configStorage(blogCoverConfig)
-const uploadFoodPhotos = configStorage(foodPhotosConfig)
+const { foodPhotosConfig } = require('@configVar');
+const { configStorage } = require('../../config/cloudinary');
+const uploadFoodPhotos = configStorage(foodPhotosConfig);
 
 const {
   uploadVideo,
-  uploadAudio,
-} = require('../../config/cloudinary').configMulter
+} = require('../../config/cloudinary').configMulter;
 
 /** ------------ -------------------- */
 
+router
+  .route('/discussions')
+  .post(
+    checkAccessToken,
+    Discussion.validatePOST,
+    DiscussionController.createDiscussion,
+  );
+
+router
+  .route('/discussions/:postId')
+  .put(
+    checkAccessToken,
+    Discussion.validatePUT,
+    DiscussionController.editDiscussion,
+  );
 
 router
   .route('/blogs')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Blog.validatePOST,
     BlogController.createBlog,
-  )
+  );
 
 router
   .route('/blogs/:postId')
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Blog.validatePUT,
     BlogController.editBlog,
-  )
+  );
 
 router
   .route('/books')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Book.validatePOST,
     BookController.createBookReview,
-  )
+  );
+router
+  .route('/books/:postId')
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Book.validatePUT,
     BookController.editBookReview,
-  )
+  );
 
 router
   .route('/food')
@@ -69,7 +81,9 @@ router
     ]),
     Food.validatePOST,
     FoodController.createFoodReview
-  )
+  );
+router
+  .route('/food/:postId')
   .put(
     checkAccessToken,
     uploadFoodPhotos.fields([
@@ -78,22 +92,22 @@ router
     ]),
     Food.validatePUT,
     FoodController.editFoodReview
-  )
+  );
 
 router
   .route('/movies')
   .post(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Movie.validatePOST,
     MovieController.createMovieReview,
-  )
+  );
+router
+  .route('/movies/:postId')
   .put(
     checkAccessToken,
-    uploadBlog.single('coverImage'),
     Movie.validatePUT,
     MovieController.editMovieReview,
-  )
+  );
 
 router
   .route('/videos')
@@ -102,7 +116,7 @@ router
     uploadVideo.single('video'),
     Video.validatePOST,
     PostController.createVideo,
-  )
+  );
 
 router
   .route('/videos/:postId')
@@ -111,68 +125,57 @@ router
     uploadVideo.single('video'),
     Video.validatePUT,
     PostController.editVideo,
-  )
+  );
 
 router
   .route('/songs')
   .post(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePOST,
-    PostController.createSong,
-  )
+    MediaController.createAudio,
+  );
+
+router
+  .route('/songs/:postId')
   .put(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePUT,
-    PostController.editSong,
-  )
-
+    MediaController.editAudio,
+  );
 router
   .route('/podcasts')
   .post(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePOST,
-    PostController.createPodcast,
-  )
+    MediaController.createAudio,
+  );
 
 router
   .route('/podcasts/:postId')
   .put(
     checkAccessToken,
-    uploadAudio.single('audio'),
     Audio.validatePUT,
-    PostController.editPodcast,
-  )
+    MediaController.editAudio,
+  );
 
 router
-  .route('/discussions')
-  .post(
-    checkAccessToken,
-    Discussion.validatePOST,
-    DiscussionController.createDiscussion,
-  )
-  .put(
-    checkAccessToken,
-    Discussion.validatePUT,
-    DiscussionController.editDiscussion,
-  )
+  .route('/')
+  .get(PostController.getPosts);
 
 router
-    .route('/tags')
-    .get(paginate(), PostController.getPostsByTagsName);
-  
+  .route('/tags')
+  .get(paginate(), PostController.getPostsByTagsName);
+
 router
   .route('/:postId')
-  .get(PostController.getOnePost);
+  .get(Post.validateGetPost, PostController.getOnePost);
 
 router
   .route('/users/:userId')
   .get(paginate({ limit: 15 }), PostController.getPosts);
 
 router
-  .route('/user/saved-posts')
+  .route('/savedPosts/user')
   .get(paginate({ limit: 15 }), checkAccessToken, PostController.getSavedPosts);
 
 router
@@ -194,5 +197,21 @@ router
 router
   .route('/:postId/unsave')
   .post(checkAccessToken, PostController.unsavePost);
+
+router
+  .route('/tags/statics')
+  .get(PostController.countTags);
+
+router
+  .route('/topPosts/statics')
+  .get(PostController.topPosts);
+
+router
+  .route('/audios/trending')
+  .get(MediaController.trendingAudio);
+
+router
+  .route('/recommend/users/:userId')
+  .get(paginate({ limit: 3 }), PostController.getRecommendPosts);
 
 module.exports = router;

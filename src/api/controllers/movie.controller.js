@@ -7,59 +7,51 @@ const { coverImageConfig } = require('@configVar');
 
 exports.createMovieReview = async (req, res, next) => {
   const type = 'movie'
-  const blogCover = req.file
   const {
-    body: { tags, authors },
+    body: { tags, authors, cover, movie },
     user,
   } = req;
 
   try {
     const newMovieReview = new Post({
-      userId: user.id,
+      user: user._id,
       ...req.body,
       type,
     });
 
-    let promises = {
-      blogCover: new File({
-        secureURL: blogCover.secure_url,
-        publicId: blogCover.public_id,
-        fileName: blogCover.originalname,
-        sizeBytes: blogCover.bytes,
-        userId: req.user._id,
-        postId: newMovieReview._id,
-        resourceType: blogCover.resource_type
-      }).save(),
-      authorsCreated: Utils.post.creatAuthors(authors)
-    }
-    if (tags) {
-      promises.tagsCreated = Utils.post.createTags(tags)
-    }
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    const data = await Promise.props(promises);
+    let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newMovieReview.cover = data.blogCover._id;
-    if (data.tagsCreated) newMovieReview.tags = data.tagsCreated.map(tag => tag._id)
-    if (data.authorsCreated) newMovieReview.authors = data.authorsCreated.map(author => author._id)
+    newMovieReview.cover = req.body.cover._id;
+    if (blogTags.length) newMovieReview.tags = blogTags.map(tag => tag._id)
+    newMovieReview.authors = authorsCreated.map(author => author._id)
+    newMovieReview.movie = movie
 
+    const promises = [
+      newMovieReview.save(),
+      File.findByIdAndUpdate(
+        cover._id,
+        {
+          $set: { postId: newMovieReview._id }
+        },
+        { new: true }
+      )
+    ]
 
-    const createdMovieReview = await newMovieReview.save()
+    const [createdMovieReview, _] = await Promise.all(promises)
     let dataRes = {
       _id: createdMovieReview.id,
-      tags: data.tagsCreated || [],
-      authors: data.authorsCreated || [],
       url: createdMovieReview.url,
       topic: createdMovieReview.topic,
       description: createdMovieReview.description,
       content: createdMovieReview.content,
       type: createdMovieReview.type,
-      cover: { 
-        secureURL: data.blogCover.secureURL,
-        publicId: data.blogCover.publicId,
-        fileName: data.blogCover.fileName,
-        createdAt: data.blogCover.createdAt,
-        sizeBytes: data.blogCover.sizeBytes
-      },
+      cover: req.body.cover,
+      authors: authorsCreated,
+      tags: blogTags,
+      movie,
       createdAt: createdMovieReview.createdAt
     }
 
@@ -68,17 +60,25 @@ exports.createMovieReview = async (req, res, next) => {
       data: dataRes,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
 
-exports.editMovieReview = async (req, res, next, type) => {
-  const { topic, description, content, tags, authors, url } = req.body;
+exports.editMovieReview = async (req, res, next) => {
+  const type = 'movie'
+  const { topic,
+    description,
+    content,
+    tags,
+    authors,
+    url,
+    movie,
+    cover,
+  } = req.body;
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -88,7 +88,7 @@ exports.editMovieReview = async (req, res, next, type) => {
       throw Boom.badRequest('Not found food blog reivew, edit failed');
     }
 
-    let query = {};
+    let query = { movie };
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
@@ -111,32 +111,7 @@ exports.editMovieReview = async (req, res, next, type) => {
       query.authors = newAuthors;
     }
 
-    const files = req.files || {};
-    const coverImageInput = files['coverImage'] || null;
-    if (coverImageInput) {
-      const coverImage = coverImageInput[0].path;
-      const oldCover = movieReview.cover || {};
-      const oldCoverId = oldCover.public_id || 'null'; // 2 cases: public_id || null -> assign = 'null'
-
-      const data = { oldImageId: oldCoverId, newImage: coverImage };
-      try {
-        const uploadedCoverImage = await CloudinaryService.deleteOldImageAndUploadNewImage(
-          data,
-          coverImageConfig,
-        );
-        if (!uploadedCoverImage) {
-          throw Boom.badRequest('Edit cover image failed');
-        }
-
-        query.cover = {
-          public_id: uploadedCoverImage.public_id,
-          url: uploadedCoverImage.url,
-          secure_url: uploadedCoverImage.secure_url,
-        };
-      } catch (error) {
-        throw Boom.badRequest(error.message);
-      }
-    }
+    if (cover) query.cover = req.body.cover._id
 
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -157,7 +132,6 @@ exports.editMovieReview = async (req, res, next, type) => {
       data: upadatedBlog,
     });
   } catch (error) {
-    console.log(error);
     return next(error);
   }
 };
@@ -166,7 +140,7 @@ exports.deleteMovieReview = async (req, res, next, type) => {
   try {
     const movieReview = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

@@ -7,56 +7,51 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBookReview = async (req, res, next) => {
   const type = 'book'
-  const blogCover = req.file;
   req.body = JSON.parse(JSON.stringify(req.body))
   const {
-    body: { tags, authors },
+    body: { tags, authors, book, cover },
     user,
   } = req;
 
   try {
     const newBook = new Post({
-      userId: user._id,
+      user: user._id,
       ...req.body,
       type,
     });
 
-    let promises = {
-      authorsCreated: Utils.post.creatAuthors(authors),
-      blogCover: new File({
-        secureURL: blogCover.secure_url,
-        publicId: blogCover.public_id,
-        fileName: blogCover.originalname,
-        sizeBytes: blogCover.bytes,
-        userId: req.user._id,
-        postId: newBook._id,
-        resourceType: blogCover.resource_type
-      }).save()
-    }
-    if (tags) promises.tagsCreated = Utils.post.createTags(tags)
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    let data = await Promise.props(promises)
+    let authorsCreated = await Utils.post.creatAuthors(authors)
 
-    newBook.cover = data.blogCover._id;
-    if (data.tagsCreated) newBook.tags = data.tagsCreated.map(tag => tag._id)
-    if (data.authorsCreated) newBook.authors = data.authorsCreated.map(author => author._id)
+    newBook.cover = req.body.cover._id;
+    if (blogTags.length) newBook.tags = blogTags.map(tag => tag._id)
+    newBook.authors = authorsCreated.map(author => author._id)
+    newBook.book = book
 
-    const createdBook = await newBook.save()
+    const promises = [
+      newBook.save(),
+      File.findByIdAndUpdate(
+        cover._id,
+        {
+          $set: { postId: newBook._id }
+        },
+        { new: true }
+      )
+    ]
+
+    const [createdBook, _] = await Promise.all(promises)
     const dataRes = {
       _id: createdBook._id,
       topic: createdBook.topic,
       description: createdBook.description,
       content: createdBook.content,
       type: createdBook.type,
-      cover: {
-        secureURL: data.blogCover.secureURL,
-        publicId: data.blogCover.publicId,
-        fileName: data.blogCover.fileName,
-        createdAt: data.blogCover.createdAt,
-        sizeBytes: data.blogCover.sizeBytes
-      },
-      authors: data.authorsCreated || [],
-      tags: data.tagsCreated || [],
+      cover: req.body.cover,
+      authors: authorsCreated,
+      tags: blogTags,
+      book,
       createdAt: createdBook.createdAt
     }
     return res.status(200).json({
@@ -70,48 +65,41 @@ exports.createBookReview = async (req, res, next) => {
 
 exports.editBookReview = async (req, res, next) => {
   const type = 'book'
-  const { topic, description, content, tags, authors } = req.body;
+  const { topic, description, content, tags, authors, book, cover } = req.body;
   try {
-    const book = await Post.findOne({
+    const bookToUpdate = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
       .populate({ path: 'tags', select: '_id tagName' })
       .populate({ path: 'authors', select: '_id name type' });
 
-    if (!book) {
+    if (!bookToUpdate) {
       throw Boom.badRequest('Not found book blog reivew, edit failed');
     }
 
-    let query = {};
+    let query = { book };
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
-    if (tags) {
+    
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
-        book,
+        bookToUpdate,
         tags,
       );
       query.tags = newTags;
-    }
 
     if (authors) {
       const newAuthors = await Utils.post.removeOldAuthorsAndCreateNewAuthors(
-        book,
+        bookToUpdate,
         authors,
       );
       query.authors = newAuthors;
     }
 
-    let blogCover = req.file
-    if (blogCover) {
-      const uploadedCoverImage = await
-        CloudinaryService.uploadFileProcess(req.user, book, blogCover, '_book_blog_review_cover_');
-
-      query.cover = uploadedCoverImage._id
-    }
+    if (cover) query.cover = req.body.cover._id
 
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
@@ -141,7 +129,7 @@ exports.deleteBookReview = async (req, res, next, type) => {
   try {
     const book = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()

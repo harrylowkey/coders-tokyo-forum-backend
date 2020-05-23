@@ -1,4 +1,4 @@
-FROM node:10.16.0
+FROM node:13.14.0
 
 ENV HOME=/home/node
 
@@ -12,4 +12,4 @@ COPY . $HOME/app
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "prod"]

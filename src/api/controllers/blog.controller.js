@@ -7,52 +7,43 @@ const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createBlog = async (req, res, next) => {
   const type = 'blog'
-  const blogCover = req.file
   const {
-    body: { tags },
+    body: { tags, cover },
   } = req;
   try {
     const newBlog = new Post({
-      userId: req.user._id,
+      user: req.user._id,
       ...req.body,
       type,
     })
 
-    const promises = {
-      blogCover: new File({
-        secureURL: blogCover.secure_url,
-        publicId: blogCover.public_id,
-        fileName: blogCover.originalname,
-        sizeBytes: blogCover.bytes,
-        userId: req.user._id,
-        postId: newBlog._id,
-        resourceType: blogCover.resource_type
-      }).save()
-    }
-    if (tags) {
-      promises.blogTags = Utils.post.createTags(tags)
-    }
+    let blogTags = []
+    if (tags) blogTags = await Utils.post.createTags(tags)
 
-    let result = await Promise.props(promises)
+    newBlog.cover = req.body.cover._id
+    if (blogTags.length) newBlog.tags = blogTags.map(tag => tag._id)
 
-    newBlog.cover = result.blogCover._id;
-    if (result.blogTags) newBlog.tags = result.blogTags.map(tag => tag._id)
+    const promises = [
+      newBlog.save(),
+      File.findByIdAndUpdate(
+        cover._id,
+        {
+          $set: { postId: newBlog._id }
+        },
+        { new: true }
+      )
+    ]
 
-    let createdBlog = await newBlog.save()
+    const [createdBlog, _] = await Promise.all(promises)
+
     let dataRes = {
       _id: createdBlog._id,
       topic: createdBlog.topic,
       description: createdBlog.description,
       content: createdBlog.content,
       type: createdBlog.type,
-      tags: result.blogTags || [],
-      cover: {
-        secureURL: result.blogCover.secureURL,
-        publicId: result.blogCover.publicId,
-        fileName: result.blogCover.fileName,
-        createdAt: result.blogCover.createdAt,
-        sizeBytes: result.blogCover.sizeBytes
-      },
+      tags: blogTags,
+      cover: req.body.cover,
       createdAt: createdBlog.createdAt,
     }
     return res.status(200).json({
@@ -66,11 +57,11 @@ exports.createBlog = async (req, res, next) => {
 
 exports.editBlog = async (req, res, next) => {
   const type = 'blog'
-  const { topic, description, content, tags } = req.body;
+  const { topic, description, content, tags, cover } = req.body;
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     })
       .lean()
@@ -87,6 +78,7 @@ exports.editBlog = async (req, res, next) => {
     if (topic) query.topic = topic;
     if (description) query.description = description;
     if (content) query.content = content;
+    if (cover) query.cover = req.body.cover._id
     if (tags) {
       const newTags = await Utils.post.removeOldTagsAndCreatNewTags(
         blog,
@@ -94,15 +86,7 @@ exports.editBlog = async (req, res, next) => {
       );
       query.tags = newTags;
     }
-
-    let blogCover = req.file
-    if (blogCover) {
-      const uploadedCoverImage = await
-        CloudinaryService.uploadFileProcess(req.user, blog, blogCover, '_blog_image_cover_');
-
-      query.cover = uploadedCoverImage._id
-    }
-
+    
     const upadatedBlog = await Post.findByIdAndUpdate(
       req.params.postId,
       {
@@ -128,10 +112,10 @@ exports.deleteBlog = async (req, res, next, type) => {
   try {
     const blog = await Post.findOne({
       _id: req.params.postId,
-      userId: req.user._id,
+      user: req.user._id,
       type,
     }).lean()
-    .populate({ path: 'cover'})
+      .populate({ path: 'cover' })
     if (!blog) {
       throw Boom.badRequest('Not found blog');
     }

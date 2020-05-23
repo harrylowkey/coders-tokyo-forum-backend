@@ -5,15 +5,12 @@ const { avatarConfig, blogCoverConfig, videoConfig, audioConfig } = require('@co
 const File = require('@models').File
 
 
-
-
-
-exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
+exports.uploadAndDeleteFileProcess = async (user, data, newFile, fileType) => {
   const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull')
-  const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
+  // const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
   const newFileName = `${user.username}${fileType}${newFile.originalname.split('.')[0]}`
-  const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
-  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+  // const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  // const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
   if (fileType === '_avatar_' && data.avatar) {
     const file = await File.findById(data.avatar._id).lean();
@@ -26,22 +23,22 @@ exports.uploadFileProcess = async (user, data, newFile, resourceType) => {
   }
 
   const newFileCreated = await new File({
-    secureURL: newSecureURL,
-    publicId: newPath,
+    secureURL: newFile.secure_url,
+    publicId: newFile.public_id,
     fileName: newFileName,
     sizeBytes: newFile.bytes,
-    userId: user._id,
+    user: user._id,
     postId: data._id,
     resourceType: newFile.resource_type
   }).save();
 
 
-  CLOUDINARY_QUEUE.renameFile.add({
-    currentPath: newFile.public_id,
-    newPath,
-    fileId: newFileCreated._id,
-    postId: data._id
-  })
+  // CLOUDINARY_QUEUE.renameFile.add({
+  //   currentPath: newFile.public_id,
+  //   newPath,
+  //   fileId: newFileCreated._id,
+  //   postId: data._id
+  // })
 
   return newFileCreated;
 };
@@ -63,7 +60,7 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
     publicId: newPath,
     fileName: newFileName,
     sizeBytes: newFile.bytes,
-    userId: user._id,
+    user: user._id,
     postId: data._id,
     resourceType: newFile.resource_type,
     media: {
@@ -90,32 +87,32 @@ exports.uploadMediaProcess = async (user, data, newFileToUpload, fileType, confi
   return newFileCreated;
 };
 
-exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileType, config) => {
-  const { CLOUDINARY_QUEUE } = require('@bull')
+exports.uploadFileProcess = async (user, newFileToUpload, resourceType, fileType, config, postId = null) => {
+  // const { CLOUDINARY_QUEUE } = require('@bull')
   const newFile = await cloudinary.uploader.upload(newFileToUpload.path, config)
   const newFileName = `${user.username}_${fileType}_${newFileToUpload.originalname.split('.')[0]}`
-  const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
-  const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
+  // const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+  // const newSecureURL = newFile.secure_url.replace(newFile.public_id, newPath);
 
   let newFileCreated
   if (resourceType === 'image') {
     newFileCreated = await new File({
-      secureURL: newSecureURL,
-      publicId: newPath,
+      secureURL: newFile.secure_url,
+      publicId: newFile.public_id,
       fileName: newFileName,
-      userId: user._id,
+      user: user._id,
       resourceType
     }).save();
   }
 
-  if (resourceType === 'video') {
-    await new File({
-      secureURL: newSecureURL,
-      publicId: newPath,
-      fileName: newFileName,
+  if (resourceType === 'audio') {
+    newFileCreated = await new File({
+      secureURL: newFile.secure_url,
+      publicId: newFile.public_id,
+      fileName: newFileToUpload.originalname.split('.')[0],
       sizeBytes: newFile.bytes,
-      userId: user._id,
-      postId: data._id,
+      user: user._id,
+      postId,
       resourceType: newFile.resource_type,
       media: {
         type: newFile.type,
@@ -131,61 +128,56 @@ exports.uploadAndRenameFile = async (user, newFileToUpload, resourceType, fileTy
     }).save();
   }
 
-  CLOUDINARY_QUEUE.renameFile.add({
-    currentPath: newFile.public_id,
-    newPath,
-    fileId: newFileCreated._id,
-    postId: '',
-    resourceType: newFile.resource_type
-  })
+  // CLOUDINARY_QUEUE.renameFile.add({
+  //   currentPath: newFile.public_id,
+  //   newPath,
+  //   fileId: newFileCreated._id,
+  //   postId: '',
+  //   resourceType: newFile.resource_type
+  // })
 
   return newFileCreated;
 }
 
 exports.uploadMultipleFiles = async (user, files, fileType, config = {}) => {
   const { CLOUDINARY_QUEUE } = require('@bull')
-  try {
-    const uploadImagePromise = image => {
-      return new Promise((resolve, reject) => {
-        try {
-          const uploadedImage = cloudinary.uploader.upload(image.path, config);
-          return resolve(uploadedImage);
-        } catch (error) {
-          return reject(error);
-        }
-      });
-    };
-
-    const uploadImagePromises = files.map(image => uploadImagePromise(image));
-    const images = await Promise.all(uploadImagePromises);
-
-    const foodPhotos = images.map(photo => {
-      const newFileName = `${user.username}${fileType}${photo.original_filename.split('.')[0]}`
-      const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
-      const newSecureURL = photo.secure_url.replace(photo.public_id, newPath);
-      const resourceType = photo.resource_type
-      return {
-        secureURL: newSecureURL,
-        publicId: newPath,
-        fileName: newFileName,
-        userId: user._id,
-        resourceType
+  const uploadImagePromise = image => {
+    return new Promise((resolve, reject) => {
+      try {
+        const uploadedImage = cloudinary.uploader.upload(image.path, config);
+        return resolve(uploadedImage);
+      } catch (error) {
+        return reject(error);
       }
-    })
+    });
+  };
 
-    const data = await File.insertMany(foodPhotos)
-    data.map((image, index) => {
-      CLOUDINARY_QUEUE.renameFile.add({
-        currentPath: images[index].public_id,
-        newPath: image.publicId,
-        fileId: image._id,
-        postId: '',
-        resourceType: image.resourceType
-      })
-    })
+  const uploadImagePromises = files.map(image => uploadImagePromise(image));
+  const images = await Promise.all(uploadImagePromises);
 
-    return data
-  } catch (error) {
-    console.log(error)
-  }
+  const foodPhotos = images.map(photo => {
+    const newFileName = `${user.username}${fileType}${photo.original_filename.split('.')[0]}`
+    // const newPath = config.folder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
+    // const newSecureURL = photo.secure_url.replace(photo.public_id, newPath);
+    const resourceType = photo.resource_type
+    return {
+      secureURL: photo.secure_url,
+      publicId: photo.public_id,
+      fileName: newFileName,
+      user: user._id,
+      resourceType
+    }
+  })
+
+  const data = await File.insertMany(foodPhotos)
+  // data.map((image, index) => {
+  //   CLOUDINARY_QUEUE.renameFile.add({
+  //     currentPath: images[index].public_id,
+  //     newPath: image.publicId,
+  //     fileId: image._id,
+  //     postId: '',
+  //     resourceType: image.resourceType
+  //   })
+  // })
+  return data
 };

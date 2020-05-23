@@ -14,7 +14,7 @@ types = [
 
 const postSchema = new Schema(
   {
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
@@ -42,7 +42,7 @@ const postSchema = new Schema(
     },
     description: {
       type: String,
-      maxlength: 400,
+      maxlength: 1000,
     },
     content: {
       type: String,
@@ -75,34 +75,51 @@ const postSchema = new Schema(
       ref: 'File'
     },
     food: {
+      foodPhotos: [
+        {
+          type: mongoose.SchemaTypes.ObjectId,
+          ref: 'File',
+          default: null
+        }
+      ],
       type: Object,
+      priceAverage: String,
+      address: String,
+      restaurant: String,
+      quality: Number,
+      service: Number,
+      space: Number,
+      openTime: String,
       foodName: {
         type: String,
-        maxlength: 30,
-        required: true,
+        maxlength: 30
       },
-      price: {
-        type: Number,
-        required: true,
-      },
-      location: {
-        type: String,
-        maxlength: 100,
-        required: true,
-      },
-      star: {
+      price: Number,
+      stars: {
         type: Number,
         default: 0,
         max: 5,
         min: 0,
-        required: true,
-      },
-      photos: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'File',
-        }
-      ],
+      }
+    },
+    book: {
+      type: Object,
+      status: String,
+      country: String,
+      year: Number,
+      length: Number,
+      genres: Array,
+      suggestedBy: Array,
+      stars: Number
+    },
+    movie: {
+      type: Object,
+      genres: Array,
+      country: String,
+      link: String,
+      releaseDate: String,
+      time: Number,
+      stars: Number
     },
     savedBy: [
       {

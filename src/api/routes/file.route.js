@@ -23,11 +23,11 @@ router
   .get(checkAccessToken, FileController.getFile);
 
 router
-  .route('/delete')
+  .route('/:fileId')
   .delete(checkAccessToken, FileController.uploadMultipleFoodPhotos)
 router
   .route('/upload/avatar')
-  .post(checkAccessToken, uploadAvatar.single('file'), FileController.uploadFile)
+  .post(checkAccessToken, uploadAvatar.single('avatar'), FileController.uploadFile)
 
 router
   .route('/upload/video')
@@ -38,14 +38,16 @@ router
   .post(checkAccessToken, uploadAudio.single('file'), FileController.uploadFile)
 
 router
-  .route('/upload/blogCover')
-  .post(checkAccessToken, uploadBlogCover.single('file'), FileController.uploadFile)
+  .route('/upload/cover')
+  .post(checkAccessToken, uploadBlogCover.single('cover'), FileController.uploadFile)
 
+router
+  .route('/upload/photo')
+  .post(checkAccessToken, uploadBlogCover.single('photo'), FileController.uploadFile)
 
-//FIXME: Client must validate photos maximum. BE still can not validate input photos maximum
 router
   .route('/upload/foodPhotos')
-  .post(checkAccessToken, uploadBlogCover.array('files', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
+  .post(checkAccessToken, uploadBlogCover.array('file', foodPhotosConfig.maxPhotos), FileController.uploadMultipleFoodPhotos)
 
 router
   .route('/delete/multipleFiles')

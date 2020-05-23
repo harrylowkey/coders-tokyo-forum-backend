@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=dev nodemon --inspect app.js",
+    "prod": "NODE_ENV=prod nodemon --inspect app.js",
     "admin": "nodemon --inspect admin.js"
   },
   "_moduleAliases": {
@@ -19,6 +20,7 @@
     "@redis": "src/config/redis",
     "@services": "src/services",
     "@views": "views",
+    "@socket": "src/services/socket",
     "@validations": "src/api/validations"
   },
   "author": "",
@@ -39,6 +41,7 @@
     "multer": "^1.4.2",
     "nodemailer": "^6.4.6",
     "pug": "^2.0.4",
+    "socket.io": "^2.3.0",
     "swagger-ui-express": "^4.0.7"
   },
   "devDependencies": {
@@ -48,6 +51,7 @@
     "ioredis": "^4.16.1",
     "joi": "^14.3.1",
     "module-alias": "^2.2.2",
+    "mongoose-deep-populate": "^3.1.1",
     "multer-storage-cloudinary": "^2.2.1",
     "nodemon": "^1.19.1",
     "zlib": "^1.0.5"

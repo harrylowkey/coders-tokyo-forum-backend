@@ -18,18 +18,19 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 const Arena = require('bull-arena');
 const QUEUES = require('./src/config/queues');
-const redis = require('./src/config/redis')
+const socket = require('@socket')
+
+app.use(cors())
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, { explorer: true }));
 
 mongoDB.connect();
 cloudinary.config();
-redis.config(redisConfig)
+socket.start(app)
 
-app.use(cors());
 app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 const arenaRoutes = Arena(
   {
@@ -43,6 +44,8 @@ const arenaRoutes = Arena(
   },
   arenaConfig,
 );
+
+
 
 app.use('/arena', arenaRoutes);
 app.use('/api/v1', apiRoutes);

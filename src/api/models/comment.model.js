@@ -6,7 +6,6 @@ const commentSchema = new Schema(
     postId: {
       type: Schema.Types.ObjectId,
       ref: 'Post',
-      required: true,
     },
     childComments: [
       {
@@ -18,11 +17,15 @@ const commentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Comment'
     },
+    replyToComment: {
+      type: Schema.Types.ObjectId,
+      ref: 'Comment'
+    },
     content: {
       type: String,
       required: true,
     },
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
