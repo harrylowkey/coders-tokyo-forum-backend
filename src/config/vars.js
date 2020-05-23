@@ -1,11 +1,11 @@
 const path = require('path');
 let mode = process.env.NODE_ENV || 'local';
 let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
-console.log('************NODE_ENV******', _path)
 
 require('dotenv').config({ path: _path });
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
+  redis_uri: process.env.REDIS_URL,
   port: process.env.PORT,
   socket_port: process.env.PORT_SOCKET,
   admin_port: process.env.ADMIN_PORT,
