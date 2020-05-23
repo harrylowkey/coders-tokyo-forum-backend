@@ -42,7 +42,7 @@ const userSchema = new Schema(
     sex: {
       type: String,
       minlength: 4,
-      maxlength: 6,
+      maxlength: 7,
       trim: true,
       sparse: true,
     },
