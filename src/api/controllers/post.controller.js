@@ -281,7 +281,7 @@ exports.getRecommendPosts = async (req, res, next) => {
         negativeQuery += '-url -media -authors';
         break;
     }
-console.log(req.query.postId)
+
     let query = { 
       type, 
       user: req.params.userId,
