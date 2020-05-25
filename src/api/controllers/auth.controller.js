@@ -87,12 +87,12 @@ exports.register = async (req, res, next) => {
     newUser.password = undefined;
     newUser.__v = undefined;
 
-    let mailData = {
-      to: req.body.email,
-      name: req.body.username,
-    };
-    EMAIL_QUEUE.sendWelcomeEmail.add(mailData);
-    MailerService.sendEmail(mailData, 'SIGN_UP');
+    // let mailData = {
+    //   to: req.body.email,
+    //   name: req.body.username,
+    // };
+    // EMAIL_QUEUE.sendWelcomeEmail.add(mailData);
+    // MailerService.sendEmail(mailData, 'SIGN_UP');
 
     return res.status(httpStatus.OK).json({
       status: 200,
