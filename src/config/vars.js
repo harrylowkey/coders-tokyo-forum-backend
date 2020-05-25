@@ -1,6 +1,7 @@
 const path = require('path');
 let mode = process.env.NODE_ENV || 'local';
 let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
+console.log('*************NODE_ENV**************', _path)
 
 require('dotenv').config({ path: _path });
 module.exports = {
@@ -119,12 +120,6 @@ module.exports = {
         prefix: '@@fileReference_',
       },
     }
-  },
-  redisConfig: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASSWORD,
-    redisPrefix: process.env.REDIS_PREFIX
   },
   arenaConfig: {
     host: process.env.ARENA_HOST,

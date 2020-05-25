@@ -3,7 +3,7 @@ const { Comment, Post, User } = require('@models');
 const Utils = require('@utils');
 const mongoose = require('mongoose');
 const configVar = require('@configVar');
-const redis = require('@redis').redisInstance;
+const redis = new Redis(configVar.redis_uri)
 
 exports.createComment = async (req, res, next) => {
   try {

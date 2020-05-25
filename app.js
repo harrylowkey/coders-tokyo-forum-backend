@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
-const { port, redisConfig, arenaConfig } = require('./src/config/vars');
+const { port, arenaConfig } = require('./src/config/vars');
 
 const apiRoutes = require('./src/api/routes/index');
 const error = require('./src/middlewares/error-handler');

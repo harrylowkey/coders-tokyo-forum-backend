@@ -108,8 +108,7 @@ const publish = async (channel, msg) => {
 };
 
 const subscribe = async (channel, callback, timeout = 0) => {
-  console.log('here');
-  let redis = new Redis(configVar.redisConfig);
+  let redis = new Redis(configVar.redis_uri);
   return new Promise((resolve, reject) => {
     let tm;
     if (timeout) {
