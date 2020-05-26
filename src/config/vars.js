@@ -2,7 +2,7 @@ const path = require('path');
 let mode = process.env.NODE_ENV || 'local';
 let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
 console.log('*************NODE_ENV**************', _path)
-
+console.log(process.env.MONGO_URL, process.env.REDIS_URL)
 require('dotenv').config({ path: _path });
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
