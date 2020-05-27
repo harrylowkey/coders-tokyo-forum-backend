@@ -7,6 +7,10 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
     restart: always
+    network_mode: host
+    depends_on:
+      - mongo
+      - redis
     logging:
       driver: 'json-file'
       options:
@@ -20,6 +24,7 @@ services:
       - ./mongodo-data/:/data/
     hostname: mongo
     restart: always
+    network_mode: host
     logging:
       driver: 'json-file'
       options:
@@ -28,16 +33,20 @@ services:
   redis:
     image: bitnami/redis:4.0.14
     environment:
-      - REDIS_PASSWORD=coderx-forumqwertyzxcvb
+      - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - '6379:6379'
     volumes:
       - ./redis-data/:/data/
     hostname: redis
     restart: always
+    network_mode: bridge
     logging:
       driver: 'json-file'
       options:
         max-size: '100M'
         max-file: '3'
-      
+networks:
+  default:
+    external:
+      name: host
