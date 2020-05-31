@@ -4,5 +4,6 @@ module.exports = {
   Author: require('./author.model').model,
   Tag: require('./tag.model').model,
   Comment: require('./comment.model').model,
-  File: require('./file-reference.model').model
+  File: require('./file-reference.model').model,
+  Notif: require('./notification.model').model,
 };

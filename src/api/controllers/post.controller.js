@@ -8,8 +8,11 @@ const FoodController = require('./food.controller');
 const MovieController = require('./movie.controller');
 const MediaController = require('./media.controller');
 const DiscussionController = require('./discussion.controller');
-const { Post, User, Tag } = require('@models');
+const { Post, User, Tag, Notif } = require('@models');
 const Utils = require('@utils');
+const configVar = require('@configVar');
+const _Redis = require('ioredis');
+const redis = new _Redis(configVar.redis_uri);
 const types = [
   'discussion',
   'blog',
@@ -282,8 +285,8 @@ exports.getRecommendPosts = async (req, res, next) => {
         break;
     }
 
-    let query = { 
-      type, 
+    let query = {
+      type,
       user: req.params.userId,
       _id: { $ne: req.query.postId }
     };
@@ -604,16 +607,41 @@ exports.likePost = async (req, res, next) => {
   } = req;
 
   try {
-    const post = await Post.findById(postId).lean();
+    const [post, _user] = await Promise.all([
+      Post.findById(postId)
+        .lean()
+        .select('_id type likes user')
+        .populate([
+          {
+            path: 'cover',
+            select: '_id secureURL'
+          },
+          {
+            path: 'user',
+            select: '_id username',
+            populate: {
+              path: 'avatar',
+              select: '_id secureURL'
+            }
+          },
+        ]),
+      User.findById(user._id).lean().populate({
+        path: 'avatar',
+        select: '_id secureURL'
+      }).select('_id username avatar')
+    ]);
+
     if (!post) {
       throw Boom.badRequest('Not found post');
     }
 
+    if (!_user) {
+      throw Boom.badRequest('Please login to like post');
+    }
     const isLiked = post.likes.includes(user._id);
     if (isLiked) {
       throw Boom.conflict('You liked');
     }
-
 
     await Post.findByIdAndUpdate(
       postId,
@@ -622,6 +650,39 @@ exports.likePost = async (req, res, next) => {
       },
       { new: true },
     );
+
+
+    if (post.user._id.toString() != user._id.toString()) {
+      let type = post.type;
+      if (post.type === 'book' || post.type === 'movie' || post.type === 'food') {
+        type = post.type + ' review';
+      }
+
+      const newNotif = await new Notif({
+        post: post._id,
+        creator: user._id,
+        user: post.user._id,
+        content: `**${_user.username}**${post.likes.length > 1 ? ', ' + '**' + post.likes.length + ' others' + '**' : ''} loved your ${type}`,
+      }).save();
+
+      let content = `**${_user.username}** loved your ${type}`;
+      let notif = content;
+      if (post.likes.length >= 1) {
+        notif = `**${_user.username}**${post.likes.length > 1 ? ', ' + '**' + post.likes.length + ' others' + '**' : ''} loved your ${type}`;
+      }
+
+      let dataSocket = {
+        content,
+        notif: {
+          content: notif,
+          post,
+          creator: _user,
+          userId: post.user._id,
+          createdAt: newNotif.createdAt,
+        },
+      };
+      redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataSocket));
+    }
 
     return res.status(200).json({
       status: 200,

@@ -1,8 +1,6 @@
 const path = require('path');
 let mode = process.env.NODE_ENV || 'local';
 let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
-console.log('*************NODE_ENV**************', _path)
-console.log(process.env.MONGO_URL, process.env.REDIS_URL)
 require('dotenv').config({ path: _path });
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
@@ -146,5 +144,5 @@ module.exports = {
   SOCKET_NEW_COMMENT: 'NEW_COMMENT',
   SOCKET_DELETE_COMMENT: 'DELETE_COMMENT',
   SOCKET_EDIT_COMMENT: 'EDIT_COMMENT',
-  SOCKET_LOAD_MORE_COMMENTS: 'LOAD_MORE_COMMENTS'
+  SOCKET_NOTIFICATION: 'NOTIFICATIONS'
 };
