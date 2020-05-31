@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const { Comment, Post, User } = require('@models');
+const { Comment, Post, User, Notif } = require('@models');
 const Utils = require('@utils');
 const mongoose = require('mongoose');
 const configVar = require('@configVar');
@@ -19,7 +19,23 @@ exports.createComment = async (req, res, next) => {
     if (!user) {
       throw Boom.badRequest('Please login to comment');
     }
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId)
+      .lean()
+      .select('_id type likes user')
+      .populate([
+        {
+          path: 'cover',
+          select: '_id secureURL'
+        },
+        {
+          path: 'user',
+          select: '_id username',
+          populate: {
+            path: 'avatar',
+            select: '_id secureURL'
+          }
+        },
+      ]);
     if (!post) {
       throw Boom.badRequest('Not found post');
     }
@@ -62,6 +78,28 @@ exports.createComment = async (req, res, next) => {
     };
     redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify(dataSocket));
 
+    if (post.user._id.toString() != user._id.toString()) {
+      const text = `**${user.username}** commented on your post`;
+      const newNotif = await new Notif({
+        post: post._id,
+        creator: user._id,
+        user: post.user._id,
+        content: text,
+      }).save();
+
+      let dataNotifSocket = {
+        content: text,
+        notif: {
+          content: text,
+          post,
+          creator: user,
+          userId: post.user._id,
+          createdAt: newNotif.createdAt,
+        }
+      };
+      redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataNotifSocket));
+    }
+
     return res
       .status(200)
       .json({ status: 200, data: savedComment });
@@ -81,10 +119,30 @@ exports.replyComment = async (req, res, next) => {
     const { commentId } = req.params;
     const { content } = req.body;
 
-    const parentComment = await Comment.findById(commentId).lean().populate({
-      path: 'user',
-      select: '_id username createdAt',
-    });
+    const parentComment = await Comment.findById(commentId).lean().populate([
+      {
+        path: 'user',
+        select: '_id username createdAt',
+      },
+      {
+        path: 'postId',
+        select: '_id type likes user',
+        populate: [
+          {
+            path: 'cover',
+            select: '_id secureURL'
+          },
+          {
+            path: 'user',
+            select: '_id username',
+            populate: {
+              path: 'avatar',
+              select: '_id secureURL'
+            }
+          },
+        ]
+      }
+    ]);
     if (!parentComment) {
       throw Boom.badRequest('Not found comment to reply');
     }
@@ -124,8 +182,32 @@ exports.replyComment = async (req, res, next) => {
 
     redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify({
       ...dataRes,
-      postId: parentComment.postId
+      postId: parentComment.postId._id
     }));
+
+    if (parentComment.postId.user._id.toString() != user._id.toString()) {
+      const text = `**${user.username}** replied to your comment`;
+      const newNotif = await new Notif({
+        post: parentComment.postId._id,
+        creator: user._id,
+        user: parentComment.user._id,
+        content: text,
+        notif: text,
+      }).save();
+
+      let dataNotifSocket = {
+        content: text,
+        notif: {
+          content: text,
+          post: parentComment.postId,
+          creator: user,
+          userId: parentComment.user._id,
+          createdAt: newNotif.createdAt,
+        },
+      };
+
+      redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataNotifSocket));
+    }
 
     return res
       .status(200)
@@ -146,7 +228,30 @@ exports.threadReplyComment = async (req, res, next) => {
     const { commentId, parentId } = req.params;
     const { content } = req.body;
 
-    const parentComment = await Comment.findById(parentId).lean();
+    const parentComment = await Comment.findById(parentId).lean().populate([
+      {
+        path: 'user',
+        select: '_id username createdAt',
+      },
+      {
+        path: 'postId',
+        select: '_id type likes user',
+        populate: [
+          {
+            path: 'cover',
+            select: '_id secureURL'
+          },
+          {
+            path: 'user',
+            select: '_id username',
+            populate: {
+              path: 'avatar',
+              select: '_id secureURL'
+            }
+          },
+        ]
+      }
+    ]);
     const comment = await Comment.findById(commentId).lean().populate({
       path: 'user',
       select: '_id username createdAt',
@@ -191,8 +296,30 @@ exports.threadReplyComment = async (req, res, next) => {
 
     redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify({
       ...dataRes,
-      postId: parentComment.postId
+      postId: parentComment.postId._id
     }));
+
+    if (parentComment.postId.user._id.toString() != user._id.toString()) {
+    const text = `**${user.username}** replied to your comment`;
+    const newNotif = await new Notif({
+      post: parentComment.postId._id,
+      creator: user._id,
+      user: parentComment.user._id,
+      content: text,
+    }).save();
+
+    let dataNotifSocket = {
+      content: text,
+      notif: {
+        content: text,
+        post: parentComment.postId,
+        creator: user,
+        userId: parentComment.user._id,
+        createdAt: newNotif.createdAt,
+      },
+    };
+    redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataNotifSocket));
+    }
 
     return res
       .status(200)
@@ -225,10 +352,10 @@ exports.editComment = async (req, res, next) => {
       throw Boom.badRequest('Edit comment failed');
     }
 
-    redis.publish(configVar.SOCKET_EDIT_COMMENT, JSON.stringify({
-      ...data,
-      postId: comment.postId
-    }));
+    // redis.publish(configVar.SOCKET_EDIT_COMMENT, JSON.stringify({
+    //   ...data,
+    //   postId: comment.postId
+    // }));
 
     return res
       .status(200)
