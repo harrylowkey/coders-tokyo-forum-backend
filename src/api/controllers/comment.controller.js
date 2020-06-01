@@ -79,7 +79,11 @@ exports.createComment = async (req, res, next) => {
     redis.publish(configVar.SOCKET_NEW_COMMENT, JSON.stringify(dataSocket));
 
     if (post.user._id.toString() != user._id.toString()) {
-      const text = `**${user.username}** commented on your post`;
+      let type = post.type;
+      if (post.type === 'book' || post.type === 'movie' || post.type === 'food') {
+        type = post.type + ' review';
+      }
+      const text = `**${user.username}** commented on your ${type}`;
       const newNotif = await new Notif({
         post: post._id,
         creator: user._id,
