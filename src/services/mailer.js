@@ -43,14 +43,6 @@ const NodeMailerSend = async ({
  */
 const sendEmail = (mail, type) => {
   if (mail.dataTemplate) {
-    switch (type) {
-      case 'REWARD':
-        mail.subject = 'REWARD',
-        mail.templateId = '';
-        break;
-      default:
-        throw Boom.badRequest('Invalid type to send mail');
-    }
     NodeMailerSend({
       to: mail.to, subject: mail.subject, dataTemplate: mail.dataTemplate, templateId: mail.templateId,
     });

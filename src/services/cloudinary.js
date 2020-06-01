@@ -1,14 +1,11 @@
 const cloudinary = require('cloudinary').v2;
 const Promise = require('bluebird');
-const Boom = require('@hapi/boom');
-const {
-  avatarConfig, blogCoverConfig, videoConfig, audioConfig,
-} = require('@configVar');
+const { videoConfig } = require('@configVar');
 const { File } = require('@models');
 
 
 exports.uploadAndDeleteFileProcess = async (user, data, newFile, fileType) => {
-  const { FILE_REFERENCE_QUEUE, CLOUDINARY_QUEUE } = require('@bull');
+  const { FILE_REFERENCE_QUEUE } = require('@bull');
   // const cloudinaryFolder = fileType === '_avatar_' ? avatarConfig.folder : blogCoverConfig.folder
   const newFileName = `${user.username}${fileType}${newFile.originalname.split('.')[0]}`;
   // const newPath = cloudinaryFolder + '/' + newFileName + '_' + Math.floor(Date.now() / 1000);
@@ -140,7 +137,7 @@ exports.uploadFileProcess = async (user, newFileToUpload, resourceType, fileType
 };
 
 exports.uploadMultipleFiles = async (user, files, fileType, config = {}) => {
-  const { CLOUDINARY_QUEUE } = require('@bull');
+  // const { CLOUDINARY_QUEUE } = require('@bull');
   const uploadImagePromise = (image) => new Promise((resolve, reject) => {
     try {
       const uploadedImage = cloudinary.uploader.upload(image.path, config);

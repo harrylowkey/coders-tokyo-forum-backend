@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Redis = require('@redis');
-const { jwt_secret, expired_time_token, REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
+const { jwtSecret, REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 
 const generateToken = (user, option) => {
   option = option || {};
@@ -11,7 +11,7 @@ const generateToken = (user, option) => {
     username: user.username,
     email: user.email,
   };
-  return jwt.sign(claims, jwt_secret + salt, {
+  return jwt.sign(claims, jwtSecret + salt, {
     expiresIn: ttl,
   });
 };
@@ -19,7 +19,7 @@ const generateToken = (user, option) => {
 const verifyToken = async (token, salt = '') => {
   let verify;
   try {
-    verify = jwt.verify(token, jwt_secret + salt);
+    verify = jwt.verify(token, jwtSecret + salt);
   } catch (e) {
     console.log('Error when verify token');
     return null;

@@ -4,13 +4,13 @@ const { User } = require('@models');
 
 exports.checkAccessToken = async (req, res, next) => {
   try {
-    let access_token = req.headers.authorization;
-    if (!access_token) {
+    let accessToken = req.headers.authorization;
+    if (!accessToken) {
       return next(Boom.unauthorized('Missing authorization token'));
     }
 
-    access_token = access_token.replace('Bearer ', '');
-    const decodedToken = await JWTUtils.verifyToken(access_token);
+    accessToken = accessToken.replace('Bearer ', '');
+    const decodedToken = await JWTUtils.verifyToken(accessToken);
     if (!decodedToken) throw Boom.unauthorized('Invalid token or token expired time');
 
     const user = await User.findById(decodedToken.id);

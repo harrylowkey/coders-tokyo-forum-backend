@@ -6,19 +6,19 @@ const redis = new Redis(configVar.redis_uri);
 
 const redisPrefix = configVar.redisPrefix || 'CodersX-Forum';
 
-const compress = function (data) {
+const compress = (data) => {
   const binary = zlib.gzipSync(data).toString('binary');
   return Promise.resolve(binary);
 };
 
-const decompress = function (data) {
+const decompress = (data) => {
   if (!data) throw new Error('Can not decompress null data');
 
   const d = zlib.unzipSync(new Buffer(data, 'binary')).toString();
   return Promise.resolve(d);
 };
 
-const cacheExecute = async function (params, func) {
+const cacheExecute = async (params, func) => {
   const { key } = params;
   const { isZip } = params;
   const { isJSON } = params;
@@ -47,7 +47,7 @@ const cacheExecute = async function (params, func) {
     });
 };
 
-let setCache = async function (params) {
+let setCache = (params) => {
   if (!params.key) throw new Error('missing key');
   if (params.value === undefined) throw new Error(`missing value to setCache (redis key: ${params.key})`);
 
@@ -59,7 +59,7 @@ let setCache = async function (params) {
   } return params.ttl ? redis.set(params.key, value, 'EX', params.ttl) : redis.set(params.key, value);
 };
 
-const getCache = async function (params) {
+const getCache = (params) => {
   if (!params.key) throw new Error('missing key');
 
   return redis.get(params.key)

@@ -64,7 +64,7 @@ exports.register = async (req, res, next) => {
       key: redisKey,
     });
 
-    if (!redisCode || redisCode != req.body.code) {
+    if (!redisCode ||  parseInt(redisCode) !== req.body.code) {
       throw Boom.badRequest('Invalid or expired code');
     }
 
@@ -136,7 +136,7 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
-  let {
+  const {
     newPassword, confirmPassword, code, email,
   } = req.body;
   try {
@@ -152,7 +152,7 @@ exports.forgotPassword = async (req, res, next) => {
       key: redisKey,
     });
 
-    if (!redisCode || redisCode != code) {
+    if (!redisCode ||  parseInt(redisCode) !== code) {
       throw Boom.badRequest('Invalid or expired code');
     }
 
@@ -191,14 +191,13 @@ exports.changePassword = async (req, res, next) => {
     const redisCode = await Redis.getCache({
       key: redisKey,
     });
-
-    if (!redisCode || redisCode != code) {
+    if (!redisCode || parseInt(redisCode) !== code) {
       throw Boom.badRequest('Invalid or expired code');
     }
 
     const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
     if (!isMatchedOldPass) {
-      throw Boom.badRequest('Wrong old password');
+      throw Boom.badRequest('Old password is wrong');
     }
 
     if (newPassword !== confirmPassword) {
@@ -249,6 +248,7 @@ const genDefaultAvatar = async (sex, userId) => {
     case 'Female':
       min = 1;
       max = 4;
+      break;
     default:
       break;
   }

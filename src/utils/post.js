@@ -163,7 +163,9 @@ exports.removeOldAuthorsAndCreateNewAuthors = async (post, newAuthors) => {
 
 
     const promises = {};
-    newAuthorsToCreate.map((author) => promises[author.key] = Author.findOne({ name: author.name, type: author.type }));
+    newAuthorsToCreate.map(
+      (author) => promises[author.key] = Author.findOne({ name: author.name, type: author.type }),
+    );
     const existedAuthors = await Promise.props(promises);
     let createdAuthors = [];
     if (newAuthorsToCreate.length) {

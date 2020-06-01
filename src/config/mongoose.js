@@ -1,7 +1,7 @@
 // config mongodb
 const mongoose = require('mongoose');
 
-const { mongo_uri } = require('./vars');
+const { mongoURL } = require('./vars');
 
 mongoose.Promise = Promise;
 const connection = () => {
@@ -13,7 +13,7 @@ const connection = () => {
 };
 
 exports.connect = () => {
-  mongoose.connect(mongo_uri, {
+  mongoose.connect(mongoURL, {
     useCreateIndex: true,
     useNewUrlParser: true,
     useFindAndModify: false,

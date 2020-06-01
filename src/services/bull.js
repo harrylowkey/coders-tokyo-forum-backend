@@ -107,7 +107,7 @@ FILE_REFERENCE_QUEUE.deleteMultipleFiles.process(async (job, done) => {
 });
 
 // TODO: Implement logger package
-EMAIL_QUEUE.sendEmailCode.on('completed', (job, result) => {
+EMAIL_QUEUE.sendEmailCode.on('completed', () => {
   console.log('****__QUEUE_JOB__**** Send email code success');
 });
 

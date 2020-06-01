@@ -5,12 +5,12 @@ const _path = `${path.join(__dirname, '../../.env')}.${mode}`;
 require('dotenv').config({ path: _path });
 
 module.exports = {
-  mongo_uri: process.env.MONGO_URL,
+  mongoURL: process.env.MONGO_URL,
   redis_uri: process.env.REDIS_URL,
   port: process.env.PORT,
   socket_port: process.env.PORT_SOCKET,
   admin_port: process.env.ADMIN_PORT,
-  jwt_secret: process.env.JWT_SECRET,
+  jwtSecret: process.env.JWT_SECRET,
   prefix: process.env.PREFIX,
   cloudinary_name: process.env.CLOUDINARY_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,

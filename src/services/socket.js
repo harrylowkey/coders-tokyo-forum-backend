@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 const Redis = require('ioredis');
 
 const redisSub = new Redis(configVar.redis_uri);
-const { Notif } = require('@models');
 
 let counter = 0;
 const port = configVar.socket_port || 8888;
@@ -22,7 +21,7 @@ const socketAuth = async (socket, token) => {
   token = token.replace('Bearer ', '');
   if (!token) return;
   let verify;
-  const secretKey = configVar.jwt_secret || '';
+  const secretKey = configVar.jwtSecret || '';
   try {
     verify = jwt.verify(token, secretKey);
   } catch (e) {
@@ -31,7 +30,6 @@ const socketAuth = async (socket, token) => {
   }
   if (verify) {
     const userId = verify.id;
-    const userName = verify.username;
     const socketIds = app.storage.userIdAndSocketId[userId] || new Set();
     socketIds.add(socket.id);
     app.storage.userIdAndSocketId[userId] = socketIds;

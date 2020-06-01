@@ -44,7 +44,7 @@ exports.handler = (err, req, res, next) => {
       console.log(ex);
     }
   }
-  if (result.status == 400 || result.status == 422) {
+  if (result.status === 400 || result.status === 422) {
     const messIndex = result.message.indexOf('fails because [');
     if (messIndex >= 0) {
       result.message = result.message.substring(messIndex + 15, result.message.length).replace(']', '');
