@@ -184,8 +184,7 @@ exports.replyComment = async (req, res, next) => {
       ...dataRes,
       postId: parentComment.postId._id
     }));
-
-    if (parentComment.postId.user._id.toString() != user._id.toString()) {
+    if (parentComment.user._id.toString() != user._id.toString()) {
       const text = `**${user.username}** replied to your comment`;
       const newNotif = await new Notif({
         post: parentComment.postId._id,
@@ -299,7 +298,7 @@ exports.threadReplyComment = async (req, res, next) => {
       postId: parentComment.postId._id
     }));
 
-    if (parentComment.postId.user._id.toString() != user._id.toString()) {
+    if (comment.user._id.toString() != user._id.toString()) {
     const text = `**${user.username}** replied to your comment`;
     const newNotif = await new Notif({
       post: parentComment.postId._id,
@@ -314,7 +313,7 @@ exports.threadReplyComment = async (req, res, next) => {
         content: text,
         post: parentComment.postId,
         creator: user,
-        userId: parentComment.user._id,
+        userId: comment.user._id,
         createdAt: newNotif.createdAt,
       },
     };
