@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 const brcrypt = require('bcrypt');
 
@@ -74,13 +75,13 @@ const userSchema = new Schema(
       {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User',
-      }
+      },
     ],
     following: [
       {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User',
-      }
+      },
     ],
   },
   { timestamps: true },

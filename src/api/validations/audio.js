@@ -1,9 +1,9 @@
 const Joi = require('@hapi/joi');
-const Boom = require('@hapi/boom')
-const { audioConfig} = require('@configVar')
+const Boom = require('@hapi/boom');
+const { audioConfig } = require('@configVar');
 
-let validatePOST = (req, res, next) => {
-  let schema = Joi.object().keys({
+const validatePOST = (req, res, next) => {
+  const schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
@@ -14,27 +14,26 @@ let validatePOST = (req, res, next) => {
       type: Joi.string().valid(
         'artist',
         'composer',
-      ).required()
+      ).required(),
     }).required(),
     type: Joi.string().optional(),
-    cover: Joi.object().required()
-  })
-  
-  let reqData = req.body;
-  const { error } = schema.validate(reqData)
+    cover: Joi.object().required(),
+  });
+
+  const reqData = req.body;
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
+  return next();
+};
 
-}
-
-let validatePUT = (req, res, next) => {
+const validatePUT = (req, res, next) => {
   if (Object.keys(req.body).length === 0) {
-    throw Boom.badRequest('Atleast 1 field required')
+    throw Boom.badRequest('Atleast 1 field required');
   }
-  let schema = Joi.object().keys({
+  const schema = Joi.object().keys({
     topic: Joi.string().optional(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
@@ -47,25 +46,24 @@ let validatePUT = (req, res, next) => {
         'artist',
         'composer',
         'actor',
-        'director'
-      ).required()
+        'director',
+      ).required(),
     }).optional(),
     audioSize: Joi.number().max(audioConfig.chunk_size),
     type: Joi.string().optional(),
-    cover: Joi.object().optional()
-  })
-  
-  let reqData = req.body;
-  const { error } = schema.validate(reqData)
+    cover: Joi.object().optional(),
+  });
+
+  const reqData = req.body;
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-
-}
+  return next();
+};
 
 module.exports = {
   validatePOST,
-  validatePUT
+  validatePUT,
 };

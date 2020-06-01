@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 const types = ['author', 'artist', 'composer', 'actor', 'director'];
 
@@ -16,11 +17,11 @@ const authorSchema = new Schema({
   },
   avatar: {
     type: mongoose.SchemaTypes.ObjectId,
-    ref: 'File'
+    ref: 'File',
   },
   description: {
-    type: String
-  }
+    type: String,
+  },
 });
 
 authorSchema.index({ name: 1, type: 1 });

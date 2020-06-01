@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 types = [
   'discussion',
@@ -72,15 +73,15 @@ const postSchema = new Schema(
     },
     media: {
       type: mongoose.SchemaTypes.ObjectId,
-      ref: 'File'
+      ref: 'File',
     },
     food: {
       foodPhotos: [
         {
           type: mongoose.SchemaTypes.ObjectId,
           ref: 'File',
-          default: null
-        }
+          default: null,
+        },
       ],
       type: Object,
       priceAverage: String,
@@ -92,7 +93,7 @@ const postSchema = new Schema(
       openTime: String,
       foodName: {
         type: String,
-        maxlength: 30
+        maxlength: 30,
       },
       price: Number,
       stars: {
@@ -100,7 +101,7 @@ const postSchema = new Schema(
         default: 0,
         max: 5,
         min: 0,
-      }
+      },
     },
     book: {
       type: Object,
@@ -110,7 +111,7 @@ const postSchema = new Schema(
       length: Number,
       genres: Array,
       suggestedBy: Array,
-      stars: Number
+      stars: Number,
     },
     movie: {
       type: Object,
@@ -119,14 +120,14 @@ const postSchema = new Schema(
       link: String,
       releaseDate: String,
       time: Number,
-      stars: Number
+      stars: Number,
     },
     savedBy: [
       {
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'User'
-      }
-    ]
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true },
 );

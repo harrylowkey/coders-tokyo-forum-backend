@@ -1,50 +1,50 @@
 const Joi = require('@hapi/joi');
-const Boom = require('@hapi/boom')
+const Boom = require('@hapi/boom');
 
 
-let validatePOST = (req, res, next) => {
-  let schema = Joi.object().keys({
+const validatePOST = (req, res, next) => {
+  const schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
     tags: Joi.array().items(Joi.string()).optional(),
     cover: Joi.object().required(),
-    type: Joi.string().optional()
-  })
+    type: Joi.string().optional(),
+  });
 
-  let reqData = req.body;
-  const { error } = schema.validate(reqData)
+  const reqData = req.body;
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-}
+  return next();
+};
 
-let validatePUT = (req, res, next) => {
+const validatePUT = (req, res, next) => {
   if (Object.keys(req.body).length === 0) {
-    throw Boom.badRequest('Atleast 1 field required')
+    throw Boom.badRequest('Atleast 1 field required');
   }
 
-  let schema = Joi.object().keys({
+  const schema = Joi.object().keys({
     topic: Joi.string().optional(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
     tags: Joi.array().items(Joi.string()).optional(),
     cover: Joi.object().optional(),
-    type: Joi.string().optional()
-  })
+    type: Joi.string().optional(),
+  });
 
-  let reqData = req.body;
-  const { error } = schema.validate(reqData)
+  const reqData = req.body;
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-}
+  return next();
+};
 
 module.exports = {
   validatePOST,
-  validatePUT
+  validatePUT,
 };

@@ -1,16 +1,15 @@
 // config mongodb
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-var { mongo_uri } = require('../config/vars');
+const { mongo_uri } = require('./vars');
 
 mongoose.Promise = Promise;
 const connection = () => {
   const db = mongoose.connection;
   db.on('error', console.error.bind(console, 'connection error:'));
-  db.once('open', function() {
+  db.once('open', () => {
     console.log('Connected to DB succesfully!');
   });
-  
 };
 
 exports.connect = () => {

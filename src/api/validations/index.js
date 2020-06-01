@@ -9,5 +9,5 @@ module.exports = {
   Movie: require('./movie'),
   Video: require('./video'),
   Audio: require('./audio'),
-  Discussion: require('./discussion')
-}
+  Discussion: require('./discussion'),
+};

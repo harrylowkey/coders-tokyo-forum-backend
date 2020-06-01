@@ -1,9 +1,9 @@
 const Joi = require('@hapi/joi');
-const Boom = require('@hapi/boom')
-const { videoConfig } = require('@configVar')
+const Boom = require('@hapi/boom');
+const { videoConfig } = require('@configVar');
 
-let validatePOST = (req, res, next) => {
-  let schema = Joi.object().keys({
+const validatePOST = (req, res, next) => {
+  const schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
@@ -12,36 +12,35 @@ let validatePOST = (req, res, next) => {
     url: Joi.string().when('isUpload', {
       is: false,
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     video: Joi.object().when('isUpload', {
       is: true,
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
-    videoSize: Joi.number().max(videoConfig.chunk_size)
-  })
-  
-  let reqData = req.body;
-  reqData.isUpload = req.query.isUpload
+    videoSize: Joi.number().max(videoConfig.chunk_size),
+  });
+
+  const reqData = req.body;
+  reqData.isUpload = req.query.isUpload;
   if (req.file) {
-    reqData.video = req.file
-    reqData.videoSize= req.file.size
+    reqData.video = req.file;
+    reqData.videoSize = req.file.size;
   }
-  const { error } = schema.validate(reqData)
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
+  return next();
+};
 
-}
-
-let validatePUT = (req, res, next) => {
+const validatePUT = (req, res, next) => {
   if (Object.keys(req.body).length === 0) {
-    throw Boom.badRequest('Atleast 1 field required')
+    throw Boom.badRequest('Atleast 1 field required');
   }
-  let schema = Joi.object().keys({
+  const schema = Joi.object().keys({
     topic: Joi.string().optional(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
@@ -49,25 +48,24 @@ let validatePUT = (req, res, next) => {
     isUpload: Joi.boolean().optional(),
     url: Joi.string().optional(),
     video: Joi.object().optional(),
-    videoSize: Joi.number().max(videoConfig.chunk_size)
-  })
-  
-  let reqData = req.body;
-  reqData.isUpload = req.query.isUpload
+    videoSize: Joi.number().max(videoConfig.chunk_size),
+  });
+
+  const reqData = req.body;
+  reqData.isUpload = req.query.isUpload;
   if (req.file) {
-    reqData.video = req.file
-    reqData.videoSize= req.file.size
+    reqData.video = req.file;
+    reqData.videoSize = req.file.size;
   }
-  const { error } = schema.validate(reqData)
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-
-}
+  return next();
+};
 
 module.exports = {
   validatePOST,
-  validatePUT
+  validatePUT,
 };

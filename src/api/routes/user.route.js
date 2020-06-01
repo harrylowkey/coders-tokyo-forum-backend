@@ -1,15 +1,17 @@
 const express = require('express');
+
 const router = express.Router();
 const { UserController } = require('@controllers');
 const { checkAccessToken } = require('@middlewares/authorize');
+const { avatarConfig } = require('@configVar');
 const {
   updateProfileValidate,
   uploadAvatarValidate,
 } = require('../validations/user');
 
 
-const { avatarConfig } = require('@configVar');
 const { configStorage } = require('../../config/cloudinary');
+
 const upload = configStorage(avatarConfig);
 
 router
@@ -24,8 +26,7 @@ router
   .route('/')
   .put(checkAccessToken,
     updateProfileValidate,
-    UserController.updateProfile
-  );
+    UserController.updateProfile);
 router
   .route('/avatars')
   .post(

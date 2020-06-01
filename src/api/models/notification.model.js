@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
   post: {
@@ -16,7 +17,7 @@ const notificationSchema = new Schema({
   },
   content: {
     type: String,
-    trim: true
+    trim: true,
   },
 }, { timestamps: true });
 

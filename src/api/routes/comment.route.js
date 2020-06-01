@@ -28,7 +28,7 @@ router
     CommentController.replyComment,
   );
 
-  router
+router
   .route('/thread/reply/:parentId/:commentId')
   .post(
     checkAccessToken,
@@ -36,7 +36,7 @@ router
     CommentController.threadReplyComment,
   );
 
-  router
+router
   .route('/:commentId')
   .put(
     checkAccessToken,
@@ -44,7 +44,7 @@ router
     CommentController.editComment,
   );
 
-  router
+router
   .route('/:commentId')
   .delete(
     checkAccessToken,

@@ -1,9 +1,10 @@
-var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const app = require('express')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 const configVar = require('@configVar');
 const jwt = require('jsonwebtoken');
 const Redis = require('ioredis');
+
 const redisSub = new Redis(configVar.redis_uri);
 const { Notif } = require('@models');
 
@@ -14,25 +15,24 @@ app.storage = {
   userIdAndSocketId: {},
   userIdAndNickname: {},
   socketIdAndUserId: {},
-  connection: 0
+  connection: 0,
 };
 
-let socketAuth = async (socket, token) => {
+const socketAuth = async (socket, token) => {
   token = token.replace('Bearer ', '');
-  if (!token)
-    return;
+  if (!token) return;
   let verify;
-  let secretKey = configVar.jwt_secret || '';
+  const secretKey = configVar.jwt_secret || '';
   try {
     verify = jwt.verify(token, secretKey);
   } catch (e) {
-    console.log("Verify err", e);
+    console.log('Verify err', e);
     return null;
   }
   if (verify) {
-    let userId = verify.id;
-    let userName = verify.username;
-    let socketIds = app.storage.userIdAndSocketId[userId] || new Set();
+    const userId = verify.id;
+    const userName = verify.username;
+    const socketIds = app.storage.userIdAndSocketId[userId] || new Set();
     socketIds.add(socket.id);
     app.storage.userIdAndSocketId[userId] = socketIds;
     app.storage.socketIdAndUserId[socket.id] = userId;
@@ -52,15 +52,15 @@ redisSub.on('message', (channel, message) => {
 
   if (channel === configVar.SOCKET_NOTIFICATION) {
     if (app.storage.userIdAndSocketId[message.notif.userId]) {
-      app.storage.userIdAndSocketId[message.notif.userId].forEach(socketId => {
+      app.storage.userIdAndSocketId[message.notif.userId].forEach((socketId) => {
         io.to(socketId).emit(configVar.SOCKET_NOTIFICATION, message);
       });
     }
   }
 });
 
-let start = () => {
-  io.on('connection', socket => {
+const start = () => {
+  io.on('connection', (socket) => {
     counter++;
     app.storage.connection = counter;
 
@@ -82,12 +82,11 @@ let start = () => {
       app.storage.connection = counter;
       console.log(`${counter} clients!`);
 
-      let userId = app.storage.socketIdAndUserId[socket.id];
+      const userId = app.storage.socketIdAndUserId[socket.id];
       delete app.storage.socketIdAndUserId[socket.id];
-      let socketIds = app.storage.userIdAndSocketId[userId] || new Set();
+      const socketIds = app.storage.userIdAndSocketId[userId] || new Set();
       socketIds.delete(socket.id);
-      if (!socketIds.size)
-        delete app.storage.userIdAndSocketId[userId];
+      if (!socketIds.size) delete app.storage.userIdAndSocketId[userId];
       io.emit(configVar.SOCKET_USER_CONNECTIONS, { connections: counter, online: Object.keys(app.storage.userIdAndSocketId).length });
     });
   });
@@ -97,5 +96,5 @@ let start = () => {
 };
 
 module.exports = {
-  start
+  start,
 };

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 const fileSchema = new Schema({
   user: {
@@ -12,11 +13,11 @@ const fileSchema = new Schema({
   },
   publicId: {
     type: String,
-    trim: true
+    trim: true,
   },
   secureURL: {
     type: String,
-    trim: true
+    trim: true,
   },
   media: {
     type: Object,
@@ -31,13 +32,13 @@ const fileSchema = new Schema({
   },
   fileName: String,
   sizeBytes: Number,
-  resourceType: String
+  resourceType: String,
 }, { timestamps: true });
 
 fileSchema.index(
   { userId: 1 },
   { postId: 1 },
-  { publicId: 1 }
+  { publicId: 1 },
 );
 
 const fileModel = mongoose.model('File', fileSchema);

@@ -1,21 +1,24 @@
 const express = require('express');
+
 const router = express.Router();
 const {
   BlogController, BookController, FoodController,
   MovieController, PostController, DiscussionController,
-  MediaController
+  MediaController,
 } = require('@controllers');
 
 const { checkAccessToken } = require('@middlewares/authorize');
 const paginate = require('@middlewares/pagination');
-const { Blog, Book, Food,
+const {
+  Blog, Book, Food,
   Movie, Video, Audio, Discussion,
-  Post
+  Post,
 } = require('@validations');
 
 /** ----------- CONFIG --------------- */
 const { foodPhotosConfig } = require('@configVar');
 const { configStorage } = require('../../config/cloudinary');
+
 const uploadFoodPhotos = configStorage(foodPhotosConfig);
 
 const {
@@ -77,10 +80,10 @@ router
     checkAccessToken,
     uploadFoodPhotos.fields([
       { name: 'coverImage', maxCount: 1 },
-      { name: 'foodPhotos', maxCount: 10 }
+      { name: 'foodPhotos', maxCount: 10 },
     ]),
     Food.validatePOST,
-    FoodController.createFoodReview
+    FoodController.createFoodReview,
   );
 router
   .route('/food/:postId')
@@ -88,10 +91,10 @@ router
     checkAccessToken,
     uploadFoodPhotos.fields([
       { name: 'coverImage', maxCount: 1 },
-      { name: 'foodPhotos', maxCount: 10 }
+      { name: 'foodPhotos', maxCount: 10 },
     ]),
     Food.validatePUT,
-    FoodController.editFoodReview
+    FoodController.editFoodReview,
   );
 
 router

@@ -4,11 +4,11 @@ const Utils = require('@utils');
 exports.getNotifs = async (req, res, next) => {
   try {
     const { user } = req;
-    const { limit, page } = req.query
+    const { limit, page } = req.query;
     const [_page, _limit] = Utils.post.standardizePageLimit20(page, limit);
     const [notifs, counter] = await Promise.all([
       Notif.find({
-        user: user._id
+        user: user._id,
       })
         .lean()
         .populate([
@@ -17,24 +17,24 @@ exports.getNotifs = async (req, res, next) => {
             select: '_id type',
             populate: {
               path: 'cover',
-              select: '_id secureURL'
-            }
+              select: '_id secureURL',
+            },
           },
           {
             path: 'creator',
             select: '_id username',
             populate: {
               path: 'avatar',
-              select: '_id secureURL'
-            }
+              select: '_id secureURL',
+            },
           },
         ])
         .skip((_page - 1) * _limit)
         .limit(_limit)
         .sort({ createdAt: -1 }),
       Notif.countDocuments({
-        user: user._id
-      })
+        user: user._id,
+      }),
     ]);
 
     return res.status(200).json({

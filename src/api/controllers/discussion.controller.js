@@ -1,10 +1,10 @@
 const Boom = require('@hapi/boom');
 const Utils = require('@utils');
-const Post = require('@models').Post;
+const { Post } = require('@models');
 const Promise = require('bluebird');
 
 exports.createDiscussion = async (req, res, next) => {
-  const type = 'discussion'
+  const type = 'discussion';
 
   const {
     body: { topic, tags, content },
@@ -12,28 +12,28 @@ exports.createDiscussion = async (req, res, next) => {
   } = req;
 
   try {
-    let discussion = {
+    const discussion = {
       user: user._id,
       topic,
       content,
       type,
     };
 
-    let discussionTags
+    let discussionTags;
     if (tags) {
-      discussionTags = await Utils.post.createTags(tags)
-      discussion.tags = discussionTags.map(tag => tag._id)
+      discussionTags = await Utils.post.createTags(tags);
+      discussion.tags = discussionTags.map((tag) => tag._id);
     }
-    let createdDissucsion = await new Post(discussion).save()
-    let resData = {
+    const createdDissucsion = await new Post(discussion).save();
+    const resData = {
       _id: createdDissucsion._id,
       tags: discussionTags || [],
       topic,
       content,
       type,
       user: user._id,
-      createdAt: createdDissucsion.createdAt
-    }
+      createdAt: createdDissucsion.createdAt,
+    };
     return res.status(200).json({
       status: 200,
       data: resData,
@@ -45,7 +45,7 @@ exports.createDiscussion = async (req, res, next) => {
 
 exports.editDiscussion = async (req, res, next) => {
   const { topic, content, tags } = req.body;
-  const type = 'discussion'
+  const type = 'discussion';
 
   try {
     const discussion = await Post.findOne({
@@ -60,7 +60,7 @@ exports.editDiscussion = async (req, res, next) => {
       throw Boom.badRequest('Not found discussion, edit discussion failed');
     }
 
-    let query = {};
+    const query = {};
     if (topic) query.topic = topic;
     if (content) query.content = content;
     if (tags) {
@@ -94,12 +94,12 @@ exports.editDiscussion = async (req, res, next) => {
 
 exports.deleteDiscussion = async (req, res, next, type) => {
   try {
-    const isDeleted = await Post.findByIdAndDelete(req.params.postId)
-    if (!isDeleted) throw Boom.badRequest('Delete post failed')
+    const isDeleted = await Post.findByIdAndDelete(req.params.postId);
+    if (!isDeleted) throw Boom.badRequest('Delete post failed');
 
     return res.status(200).json({
       status: 200,
-      message: `Delete discussion successfully`,
+      message: 'Delete discussion successfully',
     });
   } catch (error) {
     return next(error);

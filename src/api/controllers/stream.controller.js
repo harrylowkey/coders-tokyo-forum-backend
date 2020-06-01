@@ -1,10 +1,11 @@
 const Boom = require('@hapi/boom');
 const Promise = require('bluebird');
-const Post = require('@models').Post;
-const PostSchema = require('../models/post.model').schema
-const Utils = require('@utils')
-const mongoose = require('mongoose')
+const { Post } = require('@models');
+const PostSchema = require('../models/post.model').schema;
+const Utils = require('@utils');
+const mongoose = require('mongoose');
 const deepPopulate = require('mongoose-deep-populate')(mongoose);
+
 PostSchema.plugin(deepPopulate, {});
 
 exports.index = async (req, res, next) => {
@@ -32,13 +33,13 @@ exports.index = async (req, res, next) => {
         select: '_id username job createdAt description sex followers following avatar socialLinks',
         populate: {
           path: 'avatar',
-          select: '_id secureURL'
-        }
+          select: '_id secureURL',
+        },
       },
       {
         path: 'media',
       },
-    ]
+    ];
     const result = await Promise.props({
       newestBlogs: Post.find({
         type: 'blog',
@@ -75,7 +76,7 @@ exports.index = async (req, res, next) => {
         .lean()
         .sort({ createdAt: -1 })
         .populate([...generalPopulates,
-          { path: 'authors', select: 'name type' }
+          { path: 'authors', select: 'name type' },
         ])
         .select('-__v -media')
         .skip((page - 1) * limit)
@@ -113,10 +114,10 @@ exports.index = async (req, res, next) => {
       counter: Post.countDocuments({}).lean(),
     });
 
-    let posts = {}
-    Object.keys(result).map(key => {
+    const posts = {};
+    Object.keys(result).map((key) => {
       posts[key] = result[key];
-    })
+    });
     return res.status(200).json({
       status: 200,
       message: 'Get newest posts successfully',

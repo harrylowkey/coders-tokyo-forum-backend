@@ -1,9 +1,9 @@
 const Joi = require('@hapi/joi');
-const Boom = require('@hapi/boom')
+const Boom = require('@hapi/boom');
 
 
-let createPostValidate = (req, res, next) => {
-  let schema = Joi.object().keys({
+const createPostValidate = (req, res, next) => {
+  const schema = Joi.object().keys({
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
@@ -15,7 +15,7 @@ let createPostValidate = (req, res, next) => {
       'movie',
       'video',
       'podcast',
-      'discussion'
+      'discussion',
     ).required(),
     tags: Joi.array().items(Joi.string()).optional(),
     authors: Joi.array().items({
@@ -26,92 +26,92 @@ let createPostValidate = (req, res, next) => {
         'composer',
         'actor',
         'actress',
-        'director'
-      ).required()
+        'director',
+      ).required(),
     }).when('type', {
       is: Joi.valid('song', 'book', 'movie', 'podcast'),
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     coverImage: Joi.object().when('type', {
       is: Joi.valid('food', 'movie', 'book', 'blog'),
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     isUpload: Joi.boolean().optional(),
     url: Joi.string().when('isUpload', {
       is: false,
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     video: Joi.object().keys({}).when('isUpload', {
       is: true,
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     audio: Joi.object().when('type', {
       is: Joi.valid('song', 'podcast'),
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     food: Joi.object().keys({
       foodName: Joi.string().required(),
       url: Joi.string().optional(),
       price: Joi.string().required(),
       location: Joi.string().optional(),
-      star: Joi.number().optional()
+      star: Joi.number().optional(),
     }).when('type', {
       is: 'food',
       then: Joi.required(),
-      otherwise: Joi.optional()
+      otherwise: Joi.optional(),
     }),
     foodPhotos: Joi.array().when('type', {
       is: 'food',
       then: Joi.required(),
-      otherwise: Joi.optional()
-    })
-  })
+      otherwise: Joi.optional(),
+    }),
+  });
 
-  req.files = JSON.parse(JSON.stringify(req.files))
-  req.body = JSON.parse(JSON.stringify(req.body))
+  req.files = JSON.parse(JSON.stringify(req.files));
+  req.body = JSON.parse(JSON.stringify(req.body));
 
-  let reqData = req.body;
-  reqData.type = req.query.type
-  reqData.isUpload = req.query.isUpload
+  const reqData = req.body;
+  reqData.type = req.query.type;
+  reqData.isUpload = req.query.isUpload;
   if (req.files.coverImage) {
-    reqData.coverImage = req.files['coverImage'][0]
+    reqData.coverImage = req.files.coverImage[0];
   }
   if (req.files.audio) {
-    reqData.audio = req.files['audio'][0]
+    reqData.audio = req.files.audio[0];
   }
 
   if (req.files.foodPhotos) {
-    reqData.foodPhotos = req.files['foodPhotos'].map(photo => photo)
+    reqData.foodPhotos = req.files.foodPhotos.map((photo) => photo);
   }
 
-  const { error } = schema.validate(reqData)
+  const { error } = schema.validate(reqData);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-}
+  return next();
+};
 
-let validateGetPost = (req, res, next) => {
-  let schema = Joi.object().keys({
-    postId: Joi.string().length(24)
-  })
+const validateGetPost = (req, res, next) => {
+  const schema = Joi.object().keys({
+    postId: Joi.string().length(24),
+  });
 
-  req.params = JSON.parse(JSON.stringify(req.params))
-  const { error } = schema.validate(req.params)
+  req.params = JSON.parse(JSON.stringify(req.params));
+  const { error } = schema.validate(req.params);
   if (error) {
-    throw Boom.badRequest(error.message)
+    throw Boom.badRequest(error.message);
   }
 
-  return next()
-}
+  return next();
+};
 
 module.exports = {
   createPostValidate,
-  validateGetPost
+  validateGetPost,
 };

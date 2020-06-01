@@ -1,4 +1,8 @@
-const { QUEUES: { EMAIL_QUEUE, USER_QUEUE, CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE } } = require('@configVar')
+const {
+  QUEUES: {
+    EMAIL_QUEUE, USER_QUEUE, CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE,
+  },
+} = require('@configVar');
 
 module.exports = queues = [
   {

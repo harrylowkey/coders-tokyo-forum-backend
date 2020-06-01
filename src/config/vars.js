@@ -1,7 +1,9 @@
 const path = require('path');
-let mode = process.env.NODE_ENV || 'local';
-let _path = `${path.join(__dirname, '../../.env')}.${mode}`;
+
+const mode = process.env.NODE_ENV || 'local';
+const _path = `${path.join(__dirname, '../../.env')}.${mode}`;
 require('dotenv').config({ path: _path });
+
 module.exports = {
   mongo_uri: process.env.MONGO_URL,
   redis_uri: process.env.REDIS_URL,
@@ -18,7 +20,7 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'video',
-    chunk_size: 15000000, //15mb,
+    chunk_size: 15000000, // 15mb,
     // async: true,
   },
   audioConfig: {
@@ -26,7 +28,7 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'video',
-    chunk_size: 10000000, //10mb
+    chunk_size: 10000000, // 10mb
     // async: true,
   },
   blogCoverConfig: {
@@ -35,7 +37,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
-    chunk_size: 6000000, //6mb
+    chunk_size: 6000000, // 6mb
   },
   avatarConfig: {
     folder: 'Coders-Tokyo-Forum/avatars',
@@ -43,13 +45,13 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
-    chunk_size: 6000000, //6mb
+    chunk_size: 6000000, // 6mb
     // async: true,
     transformation: [
       {
         width: 400,
         height: 400,
-      }
+      },
     ],
   },
   foodPhotosConfig: {
@@ -58,7 +60,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
-    chunk_size: 6000000, //6mb,
+    chunk_size: 6000000, // 6mb,
     maxPhotos: 10,
     // async: true,
     transformation: [
@@ -74,7 +76,7 @@ module.exports = {
     unique_filename: true,
     resource_type: 'image',
     allowedFormats: ['jpg', 'png', 'jpeg'],
-    chunk_size: 6000000, //6mb,
+    chunk_size: 6000000, // 6mb,
     maxPhotos: 10,
   },
   QUEUES: {
@@ -86,7 +88,7 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@email_',
-      }
+      },
     },
     USER_QUEUE: {
       name: 'user',
@@ -117,7 +119,7 @@ module.exports = {
         },
         prefix: '@@fileReference_',
       },
-    }
+    },
   },
   arenaConfig: {
     host: process.env.ARENA_HOST,
@@ -144,5 +146,5 @@ module.exports = {
   SOCKET_NEW_COMMENT: 'NEW_COMMENT',
   SOCKET_DELETE_COMMENT: 'DELETE_COMMENT',
   SOCKET_EDIT_COMMENT: 'EDIT_COMMENT',
-  SOCKET_NOTIFICATION: 'NOTIFICATIONS'
+  SOCKET_NOTIFICATION: 'NOTIFICATIONS',
 };

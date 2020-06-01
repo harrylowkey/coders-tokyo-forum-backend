@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 
 const commentSchema = new Schema(
   {
@@ -10,16 +11,16 @@ const commentSchema = new Schema(
     childComments: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Comment'
-      }
+        ref: 'Comment',
+      },
     ],
     parentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Comment'
+      ref: 'Comment',
     },
     replyToComment: {
       type: Schema.Types.ObjectId,
-      ref: 'Comment'
+      ref: 'Comment',
     },
     content: {
       type: String,
@@ -29,7 +30,7 @@ const commentSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-    }
+    },
   },
   { timestamps: true },
 );

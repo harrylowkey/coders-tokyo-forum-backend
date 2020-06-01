@@ -1,4 +1,6 @@
 const express = require('express');
+const { AuthController } = require('@controllers');
+const { checkAccessToken } = require('@middlewares/authorize');
 const {
   signUpValidate,
   loginValidate,
@@ -6,8 +8,6 @@ const {
   changePasswordValidate,
   forgotPasswordValidate,
 } = require('../validations/auth');
-const { AuthController } = require('@controllers');
-const { checkAccessToken } = require('@middlewares/authorize');
 
 const router = express.Router();
 
