@@ -94,6 +94,9 @@ exports.createComment = async (req, res, next) => {
       let dataNotifSocket = {
         content: text,
         notif: {
+          _id: newNotif._id,
+          isRead: false,
+          isRead: false,
           content: text,
           post,
           creator: user,
@@ -201,6 +204,8 @@ exports.replyComment = async (req, res, next) => {
       let dataNotifSocket = {
         content: text,
         notif: {
+          _id: newNotif._id,
+          isRead: false,
           content: text,
           post: parentComment.postId,
           creator: user,
@@ -314,6 +319,8 @@ exports.threadReplyComment = async (req, res, next) => {
     let dataNotifSocket = {
       content: text,
       notif: {
+        _id: newNotif._id,
+        isRead: false,
         content: text,
         post: parentComment.postId,
         creator: user,

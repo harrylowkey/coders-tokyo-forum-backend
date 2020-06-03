@@ -7,4 +7,12 @@ const router = express.Router();
 
 router.route('/').get(checkAccessToken, notifController.getNotifs);
 
+router
+  .route('/:id/markAsRead')
+  .post(checkAccessToken, notifController.markAsRead);
+
+  router
+  .route('/markMultipleAsRead')
+  .post(checkAccessToken, notifController.markMultipleAsRead);
+
 module.exports = router;
