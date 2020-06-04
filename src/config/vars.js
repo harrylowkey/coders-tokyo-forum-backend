@@ -28,7 +28,7 @@ module.exports = {
     use_filename: true,
     unique_filename: true,
     resource_type: 'video',
-    chunk_size: 10000000, // 10mb
+    chunk_size: 20000000, // 10mb
     // async: true,
   },
   blogCoverConfig: {
