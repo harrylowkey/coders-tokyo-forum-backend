@@ -674,6 +674,8 @@ exports.likePost = async (req, res, next) => {
       let dataSocket = {
         content,
         notif: {
+          _id: newNotif._id,
+          isRead: false,
           content: notif,
           post,
           creator: _user,
