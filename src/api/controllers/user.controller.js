@@ -1,8 +1,10 @@
 const Boom = require('@hapi/boom');
 const httpStatus = require('http-status');
-const { User } = require('@models');
-const { CloudinaryService } = require('@services');
+const { User, Notif } = require('@models');
 const { CLOUDINARY_QUEUE, FILE_REFERENCE_QUEUE } = require('@bull');
+const configVar = require('@configVar');
+const _Redis = require('ioredis');
+const redis = new _Redis(configVar.redis_uri);
 
 exports.getById = async (req, res, next) => {
   try {
@@ -214,6 +216,11 @@ exports.getByUsername = async (req, res, next) => {
 exports.follow = async (req, res, next) => {
   try {
     const { user } = req;
+    const _user = await User.findById(user._id).lean().populate({
+      path: 'avatar',
+      select: '_id secureURL'
+    }).select('_id username avatar')
+    console.log('_user', _user)
     const userToFollow = await User.findById(req.params.userId).lean();
     if (!userToFollow) {
       throw Boom.badRequest('Not found user to follow');
@@ -239,6 +246,32 @@ exports.follow = async (req, res, next) => {
     if (!updateFollowers || !updateFollwing) {
       throw Boom.badRequest('Follow failed');
     }
+
+    const path = `/users/profile/${user.username}`
+    const content = `**${user.username}** followed you`
+    const newNotif = await new Notif({
+      creator: user._id,
+      user: userToFollow._id,
+      path,
+      content,
+    }).save();
+
+    let dataSocket = {
+      content,
+      notif: {
+        _id: newNotif._id,
+        isRead: false,
+        content,
+        path,
+        creator: _user,
+        userId: userToFollow._id,
+        createdAt: newNotif.createdAt,
+      },
+    };
+
+    console.log(dataSocket)
+
+    redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataSocket));
 
     return res.status(200).json({
       status: 200,

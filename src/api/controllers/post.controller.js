@@ -654,14 +654,19 @@ exports.likePost = async (req, res, next) => {
 
     if (post.user._id.toString() != user._id.toString()) {
       let type = post.type;
+      let typeParams = post.type;
+      let path = `/${typeParams}s/${post._id}?type=${type}`;
       if (post.type === 'book' || post.type === 'movie' || post.type === 'food') {
         type = post.type + ' review';
+        typeParams = `${post.type}Review`;
+        path = `/${typeParams}s/${post._id}?type=${post.type}`
       }
 
       const newNotif = await new Notif({
         post: post._id,
         creator: user._id,
         user: post.user._id,
+        path,
         content: `**${_user.username}**${post.likes.length > 1 ? ', ' + '**' + post.likes.length + ' others' + '**' : ''} loved your ${type}`,
       }).save();
 
@@ -678,6 +683,7 @@ exports.likePost = async (req, res, next) => {
           isRead: false,
           content: notif,
           post,
+          path,
           creator: _user,
           userId: post.user._id,
           createdAt: newNotif.createdAt,

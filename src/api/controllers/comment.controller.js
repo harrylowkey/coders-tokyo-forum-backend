@@ -80,8 +80,12 @@ exports.createComment = async (req, res, next) => {
 
     if (post.user._id.toString() != user._id.toString()) {
       let type = post.type;
+      let typeParams = post.type;
+      let path = `/${typeParams}s/${post._id}?type=${type}`;
       if (post.type === 'book' || post.type === 'movie' || post.type === 'food') {
         type = post.type + ' review';
+        typeParams = `${post.type}Review`;
+        path = `/${typeParams}s/${post._id}?type=${post.type}`
       }
       const text = `**${user.username}** commented on your ${type}`;
       const newNotif = await new Notif({
@@ -89,6 +93,7 @@ exports.createComment = async (req, res, next) => {
         creator: user._id,
         user: post.user._id,
         content: text,
+        path,
       }).save();
 
       let dataNotifSocket = {
@@ -99,6 +104,7 @@ exports.createComment = async (req, res, next) => {
           isRead: false,
           content: text,
           post,
+          path,
           creator: user,
           userId: post.user._id,
           createdAt: newNotif.createdAt,
@@ -192,6 +198,14 @@ exports.replyComment = async (req, res, next) => {
       postId: parentComment.postId._id
     }));
     if (parentComment.user._id.toString() != user._id.toString()) {
+      let type = parentComment.postId.type;
+      let typeParams = type;
+      let path = `/${typeParams}s/${parentComment.postId._id}?type=${type}`;
+      if (type === 'book' || type === 'movie' || type === 'food') {
+        type = type + ' review';
+        typeParams = `${type}Review`;
+        path = `/${typeParams}s/${parentComment.postId._id}?type=${type}`
+      }
       const text = `**${user.username}** replied to your comment`;
       const newNotif = await new Notif({
         post: parentComment.postId._id,
@@ -199,6 +213,7 @@ exports.replyComment = async (req, res, next) => {
         user: parentComment.user._id,
         content: text,
         notif: text,
+        path
       }).save();
 
       let dataNotifSocket = {
@@ -209,6 +224,7 @@ exports.replyComment = async (req, res, next) => {
           content: text,
           post: parentComment.postId,
           creator: user,
+          path,
           userId: parentComment.user._id,
           createdAt: newNotif.createdAt,
         },
@@ -308,12 +324,21 @@ exports.threadReplyComment = async (req, res, next) => {
     }));
 
     if (comment.user._id.toString() != user._id.toString()) {
+      let type = parentComment.postId.type;
+      let typeParams = type;
+      let path = `/${typeParams}s/${parentComment.postId._id}?type=${type}`;
+      if (type === 'book' || type === 'movie' || type === 'food') {
+        type = type + ' review';
+        typeParams = `${type}Review`;
+        path = `/${typeParams}s/${parentComment.postId._id}?type=${type}`
+      }
     const text = `**${user.username}** replied to your comment`;
     const newNotif = await new Notif({
       post: parentComment.postId._id,
       creator: user._id,
       user: parentComment.user._id,
       content: text,
+      path
     }).save();
 
     let dataNotifSocket = {
@@ -326,6 +351,7 @@ exports.threadReplyComment = async (req, res, next) => {
         creator: user,
         userId: comment.user._id,
         createdAt: newNotif.createdAt,
+        path
       },
     };
     redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataNotifSocket));
