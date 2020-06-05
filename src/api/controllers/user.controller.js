@@ -220,7 +220,6 @@ exports.follow = async (req, res, next) => {
       path: 'avatar',
       select: '_id secureURL'
     }).select('_id username avatar')
-    console.log('_user', _user)
     const userToFollow = await User.findById(req.params.userId).lean();
     if (!userToFollow) {
       throw Boom.badRequest('Not found user to follow');
