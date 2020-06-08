@@ -43,7 +43,7 @@ const NodeMailerSend = async ({
  */
 const sendEmail = (mail, type) => {
   if (mail.dataTemplate) {
-    NodeMailerSend({
+    return NodeMailerSend({
       to: mail.to, subject: mail.subject, dataTemplate: mail.dataTemplate, templateId: mail.templateId,
     });
   } else {
@@ -66,7 +66,7 @@ const sendEmail = (mail, type) => {
         throw Boom.badRequest('Invalid type to send mail');
     }
 
-    NodeMailerSend({
+    return NodeMailerSend({
       html: mail.html, subject: mail.subject, to: mail.to, text: mail.text,
     });
   }

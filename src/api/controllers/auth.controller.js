@@ -8,6 +8,8 @@ const { REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 const { EMAIL_QUEUE } = require('@bull');
 const configVar = require('@configVar');
 
+const { MailerService } = require('@services');
+
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -64,7 +66,7 @@ exports.register = async (req, res, next) => {
       key: redisKey,
     });
 
-    if (!redisCode ||  parseInt(redisCode) !== req.body.code) {
+    if (!redisCode || parseInt(redisCode) !== req.body.code) {
       throw Boom.badRequest('Invalid or expired code');
     }
 
@@ -124,12 +126,19 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
       to: email,
       verifyCode,
     };
+    try {
+      const isSuccess = await MailerService.sendEmail(mailData, 'VERIFY_CODE');
+      console.log('isSuccess', isSuccess)
+      if (isSuccess) {
+        return res.status(200).json({
+          status: 200,
+          message: 'Send email verify code successfully',
+        });
+      }
+    } catch (error) {
+      throw Boom.badRequest('Send email code failed')
+    }
 
-    EMAIL_QUEUE.sendEmailCode.add(mailData);
-    return res.status(200).json({
-      status: 200,
-      message: 'Send email verify code successfully',
-    });
   } catch (error) {
     return next(error);
   }
@@ -152,7 +161,7 @@ exports.forgotPassword = async (req, res, next) => {
       key: redisKey,
     });
 
-    if (!redisCode ||  parseInt(redisCode) !== code) {
+    if (!redisCode || parseInt(redisCode) !== code) {
       throw Boom.badRequest('Invalid or expired code');
     }
 
