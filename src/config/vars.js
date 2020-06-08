@@ -88,6 +88,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@email_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     USER_QUEUE: {
@@ -98,6 +102,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@user_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     CLOUDINARY_QUEUE: {
@@ -108,6 +116,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@cloudinary_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     FILE_REFERENCE_QUEUE: {
@@ -118,6 +130,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@fileReference_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
   },
