@@ -136,7 +136,7 @@ exports.sendEmailVerifyCode = async (req, res, next) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
-  const {
+  let {
     newPassword, confirmPassword, code, email,
   } = req.body;
   try {
