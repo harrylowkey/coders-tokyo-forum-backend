@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const tagSchema = new Schema({
   tagName: {
     type: String,
-    maxlength: 30,
+    maxlength: 15,
     required: true,
     trim: true,
   },

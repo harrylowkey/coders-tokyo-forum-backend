@@ -7,7 +7,7 @@ const validatePOST = (req, res, next) => {
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     cover: Joi.object().required(),
     type: Joi.string().optional(),
   });
@@ -30,7 +30,7 @@ const validatePUT = (req, res, next) => {
     topic: Joi.string().optional(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     cover: Joi.object().optional(),
     type: Joi.string().optional(),
   });

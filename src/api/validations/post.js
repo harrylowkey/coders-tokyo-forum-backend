@@ -17,7 +17,7 @@ const createPostValidate = (req, res, next) => {
       'podcast',
       'discussion',
     ).required(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     authors: Joi.array().items({
       name: Joi.string().required(),
       type: Joi.string().valid(

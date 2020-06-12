@@ -6,7 +6,7 @@ const validatePOST = (req, res, next) => {
   const schema = Joi.object().keys({
     topic: Joi.string().required(),
     content: Joi.string().required(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     type: Joi.string().optional(),
   });
 
@@ -22,7 +22,7 @@ const validatePUT = (req, res, next) => {
   const schema = Joi.object().keys({
     topic: Joi.string().optional(),
     content: Joi.string().optional(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     type: Joi.string().optional(),
   });
 
