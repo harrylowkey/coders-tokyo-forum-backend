@@ -268,8 +268,6 @@ exports.follow = async (req, res, next) => {
       },
     };
 
-    console.log(dataSocket)
-
     redis.publish(configVar.SOCKET_NOTIFICATION, JSON.stringify(dataSocket));
 
     return res.status(200).json({
