@@ -143,12 +143,12 @@ exports.deleteBookReview = async (req, res, next, type) => {
     const isDeleted = await Post.findByIdAndDelete(req.params.postId)
 
     if (!isDeleted) {
-      throw Boom.badRequest('Delete book blog failed')
+      throw Boom.badRequest('Delete book blog review failed')
     }
 
     return res.status(200).json({
       status: 200,
-      message: `Delete book blog successfully`,
+      message: `Delete book blog review successfully`,
     });
   } catch (error) {
     return next(error);

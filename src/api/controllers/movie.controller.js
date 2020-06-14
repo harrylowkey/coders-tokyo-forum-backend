@@ -2,8 +2,7 @@ const Boom = require('@hapi/boom');
 const Utils = require('@utils');
 const { Post, File } = require('@models');
 const Promise = require('bluebird');
-const cloudinary = require('cloudinary').v2;
-const { coverImageConfig } = require('@configVar');
+const { FILE_REFERENCE_QUEUE } = require('@bull')
 
 exports.createMovieReview = async (req, res, next) => {
   const type = 'movie'
@@ -154,7 +153,7 @@ exports.deleteMovieReview = async (req, res, next, type) => {
     const isDeleted = await Post.findByIdAndDelete(movieReview._id)
 
     if (!isDeleted) {
-      throw Boom.badRequest('Delete movie failed')
+      throw Boom.badRequest('Delete movie blog review failed')
     }
 
     return res.status(200).json({

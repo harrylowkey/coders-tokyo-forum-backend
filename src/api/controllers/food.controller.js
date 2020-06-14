@@ -3,6 +3,7 @@ const Utils = require('@utils');
 const { Post, File } = require('@models');
 const Promise = require('bluebird');
 const cloudinary = require('cloudinary').v2;
+const { FILE_REFERENCE_QUEUE } = require('@bull');
 
 exports.createFoodReview = async (req, res, next) => {
   const type = 'food';
@@ -28,7 +29,7 @@ exports.createFoodReview = async (req, res, next) => {
 
     newFoodBlog.cover = cover._id;
     newFoodBlog.food = food;
-    let a = []
+    let a = [];
     if (newFoodBlog.food.foodPhotos.length) {
       a = newFoodBlog.food.foodPhotos.map(photo => {
         return File.findByIdAndUpdate(
@@ -146,25 +147,23 @@ exports.deleteFoodReview = async (req, res, next, type) => {
     const foodReview = await Post.findOne({
       _id: req.params.postId,
       type,
-    }).lean();
+    })
+    .populate({ path: 'cover' })
+    .lean()
 
     if (!foodReview) {
       throw Boom.badRequest('Not found food blog review');
     }
-    const photos = foodReview.foodPhotos.map(photo => photo.public_id);
 
-    let result = await Promise.props({
-      idDeletedFoodBlog: Post.findByIdAndDelete(req.params.postId),
-      isDeletedCoverImage: cloudinary.uploader.destroy(
-        foodReview.cover.public_id,
-      ),
-      isDeletedFoodPhotos: CloudinaryService.deteteManyImages(photos),
-    });
 
-    if (!result.idDeletedFoodBlog) {
-      throw Boom.badRequest('Delete food blog fail');
+    let isDeletedFoodBlog = await Post.findByIdAndDelete(req.params.postId);
+
+    if (!isDeletedFoodBlog) {
+      throw Boom.badRequest('Delete food blog review fail');
     }
 
+    FILE_REFERENCE_QUEUE.deleteFile.add({ file: foodReview.cover });
+    FILE_REFERENCE_QUEUE.deleteMultipleFiles.add({ files: foodReview.food.foodPhotos });
     return res.status(200).json({
       status: 200,
       message: `Delete food blog review successfully`,

@@ -187,17 +187,17 @@ exports.changePassword = async (req, res, next) => {
     const userId = req.user._id;
     const user = await User.findById(userId).lean();
 
+    const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
+    if (!isMatchedOldPass) {
+      throw Boom.badRequest('Old password is wrong');
+    }
+
     const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', email]);
     const redisCode = await Redis.getCache({
       key: redisKey,
     });
     if (!redisCode || parseInt(redisCode) !== code) {
       throw Boom.badRequest('Invalid or expired code');
-    }
-
-    const isMatchedOldPass = bcrypt.compareSync(oldPassword, user.password);
-    if (!isMatchedOldPass) {
-      throw Boom.badRequest('Old password is wrong');
     }
 
     if (newPassword !== confirmPassword) {
