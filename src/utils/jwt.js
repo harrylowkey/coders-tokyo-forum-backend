@@ -5,7 +5,7 @@ const { jwtSecret, REDIS_EXPIRE_TOKEN_KEY, ACCESS_TOKEN_EXPIRED_TIME } = require
 const generateToken = (user, option) => {
   option = option || {};
   const salt = option.salt || '';
-  const ttl = option.ttl || ACCESS_TOKEN_EXPIRED_TIME; // 1 day default
+  const ttl = parseInt(option.ttl) || parseInt(ACCESS_TOKEN_EXPIRED_TIME, 10); // 1 day default
   const claims = {
     id: user._id,
     username: user.username,
