@@ -12,6 +12,7 @@ module.exports = {
   admin_port: process.env.ADMIN_PORT,
   jwtSecret: process.env.JWT_SECRET,
   prefix: process.env.PREFIX,
+  ACCESS_TOKEN_EXPIRED_TIME: process.env.ACCESS_TOKEN_EXPIRED_TIME,
   cloudinary_name: process.env.CLOUDINARY_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRECT,
