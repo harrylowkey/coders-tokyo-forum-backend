@@ -41,6 +41,7 @@ router
   .route('/discussions/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Discussion.validatePUT,
     DiscussionController.editDiscussion,
   );
@@ -57,6 +58,7 @@ router
   .route('/blogs/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Blog.validatePUT,
     BlogController.editBlog,
   );
@@ -73,6 +75,7 @@ router
   .route('/books/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Book.validatePUT,
     BookController.editBookReview,
   );
@@ -97,6 +100,7 @@ router
       { name: 'coverImage', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
+    (req, res, next) => sanitizeInput(req, res, next),
     Food.validatePUT,
     FoodController.editFoodReview,
   );
@@ -113,6 +117,7 @@ router
   .route('/movies/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Movie.validatePUT,
     MovieController.editMovieReview,
   );
@@ -148,6 +153,7 @@ router
   .route('/songs/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePUT,
     MediaController.editAudio,
   );
@@ -164,6 +170,7 @@ router
   .route('/podcasts/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePUT,
     MediaController.editAudio,
   );
