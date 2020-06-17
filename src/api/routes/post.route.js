@@ -17,6 +17,7 @@ const {
 
 /** ----------- CONFIG --------------- */
 const { foodPhotosConfig } = require('@configVar');
+const { sanitizeContent } = require('../../middlewares/sanitizeInput');
 const { configStorage } = require('../../config/cloudinary');
 
 const uploadFoodPhotos = configStorage(foodPhotosConfig);
@@ -31,6 +32,7 @@ router
   .route('/discussions')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeContent(req, res, next),
     Discussion.validatePOST,
     DiscussionController.createDiscussion,
   );
@@ -63,6 +65,7 @@ router
   .route('/books')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeContent(req, res, next),
     Book.validatePOST,
     BookController.createBookReview,
   );
@@ -82,6 +85,7 @@ router
       { name: 'coverImage', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
+    (req, res, next) => sanitizeContent(req, res, next),
     Food.validatePOST,
     FoodController.createFoodReview,
   );
@@ -101,6 +105,7 @@ router
   .route('/movies')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeContent(req, res, next),
     Movie.validatePOST,
     MovieController.createMovieReview,
   );
@@ -134,6 +139,7 @@ router
   .route('/songs')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeContent(req, res, next),
     Audio.validatePOST,
     MediaController.createAudio,
   );
@@ -149,6 +155,7 @@ router
   .route('/podcasts')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeContent(req, res, next),
     Audio.validatePOST,
     MediaController.createAudio,
   );
