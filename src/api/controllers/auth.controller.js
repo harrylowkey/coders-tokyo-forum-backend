@@ -8,7 +8,6 @@ const { REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
 const { EMAIL_QUEUE } = require('@bull');
 const configVar = require('@configVar');
 
-
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
