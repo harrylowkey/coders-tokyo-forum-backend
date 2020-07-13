@@ -16,11 +16,11 @@ const signUpValidate = (req, res, next) => {
       .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     confirmPassword: Joi.string()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     code: Joi.number().required(),
     sex: Joi.string().optional(),
@@ -60,11 +60,11 @@ const forgotPasswordValidate = (req, res, next) => {
       .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     confirmPassword: Joi.string()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     code: Joi.number().required(),
     email: Joi.string()
@@ -90,7 +90,7 @@ const changePasswordValidate = (req, res, next) => {
       .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     confirmPassword: Joi.string()
       .min(8)
@@ -98,7 +98,7 @@ const changePasswordValidate = (req, res, next) => {
       .regex(/[a-zA-Z0-9]/)
       .required()
       .error(() => ({
-        message: 'Password must include lower, uppper characters and number',
+        message: 'Password must include lower, upper characters and number',
       })),
     oldPassword: Joi.string().required(),
     code: Joi.number().required(),

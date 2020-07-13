@@ -12,6 +12,7 @@ module.exports = {
   admin_port: process.env.ADMIN_PORT,
   jwtSecret: process.env.JWT_SECRET,
   prefix: process.env.PREFIX,
+  ACCESS_TOKEN_EXPIRED_TIME: process.env.ACCESS_TOKEN_EXPIRED_TIME,
   cloudinary_name: process.env.CLOUDINARY_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRECT,
@@ -88,6 +89,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@email_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     USER_QUEUE: {
@@ -98,6 +103,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@user_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     CLOUDINARY_QUEUE: {
@@ -108,6 +117,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@cloudinary_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
     FILE_REFERENCE_QUEUE: {
@@ -118,6 +131,10 @@ module.exports = {
           timeout: 10000,
         },
         prefix: '@@fileReference_',
+        redis: { 
+          port: 6379, 
+          host: process.env.REDIS_HOST, 
+        }
       },
     },
   },

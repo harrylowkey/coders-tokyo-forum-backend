@@ -7,7 +7,7 @@ const validatePOST = (req, res, next) => {
     topic: Joi.string().required(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().required(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     isUpload: Joi.boolean().required(),
     url: Joi.string().when('isUpload', {
       is: false,
@@ -44,7 +44,7 @@ const validatePUT = (req, res, next) => {
     topic: Joi.string().optional(),
     description: Joi.string().allow('').optional(),
     content: Joi.string().optional(),
-    tags: Joi.array().items(Joi.string()).optional(),
+    tags: Joi.array().items(Joi.string().min(1).max(16)).optional(),
     isUpload: Joi.boolean().optional(),
     url: Joi.string().optional(),
     video: Joi.object().optional(),

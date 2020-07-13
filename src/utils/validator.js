@@ -5,12 +5,12 @@ const validatePassword = (password) => {
   if (password === '') {
     throw Boom.badRequest('Password cannot be blank!');
   }
-  let re = /((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%?=*&]).{8,30})/;
+  let re = /((?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,20})/;
   if (!re.test(password)) {
     error.push('');
     throw Boom.badRequest('Password should contain\
-      at least 8 characters, a lowercase, uppercase,\
-      special character and contain at most 30 characters!');
+      at least 8 characters, a lowercase, uppercase\
+      and contain at most 20 characters!');
   }
 
   re = /\s/;

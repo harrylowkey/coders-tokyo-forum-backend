@@ -17,6 +17,7 @@ const {
 
 /** ----------- CONFIG --------------- */
 const { foodPhotosConfig } = require('@configVar');
+const { sanitizeInput } = require('../../middlewares/sanitizeInput');
 const { configStorage } = require('../../config/cloudinary');
 
 const uploadFoodPhotos = configStorage(foodPhotosConfig);
@@ -31,6 +32,7 @@ router
   .route('/discussions')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Discussion.validatePOST,
     DiscussionController.createDiscussion,
   );
@@ -39,6 +41,7 @@ router
   .route('/discussions/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Discussion.validatePUT,
     DiscussionController.editDiscussion,
   );
@@ -55,6 +58,7 @@ router
   .route('/blogs/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Blog.validatePUT,
     BlogController.editBlog,
   );
@@ -63,6 +67,7 @@ router
   .route('/books')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Book.validatePOST,
     BookController.createBookReview,
   );
@@ -70,6 +75,7 @@ router
   .route('/books/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Book.validatePUT,
     BookController.editBookReview,
   );
@@ -82,6 +88,7 @@ router
       { name: 'coverImage', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
+    (req, res, next) => sanitizeInput(req, res, next),
     Food.validatePOST,
     FoodController.createFoodReview,
   );
@@ -93,6 +100,7 @@ router
       { name: 'coverImage', maxCount: 1 },
       { name: 'foodPhotos', maxCount: 10 },
     ]),
+    (req, res, next) => sanitizeInput(req, res, next),
     Food.validatePUT,
     FoodController.editFoodReview,
   );
@@ -101,6 +109,7 @@ router
   .route('/movies')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Movie.validatePOST,
     MovieController.createMovieReview,
   );
@@ -108,6 +117,7 @@ router
   .route('/movies/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Movie.validatePUT,
     MovieController.editMovieReview,
   );
@@ -134,6 +144,7 @@ router
   .route('/songs')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePOST,
     MediaController.createAudio,
   );
@@ -142,6 +153,7 @@ router
   .route('/songs/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePUT,
     MediaController.editAudio,
   );
@@ -149,6 +161,7 @@ router
   .route('/podcasts')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePOST,
     MediaController.createAudio,
   );
@@ -157,6 +170,7 @@ router
   .route('/podcasts/:postId')
   .put(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     Audio.validatePUT,
     MediaController.editAudio,
   );

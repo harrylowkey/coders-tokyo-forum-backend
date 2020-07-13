@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 const Redis = require('@redis');
-const { jwtSecret, REDIS_EXPIRE_TOKEN_KEY } = require('@configVar');
+const { jwtSecret, REDIS_EXPIRE_TOKEN_KEY, ACCESS_TOKEN_EXPIRED_TIME } = require('@configVar');
 
 const generateToken = (user, option) => {
   option = option || {};
   const salt = option.salt || '';
-  const ttl = option.ttl || 7200; // 2hour default
+  const ttl = parseInt(option.ttl) || parseInt(ACCESS_TOKEN_EXPIRED_TIME, 10); // 1 day default
   const claims = {
     id: user._id,
     username: user.username,

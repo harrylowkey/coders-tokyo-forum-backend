@@ -78,7 +78,7 @@ exports.getOnePost = async (req, res, next) => {
             path: 'childComments',
             select: 'content createdAt parentId',
             options: {
-              sort: { createdAt: -1 }
+              sort: { createdAt: 1 }
             },
             populate: [
               {

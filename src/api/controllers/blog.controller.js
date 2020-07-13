@@ -114,8 +114,9 @@ exports.deleteBlog = async (req, res, next, type) => {
       _id: req.params.postId,
       user: req.user._id,
       type,
-    }).lean()
+    })
       .populate({ path: 'cover' })
+      .lean()
     if (!blog) {
       throw Boom.badRequest('Not found blog');
     }

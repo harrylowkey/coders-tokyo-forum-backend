@@ -12,9 +12,9 @@
 ## What is the Coders.Tokyo forum?
 - This project is aim to make a playground for every members of Coders.Tokyo. 
 - In there, you are a blogger, reviewer. That you can:
- - [ ] Write your own blog
- - [ ] Write the book, movie review
- - [ ] Share with others about the food you like through blog
- - [ ] Ask question, make discussion at there
- - [ ] *Specially*, you can upload the songs or videos you like and share your thoughts, feelings about them.
+ - [x] Write your own blog
+ - [x] Write the book, movie review
+ - [x] Share with others about the food you like through blog
+ - [x] Ask question, make discussion at there
+ - [x] *Specially*, you can upload the songs or videos you like and share your thoughts, feelings about them.
 > ***Hope you can improve your writing skill and have many joys in this playground***

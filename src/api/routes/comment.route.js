@@ -5,6 +5,7 @@ const { checkAccessToken } = require('@middlewares/authorize');
 const {
   commentValidate,
 } = require('../validations/comment');
+const { sanitizeInput } = require('../../middlewares/sanitizeInput');
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ router
   .route('/reply/:commentId')
   .post(
     checkAccessToken,
+    (req, res, next) => sanitizeInput(req, res, next),
     commentValidate,
     CommentController.replyComment,
   );
