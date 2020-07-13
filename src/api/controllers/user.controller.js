@@ -219,7 +219,7 @@ exports.follow = async (req, res, next) => {
     const _user = await User.findById(user._id).lean().populate({
       path: 'avatar',
       select: '_id secureURL'
-    }).select('_id username avatar')
+    }).select('_id username avatar');
     const userToFollow = await User.findById(req.params.userId).lean();
     if (!userToFollow) {
       throw Boom.badRequest('Not found user to follow');
@@ -246,8 +246,8 @@ exports.follow = async (req, res, next) => {
       throw Boom.badRequest('Follow failed');
     }
 
-    const path = `/users/profile/${user.username}`
-    const content = `**${user.username}** followed you`
+    const path = `/users/profile/${user.username}`;
+    const content = `**${user.username}** followed you`;
     const newNotif = await new Notif({
       creator: user._id,
       user: userToFollow._id,
@@ -303,7 +303,7 @@ exports.unfollow = async (req, res, next) => {
         },
         { new: true }),
     ]);
-
+//test
     if (!updateFollowers || !updateFollwing) {
       throw Boom.badRequest('Follow failed');
     }
