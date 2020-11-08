@@ -19,5 +19,3 @@ router.use('/files', fileRoute);
 router.use('/notifications', notifRoute);
 
 module.exports = router;
-
-const z = 'z';
