@@ -21,4 +21,6 @@ router.use('/notifications', notifRoute);
 const x = 'x';
 const y = 'y';
 const z = 'z';
+const a = 'a';
+const b = 'b';
 module.exports = router;
