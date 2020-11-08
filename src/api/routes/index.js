@@ -19,4 +19,6 @@ router.use('/files', fileRoute);
 router.use('/notifications', notifRoute);
 
 const x = 'x';
+const y = 'y';
+const z = 'z';
 module.exports = router;
