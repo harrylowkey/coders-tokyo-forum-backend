@@ -18,4 +18,6 @@ router.use('/comments', commentRoute);
 router.use('/files', fileRoute);
 router.use('/notifications', notifRoute);
 
+const x = 'x';
+const b = 'b'
 module.exports = router;
