@@ -3,7 +3,7 @@
 ## How to start 
 
  1. Clone this repo
- 2. Contact to me to receive the .env.dev file and postman file
+ 2. Contact to me if you want the APIs postman file
  3. Checkout `develop branch`
  4. Run command `npm i`
  5. Run command `npm run dev` to start server
