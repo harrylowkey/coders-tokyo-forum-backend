@@ -13,12 +13,12 @@ const NodeMailerSend = async ({
     secure: false,
     requireTLS: true,
     auth: {
-      user: process.env.SMTP_EMAIL,
-      pass: process.env.SMTP_EMAIL_PASS,
+      user: 'quangmitdepzai@gmail.com',
+      pass: 'Quangdepzai',
     },
   });
   const preData = {
-    from: process.env.EMAIL_FROM,
+    from: 'noreply@forum.com',
     to,
     subject,
     text,

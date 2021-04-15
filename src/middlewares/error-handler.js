@@ -39,7 +39,7 @@ exports.handler = (err, req, res, next) => {
         const data = `\nData: \`\`\`${JSON.stringify(err.data, null, 2)}\`\`\``;
         message += data;
       }
-      message += `\n at **${process.env.NODE_ENV}** environment!`;
+      message += `\n at **dev** environment!`;
     } catch (ex) {
       console.log(ex);
     }

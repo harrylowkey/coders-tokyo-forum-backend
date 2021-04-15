@@ -1,7 +1,7 @@
 version: '3'
 services:
   api:
-    image: hongquangraem/forum-nodejs:05232020.prod.3
+    image: hongquangraem/forum-nodejs:202210415.prod.3
     ports:
       - '3000:3000'
     environment:
