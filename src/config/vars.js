@@ -1,8 +1,4 @@
-const path = require('path');
-
-const mode = process.env.NODE_ENV || 'local';
-const _path = `${path.join(__dirname, '../../.env')}.${mode}`;
-require('dotenv').config({ path: _path });
+require('dotenv').config();
 
 module.exports = {
   mongoURL: process.env.MONGO_URL,
