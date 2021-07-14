@@ -62,7 +62,7 @@ exports.register = async (req, res, next) => {
     const redisKey = await Redis.makeKey(['EMAIL_VERIFY_CODE', req.body.email]);
     const redisCode = await Redis.getCache({
       key: redisKey,
-    })
+    });
 
     if (!redisCode ||  parseInt(redisCode) !== req.body.code) {
       throw Boom.badRequest('Invalid or expired code');
