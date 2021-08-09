@@ -18,8 +18,8 @@ exports.login = async (req, res, next) => {
         path: 'avatar',
         select: 'publicId secureURL fileName sizeBytes',
       })
-      .select('-__v -verifyCode -posts -likedPosts -savedPosts');
-    if (!user) throw Boom.badRequest('Not found user');
+      .select('-__v -verifyCode -posts -likedPosts -savedPosts')
+    if (!user) throw Boom.badRequest('Not found user')
 
     const isMatchedPassword = Utils.bcrypt.comparePassword(
       password,
@@ -65,7 +65,7 @@ exports.register = async (req, res, next) => {
     });
 
     if (!redisCode ||  parseInt(redisCode) !== req.body.code) {
-      throw Boom.badRequest('Invalid or expired code');
+      throw Boom.badRequest('Invalid or expired code')
     }
 
     if (req.body.confirmPassword !== req.body.password) {
